@@ -96,7 +96,7 @@ void phoD::ptree::setbranchaddress()
   nt_->SetBranchAddress("nPho", &nPho_);
   nt_->SetBranchAddress("nEle", &nEle_);
   if(nt_->FindBranch("nMC")) { nt_->SetBranchAddress("nMC", &nMC_); }
-  for(auto& b : tbvf_) { if(bvs_[b]) { nt_->SetBranchAddress(b.c_str(), bvf_[b]); } }
+  for(auto& b : tbvf_) { if(bvs_[b]) { nt_->SetBranchAddress(b.c_str(), &(bvf_[b])); } }
 }
 
 bool phoD::ptree::presel(int j)
