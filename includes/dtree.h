@@ -1,3 +1,6 @@
+#ifndef __PHOD_DTREE__
+#define __PHOD_DTREE__
+
 #include <TTree.h>
 #include <TDirectory.h>
 
@@ -19,9 +22,11 @@ namespace phoD
     dtree(TFile* outf, std::string name);
     TTree* nt() { return nt_; }
     template<typename T> T val(std::string br, int j);
+    bool status(std::string br) { return bvs_[br]; }
     int GetEntries() { return nt_->GetEntries(); }
     void GetEntry(int i) { nt_->GetEntry(i); }
     int Dsize() { return Dsize_; }
+    void setBDT(int j, float mva) { bvf_["BDT"][j] = mva; }
     bool presel(int j);
 
     void ClearDsize() { Dsize_ = 0; }
@@ -70,7 +75,8 @@ namespace phoD
       "Dtrk1nPixelLayer",
       "Dtrk2nPixelLayer",
       "Dtrk1Chi2ndf",
-      "Dtrk2Chi2ndf"
+      "Dtrk2Chi2ndf",
+      "BDT"
     };
     std::vector<std::string> tbvi_ = {
     };
@@ -82,12 +88,15 @@ namespace phoD
     std::map<std::string, float*> bvf_;
     std::map<std::string, int*> bvi_;
     std::map<std::string, bool*> bvo_;
+
+    std::map<std::string, bool> bvs_; //
   };
 }
 
 phoD::dtree::dtree(TTree* nt) : nt_(nt)
 {
-  std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<std::endl;
+  std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<"\e[0m"<<std::endl;
+
   for(auto& i : tbvf_) { bvf_[i] = new float[MAX_XB]; }
   for(auto& i : tbvi_) { bvi_[i] = new int[MAX_XB]; }
   for(auto& i : tbvo_) { bvo_[i] = new bool[MAX_XB]; }
@@ -97,18 +106,24 @@ phoD::dtree::dtree(TTree* nt) : nt_(nt)
 
   nt_->SetBranchStatus("*", 0);
   nt_->SetBranchStatus("Dsize", 1);
-  for(auto& b : tbvf_) nt_->SetBranchStatus(b.c_str(), 1);
-  for(auto& b : tbvi_) nt_->SetBranchStatus(b.c_str(), 1);
-  for(auto& b : tbvo_) nt_->SetBranchStatus(b.c_str(), 1);
+
+  for(auto& b : tbvf_) { bvs_[b] = false; 
+    if(nt_->FindBranch(b.c_str())) { nt_->SetBranchStatus(b.c_str(), 1); bvs_[b] = true; } }
+  for(auto& b : tbvi_) { bvs_[b] = false; 
+    if(nt_->FindBranch(b.c_str())) { nt_->SetBranchStatus(b.c_str(), 1); bvs_[b] = true; } }
+  for(auto& b : tbvo_) { bvs_[b] = false; 
+    if(nt_->FindBranch(b.c_str())) { nt_->SetBranchStatus(b.c_str(), 1); bvs_[b] = true; } }
 
   setbranchaddress();
 }
 
 phoD::dtree::dtree(TFile* outf, std::string name)
 {
-  for(auto& i : tbvf_) { bvf_[i] = new float[MAX_XB]; }
-  for(auto& i : tbvi_) { bvi_[i] = new int[MAX_XB]; }
-  for(auto& i : tbvo_) { bvo_[i] = new bool[MAX_XB]; }
+  std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<"\e[0m"<<std::endl;
+
+  for(auto& i : tbvf_) { bvf_[i] = new float[MAX_XB]; bvs_[i] = false; }
+  for(auto& i : tbvi_) { bvi_[i] = new int[MAX_XB]; bvs_[i] = false; }
+  for(auto& i : tbvo_) { bvo_[i] = new bool[MAX_XB]; bvs_[i] = false; }
 
   newtree_ = true;
  
@@ -133,9 +148,9 @@ void phoD::dtree::branch()
 void phoD::dtree::setbranchaddress()
 {
   nt_->SetBranchAddress("Dsize", &Dsize_);
-  for(auto& b : tbvf_) nt_->SetBranchAddress(b.c_str(), bvf_[b]);
-  for(auto& b : tbvi_) nt_->SetBranchAddress(b.c_str(), bvi_[b]);
-  for(auto& b : tbvo_) nt_->SetBranchAddress(b.c_str(), bvo_[b]);
+  for(auto& b : tbvf_) { if(bvs_[b]) { nt_->SetBranchAddress(b.c_str(), bvf_[b]); } }
+  for(auto& b : tbvi_) { if(bvs_[b]) { nt_->SetBranchAddress(b.c_str(), bvi_[b]); } }
+  for(auto& b : tbvo_) { if(bvs_[b]) { nt_->SetBranchAddress(b.c_str(), bvo_[b]); } }
 }
 
 template<typename T> T phoD::dtree::val(std::string br, int j)
@@ -148,9 +163,9 @@ template<typename T> T phoD::dtree::val(std::string br, int j)
 
 void phoD::dtree::Fillall(dtree* nt, int j)
 {
-  for(auto& b : tbvf_) bvf_[b][Dsize_] = nt->val<float>(b, j);
-  for(auto& b : tbvi_) bvi_[b][Dsize_] = nt->val<int>(b, j);
-  for(auto& b : tbvo_) bvo_[b][Dsize_] = nt->val<bool>(b, j);
+  for(auto& b : tbvf_) { if(nt->status(b)) { bvf_[b][Dsize_] = nt->val<float>(b, j); } }
+  for(auto& b : tbvi_) { if(nt->status(b)) { bvi_[b][Dsize_] = nt->val<int>(b, j); } }
+  for(auto& b : tbvo_) { if(nt->status(b)) { bvo_[b][Dsize_] = nt->val<bool>(b, j); } }
   Dsize_++;
 }
 
@@ -165,3 +180,6 @@ bool phoD::dtree::presel(int j)
      ) return true;
   return false;
 }
+
+
+#endif

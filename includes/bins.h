@@ -1,3 +1,6 @@
+#ifndef __PHOD_BINS__
+#define __PHOD_BINS__
+
 #include <vector>
 #include <iostream>
 
@@ -52,3 +55,5 @@ std::string phoD::bins<T>::tag(std::size_t i, std::string var, std::string unit)
   t = xjjc::number_remove_zero(v_[i]) + " < " + var + " < " + xjjc::number_remove_zero(v_[i+1]) + unit;
   return t;
 }
+
+#endif

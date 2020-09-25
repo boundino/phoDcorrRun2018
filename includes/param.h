@@ -1,3 +1,6 @@
+#ifndef __PHOD_PARAM__
+#define __PHOD_PARAM__
+
 #include <vector>
 #include <string>
 #include <map>
@@ -95,3 +98,4 @@ void phoD::param::print()
   std::cout << "\e[0m";
 }
 
+#endif

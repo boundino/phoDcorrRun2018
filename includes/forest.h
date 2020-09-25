@@ -1,3 +1,6 @@
+#ifndef __PHOD_FOREST__
+#define __PHOD_FOREST__
+
 #include <TFile.h>
 #include <TTree.h>
 
@@ -44,3 +47,4 @@ void phoD::forest::GetEntry(int i)
   ptr_->GetEntry(i);
 }
 
+#endif

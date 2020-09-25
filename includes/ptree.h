@@ -1,3 +1,6 @@
+#ifndef __PHOD_PTREE__
+#define __PHOD_PTREE__
+
 #include <TTree.h>
 
 #include <vector>
@@ -94,3 +97,4 @@ bool phoD::ptree::sel(int j)
   return false;
 }
 
+#endif
