@@ -67,7 +67,7 @@ namespace phoD
       "mcEta",
       "mcPhi",
       "mcEt",
-      "mcCalIsoDR04",
+      "mcCalIsoDR04"
     };
     std::map<std::string, std::vector<float>*> bvf_;
     std::map<std::string, bool> bvs_; // if the branch is valid

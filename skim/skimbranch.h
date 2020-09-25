@@ -45,7 +45,11 @@ phoD::skimtree::skimtree(std::string treename, TFile* inf, TFile* outf, std::vec
   ft = (TTree*)inf->Get(treename.c_str());
   // branch skim
   ft->SetBranchStatus("*", 0);
-  for(auto& b : branches) { std::cout<<"  --> "<<b<<std::endl; ft->SetBranchStatus(b.c_str(), 1); }
+  for(auto& b : branches) 
+    { 
+      if(ft->FindBranch(b.c_str()) || xjjc::str_contains(b, "*")) { std::cout<<"\e[34;1m  --> "<<b<<"\e[0m"<<std::endl; ft->SetBranchStatus(b.c_str(), 1); } 
+      else { std::cout<<"\e[31;1m  --x "<<b<<"\e[0m"<<std::endl; } 
+    }
   // output
   foutf->cd();
   std::vector<std::string> p = xjjc::str_divide(treename, "/");
@@ -104,7 +108,14 @@ phoD::skimbranch::skimbranch()
     "Dtrk1nPixelLayer",
     "Dtrk2nPixelLayer",
     "Dtrk1Chi2ndf",
-    "Dtrk2Chi2ndf"
+    "Dtrk2Chi2ndf",
+    "BDT",
+    "Dgen",
+    "DgencollisionId",
+    "Dgenpt",
+    "Dgeneta",
+    "Dgenphi",
+    "Dgeny"
   };
 
   fbr["HiForest/HiForestInfo"] = {"*"};
@@ -132,7 +143,15 @@ phoD::skimbranch::skimbranch()
     "phoSigmaIEtaIEta_2012",
     "pho_ecalClusterIsoR3",
     "pho_hcalRechitIsoR3",
-    "pho_trackIsoR3PtCut20"
+    "pho_trackIsoR3PtCut20",
+    "pho_genMatchedIndex",
+    "mcPID",
+    "mcStatus",
+    "mcPt",
+    "mcEta",
+    "mcPhi",
+    "mcEt",
+    "mcCalIsoDR04"
   };
 
   fbr["hiEvtAnalyzer/HiTree"] = {
@@ -141,7 +160,8 @@ phoD::skimbranch::skimbranch()
     "lumi",
     "vz",
     "hiBin",
-    "hiHF"
+    "hiHF",
+    "Ncoll"
   };
 
   fbr["hltanalysis/HltTree"] = {"HLT_HIGEDPhoton40_v1"};
