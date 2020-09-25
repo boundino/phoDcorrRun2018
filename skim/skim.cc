@@ -60,8 +60,9 @@ int skim(std::string inputname, std::string outputname)
           float mvaval = mva->eval(dt, j, hiBin);
           if(!mva->pass(mvaval, dt->val<float>("Dpt", j), hiBin)) continue;
 
-          dt_new->setBDT(j, mvaval);
+          dt_new->Fillone("BDT", mvaval);
           dt_new->Fillall(dt, j);
+          dt_new->Dsizepp();
         }
       dt_new->Fill();
     }

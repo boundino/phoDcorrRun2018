@@ -21,19 +21,23 @@ namespace phoD
     dtree(TTree* nt);
     dtree(TFile* outf, std::string name);
     TTree* nt() { return nt_; }
+
+    // read
     template<typename T> T val(std::string br, int j);
     bool status(std::string br) { return bvs_[br]; }
     int GetEntries() { return nt_->GetEntries(); }
     void GetEntry(int i) { nt_->GetEntry(i); }
 
+    // tools
     int Dsize() { return Dsize_; }
-    void setBDT(int j, float mva) { bvf_["BDT"][j] = mva; }
-
     bool presel(int j);
 
-    void ClearDsize() { Dsize_ = 0; }
+    // fill new file tree
+    void ClearDsize() { if(newtree_) { Dsize_ = 0; } }
     void Fillall(dtree* nt, int j);
-    void Fill() { dr_->cd(); nt_->Fill(); }
+    void Fillone(std::string br, float val) { if(newtree_) { bvf_[br][Dsize_] = val; } }
+    void Dsizepp() { if(newtree_) Dsize_++; }
+    void Fill() { if(newtree_ ){ dr_->cd(); nt_->Fill(); } }
   private:
     TTree* nt_;
     TDirectory* dr_;
@@ -79,14 +83,14 @@ namespace phoD
       "Dtrk1Chi2ndf",
       "Dtrk2Chi2ndf",
       "BDT",
-      "Dgen",
-      "DgencollisionId",
       "Dgenpt",
       "Dgeneta",
       "Dgenphi",
       "Dgeny"
     };
     std::vector<std::string> tbvi_ = {
+      "Dgen",
+      "DgencollisionId",
     };
     std::vector<std::string> tbvo_ = {
       "Dtrk1highPurity",
@@ -171,10 +175,10 @@ template<typename T> T phoD::dtree::val(std::string br, int j)
 
 void phoD::dtree::Fillall(dtree* nt, int j)
 {
+  if(!newtree_) return;
   for(auto& b : tbvf_) { if(nt->status(b)) { bvf_[b][Dsize_] = nt->val<float>(b, j); } }
   for(auto& b : tbvi_) { if(nt->status(b)) { bvi_[b][Dsize_] = nt->val<int>(b, j); } }
   for(auto& b : tbvo_) { if(nt->status(b)) { bvo_[b][Dsize_] = nt->val<bool>(b, j); } }
-  Dsize_++;
 }
 
 bool phoD::dtree::presel(int j)
