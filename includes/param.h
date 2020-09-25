@@ -14,8 +14,15 @@
 namespace phoD
 {
   std::vector<float> bins_dphi = {0, 0.2, 0.4, 0.6, 0.8, 1.0};
-  // std::vector<float> bins_dphi = {0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
   int nbins_dphi = bins_dphi.size() - 1;
+
+  // photon selection
+  const float photon_pt_min_ = 40;
+  const float photon_eta_abs_ = 1.442;
+  const float hovere_max_ = 0.119947;
+  const float see_min_ = 0;
+  const float see_max_ = 0.010392;
+  const float iso_max_ = 2.099277;
 
   class param
   {

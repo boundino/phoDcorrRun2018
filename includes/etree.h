@@ -16,6 +16,7 @@ namespace phoD
     void GetEntry(int i) { nt_->GetEntry(i); }
     float vz() { return vz_; }
     int hiBin() { return hiBin_; }
+    float Ncoll() { return Ncoll_; }
     bool presel();
 
   private:
@@ -23,13 +24,15 @@ namespace phoD
     void setbranchaddress();
     float vz_;
     int hiBin_;
+    float Ncoll_;
   };
 }
 
 void phoD::etree::setbranchaddress()
 {
-  nt_->SetBranchAddress("vz", &vz_);
-  nt_->SetBranchAddress("hiBin", &hiBin_);
+  if(nt_->FindBranch("vz")) nt_->SetBranchAddress("vz", &vz_);
+  if(nt_->FindBranch("hiBin")) nt_->SetBranchAddress("hiBin", &hiBin_);
+  if(nt_->FindBranch("Ncoll")) nt_->SetBranchAddress("Ncoll", &Ncoll_);
 }
 
 bool phoD::etree::presel()

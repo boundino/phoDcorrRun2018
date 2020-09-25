@@ -25,8 +25,10 @@ namespace phoD
     bool status(std::string br) { return bvs_[br]; }
     int GetEntries() { return nt_->GetEntries(); }
     void GetEntry(int i) { nt_->GetEntry(i); }
+
     int Dsize() { return Dsize_; }
     void setBDT(int j, float mva) { bvf_["BDT"][j] = mva; }
+
     bool presel(int j);
 
     void ClearDsize() { Dsize_ = 0; }
@@ -76,7 +78,13 @@ namespace phoD
       "Dtrk2nPixelLayer",
       "Dtrk1Chi2ndf",
       "Dtrk2Chi2ndf",
-      "BDT"
+      "BDT",
+      "Dgen",
+      "DgencollisionId",
+      "Dgenpt",
+      "Dgeneta",
+      "Dgenphi",
+      "Dgeny"
     };
     std::vector<std::string> tbvi_ = {
     };
