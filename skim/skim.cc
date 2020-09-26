@@ -22,7 +22,7 @@ int skim(std::string inputname, std::string outputname)
   s["skim"] = new phoD::skimtree("skimanalysis/HltTree", inf, outf, sb->branches("skimanalysis/HltTree"));
   s["hi"] = new phoD::skimtree("hiEvtAnalyzer/HiTree", inf, outf, sb->branches("hiEvtAnalyzer/HiTree"));
   s["forest"] = new phoD::skimtree("HiForest/HiForestInfo", inf, outf, sb->branches("HiForest/HiForestInfo"));
-  // s["nt"] = new phoD::skimtree("Dfinder/ntDkpi", inf, outf, sb->branches("Dfinder/ntDkpi"));
+  s["ntGen"] = new phoD::skimtree("Dfinder/ntGen", inf, outf, sb->branches("Dfinder/ntGen"));
   TTree* nt = (TTree*)inf->Get("Dfinder/ntDkpi");
   phoD::dtree* dt = new phoD::dtree(nt);
   phoD::dtree* dt_new = new phoD::dtree(outf, "Dfinder/ntDkpi");
@@ -52,10 +52,6 @@ int skim(std::string inputname, std::string outputname)
       for(int j=0; j<dt->Dsize(); j++)
         {
           if(!dt->presel(j)) continue;
-          // if(!(fabs(dt->val<float>("Dalpha", j)) < 0.2 && 
-          //      ((dt->val<float>("Dpt", j) < 6. && fabs(dt->val<float>("DsvpvDistance", j)/dt->val<float>("DsvpvDisErr", j)) > 4.5 && dt->val<float>("Dchi2cl", j) > 0.15) ||
-          //       (dt->val<float>("Dpt", j) > 6. && fabs(dt->val<float>("DsvpvDistance", j)/dt->val<float>("DsvpvDisErr", j)) > 3.5 && dt->val<float>("Dchi2cl", j) > 0.05))
-          //      )) continue;
 
           float mvaval = mva->eval(dt, j, hiBin);
           if(!mva->pass(mvaval, dt->val<float>("Dpt", j), hiBin)) continue;

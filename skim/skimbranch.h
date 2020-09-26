@@ -173,5 +173,23 @@ phoD::skimbranch::skimbranch()
     "phfCoincFilter2Th4",
     "pclusterCompatibilityFilter"
   };
+
+  fbr["Dfinder/ntGen"] = {
+    "GPV*",
+    "Gsize",
+    "Gy",
+    "Geta",
+    "Gphi",
+    "Gpt",
+    "GpdgId",
+    "GcollisionId",
+    "GisSignal",
+    "Gtk1pt",
+    "Gtk1eta",
+    "Gtk1phi",
+    "Gtk2pt",
+    "Gtk2eta",
+    "Gtk2phi",
+  };
 }
 
