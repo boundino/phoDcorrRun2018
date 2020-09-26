@@ -141,7 +141,10 @@ phoD::dtree::dtree(TFile* outf, std::string name)
  
   std::vector<std::string> p = xjjc::str_divide(name, "/");  
   if(p.size() > 1)
-    { dr_ = outf->mkdir(p[0].c_str()); }
+    { 
+      if(!outf->cd(p[0].c_str())) dr_ = outf->mkdir(p[0].c_str()); 
+      else { dr_ = outf->GetDirectory(p[0].c_str()); }
+    }
   else { dr_ = outf; }
   dr_->cd();
   nt_ = new TTree(p.back().c_str(), "");
