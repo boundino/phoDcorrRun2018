@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <cmath>
 
 #include "TFile.h"
 #include "TTree.h"
@@ -34,13 +35,13 @@ int weighPurePthat(TString ifname, TString ofname)
   for(int i=0; i<nentries; i++)
     {
       HiTree->GetEntry(i);
-      if(i%10000==0) std::cout<<std::left<<" Processing [ "<<std::setw(10)<<i<<" / "<<nentries<<" ] - "<<std::setw(6)<<(int)(100.*i/nentries)<<"% \r"<<std::flush;
+      if(i%10000==0 || i==nentries-1) std::cout<<std::left<<" Processing [ "<<std::setw(10)<<i<<" / "<<nentries<<" ] - "<<std::setw(6)<<round(100.*i/nentries)<<"% \r"<<std::flush;
 
-      // if(pthat < sample) continue;
+      if(pthat < sample) continue;
 
-      for(int j=0;j<nBins;j++)
+      for(int j=0; j<nBins; j++)
         {
-          if(isInsidebin(pthat,j)) nweight[j]++;
+          if(isInsidebin(pthat, j)) nweight[j]++;
         }
     }
   std::cout<<std::endl<<" -- Weight count"<<std::endl;
@@ -50,13 +51,13 @@ int weighPurePthat(TString ifname, TString ofname)
   std::cout<<std::endl<<" -- Weight results"<<std::endl;
   for(int j=0; j<nBins; j++)
     {
-      if(nweight[j]==0)
+      if(nweight[j] == 0)
         {
           std::cout<<"    Error: Weight fails."<<std::endl;
           return 1;
         }
       weight[j] = (crosssec[j]-crosssec[j+1])/nweight[j];
-      std::cout<<std::left<<std::setw(18)<<Form("    Pthat %.0f - %.0f", pthatBin[j], pthatBin[j+1])<<": "<<weight[j]<<" ("<<(crosssec[j]-crosssec[j+1])<<")"<<std::endl;
+      std::cout<<std::left<<std::setw(18)<<Form("    Pthat %.0f - %.0f", pthatBin[j], pthatBin[j+1])<<": "<<weight[j]<<std::endl;
     }
 
   std::cout<<" -- Building weight branch"<<std::endl;
@@ -68,14 +69,14 @@ int weighPurePthat(TString ifname, TString ofname)
   for(int i=0;i<nentries;i++)
     {
       HiTree->GetEntry(i);
-      if(i%10000==0) std::cout<<std::left<<" Processing [ "<<std::setw(10)<<i<<" / "<<nentries<<" ] - "<<std::setw(6)<<(int)(100.*i/nentries)<<"% \r"<<std::flush;
+      if(i%10000==0 || i==nentries-1) std::cout<<std::left<<" Processing [ "<<std::setw(10)<<i<<" / "<<nentries<<" ] - "<<std::setw(6)<<round(100.*i/nentries)<<"% \r"<<std::flush;
 
-      pthatweight=0;
+      pthatweight = 0;
       if(pthat > sample) 
         {
-          for(int j=0;j<nBins;j++)
+          for(int j=0; j<nBins; j++)
             {
-              if(isInsidebin(pthat,j))
+              if(isInsidebin(pthat, j))
                 {
                   pthatweight = weight[j];
                 }
@@ -106,6 +107,6 @@ bool isInsidebin(float xpthat, int i)
 int main(int argc, char *argv[])
 {
   if(argc==3) { return weighPurePthat(argv[1], argv[2]); }
-  std::cout<<"Invalid parameter number"<<std::endl;
+  std::cout<<"Invalid argument number."<<std::endl;
   return 1;
 }
