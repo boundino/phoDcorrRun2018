@@ -6,6 +6,7 @@
 #include "forest.h"
 #include "param.h"
 #include "bins.h"
+#include "utili.h"
 
 #include "xjjcuti.h"
 #include "xjjrootuti.h"
@@ -18,25 +19,30 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
   phoD::etree* etr = f->etr();
   phoD::dtree* dtr = f->dtr();
   phoD::ptree* ptr = f->ptr();
-  // phoD::bins<float>* vb = new phoD::bins<float>(phoD::bins_dphi);
+
   phoD::bins<float> vb(phoD::bins_dphi);
   std::vector<TH1F*> hmass(vb.n(), 0);
   for(int k=0; k<vb.n(); k++)
     {
       hmass[k] = new TH1F(Form("hmass_%d", k), 
-                          Form("#Delta#phi/#pi: %s - %s;;", xjjc::number_remove_zero(vb[k]).c_str(), xjjc::number_remove_zero(vb[k+1]).c_str()), 
+                          Form("#Delta#phi/#pi: %s - %s;m_{K#pi} (GeV/c);", xjjc::number_remove_zero(vb[k]).c_str(), xjjc::number_remove_zero(vb[k+1]).c_str()), 
                           xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
     }
+  TH1F* hmass_incl = new TH1F("hmass_incl", ";m_{K#pi} (GeV/c);", xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
+
+  int HLT_HIGEDPhoton40_v1; 
 
   int nentries = f->GetEntries();
-  int passevt = 0;
+  int passevt = 0, passevthlt = 0;
   for(int i=0; i<nentries; i++)
     {
       if(i%10000==0 || i==nentries-1) xjjc::progressbar(i, nentries);
       f->GetEntry(i);
 
-      // event selection
+      // event selection + hlt
       if(!etr->presel() || etr->hiBin() < pa["centmin"]*2 || etr->hiBin() > pa["centmax"]*2) continue;
+
+      passevthlt++;
 
       // photon selection
       int jlead = -1;
@@ -48,8 +54,7 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
           break;
         }
       if(jlead < 0) continue;
-      // see, iso, 
-      if(!ptr->sel(jlead)) continue;
+      if(!ptr->sel(jlead, pa.ishi(), false)) continue;
       // miss eletron reject selection
 
       passevt++;
@@ -57,27 +62,28 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
       // D mesons
       for(int j=0; j<dtr->Dsize(); j++)
         {
-          if(!(dtr->presel(j))) continue;
-          if(!(dtr->val<float>("Dpt", j) > pa["Dptmin"] && dtr->val<float>("Dpt", j) < pa["Dptmax"] && 
-               fabs(dtr->val<float>("Dy", j)) < pa["Dymax"])) continue;
-          if(dtr->val<float>("Dalpha", j) >= 0.12) continue;
-          if((dtr->val<float>("DsvpvDistance", j)/dtr->val<float>("DsvpvDisErr", j)) <= 6) continue;
-          if(dtr->val<float>("Dchi2cl", j) <= 0.25) continue;
+          // D selection applied in skim
+          if(dtr->val<float>("Dpt", j) < pa["Dptmin"] || dtr->val<float>("Dpt", j) > pa["Dptmax"]) continue;
+          if(fabs(dtr->val<float>("Dy", j)) > pa["Dymax"]) continue;
 
-          float dphi = dtr->val<float>("Dphi", j) - ptr->val("phoPhi", jlead); //
-          if(dphi < -M_PI) dphi += M_PI*2;
-          else if(dphi > M_PI) dphi -= M_PI*2;
-          dphi = fabs(dphi)/M_PI;
+          hmass_incl->Fill(dtr->val<float>("Dmass", j));
+
+          // dphi calculation
+          float dphi = phoD::cal_dphi_01(dtr->val<float>("Dphi", j), 
+                                         ptr->val("phoPhi", jlead)); // 0 ~ 1
+
           int ibin = vb.ibin(dphi);
           hmass[ibin]->Fill(dtr->val<float>("Dmass", j));
         }
     }
   xjjc::progressbar_summary(nentries);
-  std::cout<<passevt<<std::endl;
+  std::cout<<"Events passing HLT filter: \e[31m"<<passevt<<"\e[0m."<<std::endl;
+  std::cout<<"Events with qualified photons: \e[31m"<<passevt<<"\e[0m."<<std::endl;
 
   std::string outputname = "rootfiles/" + outsubdir + "_" + pa.tag() + "/savehist.root";
   xjjroot::mkdir(outputname);
   TFile* outf = new TFile(outputname.c_str(), "recreate");
+  hmass_incl->Write();
   for(auto& hh : hmass) { xjjroot::printhist(hh, 9); hh->Write(); }
   pa.write();
   outf->Close();
@@ -87,9 +93,9 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
 
 int main(int argc, char* argv[])
 {
-  if(argc==8)
+  if(argc==9)
     {
-      phoD::param pa(atof(argv[3]), atof(argv[4]), atof(argv[5]), atof(argv[6]), atof(argv[7]));
+      phoD::param pa(atoi(argv[3]), atof(argv[4]), atof(argv[5]), atof(argv[6]), atof(argv[7]), atof(argv[8]));
       return pdana_savehist(argv[1], argv[2], pa);
     }
   return 1;
