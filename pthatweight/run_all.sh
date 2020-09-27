@@ -7,7 +7,7 @@ filelists=(
 )
 ##
 crosssec=(
-    'const int nBins=4; float pthatBin[nBins]={30, 50, 80, 120}; float crosssec[nBins+1]={1002508., 341974., 88321., 21579., 0.};  int genSignal[2]={1, 2};'
+    'const int nBins=4; float pthatBin[nBins]={30, 50, 80, 120}; float crosssec[nBins+1]={1002508., 341974., 88321., 21579., 0.};'
 )
 
 ##

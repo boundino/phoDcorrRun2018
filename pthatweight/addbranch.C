@@ -7,6 +7,7 @@
 #include <TDirectory.h>
 #include <string>
 #include <regex>
+#include <cmath>
 
 #include "typeinfo.h"
 
@@ -80,7 +81,7 @@ void xjjc::addbranch(std::string inputname, std::string treename, std::string br
       int nentries = tr->GetEntries();
       for(int i=0; i<nentries; i++) 
         {
-          if(i%1000==0) xjjc::progressbar(i, nentries);
+          if(i%1000==0 || i==nentries-1) xjjc::progressbar(i, nentries);
           br->Fill();
         }
       xjjc::progressbar_summary(nentries);
@@ -163,7 +164,7 @@ std::vector<std::string> xjjc::str_divide(std::string str, std::string div)
 
 void xjjc::progressbar(int index_, int total_, int morespace_/*=0*/)
 {
-  std::cout<<std::setiosflags(std::ios::left)<<"  [ \033[1;36m"<<std::setw(10+morespace_)<<index_<<"\033[0m"<<" / "<<std::setw(10+morespace_)<<total_<<" ] "<<"\033[1;36m"<<(int)(100.*index_/total_)<<"%\033[0m"<<"\r"<<std::flush;
+  std::cout<<std::setiosflags(std::ios::left)<<"  [ \033[1;36m"<<std::setw(10+morespace_)<<index_<<"\033[0m"<<" / "<<std::setw(10+morespace_)<<total_<<" ] "<<"\033[1;36m"<<round(100.*index_/total_)<<"%\033[0m"<<"\r"<<std::flush;
 }
 
 void xjjc::progressbar_summary(int total_)

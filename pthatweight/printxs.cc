@@ -13,14 +13,14 @@ int printxs(std::string inputname)
   phoD::forest* f = new phoD::forest(inf);
   phoD::etree* etr = f->etr();
 
-  std::vector<float> pthats = {15, 30, 50, 80, 120};
+  std::vector<float> pthats = {30, 50, 80, 120};
   std::vector<int> nevt(pthats.size(), 0);
 
   int nentries = f->GetEntries();
   for(int i=0; i<nentries; i++)
     {
-      if(i%10000==0 || i==nentries-1) xjjc::progressbar(i, nentries);
-      f->GetEntry(i);
+      if(i%100000==0 || i==nentries-1) xjjc::progressbar(i, nentries);
+      etr->GetEntry(i);
 
       for(int p=0; p<pthats.size(); p++)
         {
@@ -28,10 +28,12 @@ int printxs(std::string inputname)
         }
     }
   xjjc::progressbar_summary(nentries);
+  std::cout<<std::endl;
   for(int p=0; p<pthats.size(); p++)
     {
-      std::cout<<pthats[p]<<" "<<nevt[p]<<std::endl;
+      std::cout<<std::left<<"pthat > "<<std::setw(5)<<Form("%.0f:", pthats[p])<<nevt[p]<<std::endl<<std::string(20, '-')<<std::endl;
     }
+  std::cout<<std::endl;
 }
 
 int main(int argc, char* argv[])
