@@ -31,7 +31,9 @@ namespace phoD
 phoD::forest::forest(TFile* inf) : f_(inf)
 {
   TTree* et = (TTree*)inf->Get("hiEvtAnalyzer/HiTree");
-  etr_ = new etree(et);
+  TTree* ht = (TTree*)inf->Get("hltanalysis/HltTree");
+  TTree* st = (TTree*)inf->Get("skimanalysis/HltTree");
+  etr_ = new etree(et, ht, st);
   TTree* dt = (TTree*)inf->Get("Dfinder/ntDkpi");
   dtr_ = new dtree(dt);
   TTree* pt = (TTree*)inf->Get("ggHiNtuplizerGED/EventTree");
