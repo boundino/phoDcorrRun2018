@@ -155,16 +155,10 @@ phoD::skimbranch::skimbranch()
   };
 
   fbr["hiEvtAnalyzer/HiTree"] = {
-    "run",
-    "evt",
-    "lumi",
-    "vz",
-    "hiBin",
-    "hiHF",
-    "Ncoll"
+    "*"
   };
 
-  fbr["hltanalysis/HltTree"] = {"HLT_HIGEDPhoton40_v1"};
+  fbr["hltanalysis/HltTree"] = {"HLT_HIGEDPhoton*_v*"};
 
   fbr["hltobject/HLT_HIGEDPhoton40_v"] = {"*"};
 

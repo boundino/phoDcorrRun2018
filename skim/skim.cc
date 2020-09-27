@@ -45,7 +45,8 @@ int skim(std::string inputname, std::string outputname)
       for(auto& ss : s) { if(ss.first != "forest") { ss.second->GetEntry(i); } }
       dt->GetEntry(i);
 
-      if(!(pprimaryVertexFilter && phfCoincFilter2Th4 && pclusterCompatibilityFilter)) continue;
+      // event selection
+      // if(!(pprimaryVertexFilter && phfCoincFilter2Th4 && pclusterCompatibilityFilter)) continue;
 
       for(auto& ss : s) { if(ss.first != "forest") { ss.second->Fill(); } }
       dt_new->ClearDsize();
