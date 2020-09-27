@@ -15,7 +15,7 @@ runjobs=${2:-0}
 
 INPUTDIR="/mnt/hadoop/cms/store/user/wangj/HIHardProbes/crab_Dpho_20200921_HIHardProbes_04Apr2019_HIGEDPhoton40_trk1Dpt2/200921_210311/0000/" # 0000
 OUTPUTPRIDIR="/mnt/hadoop/cms/store/user/jwang/DntupleRun2018condor/"
-OUTPUTSUBDIR="phodmva_20200924_crab_Dpho_20200921_HIHardProbes_04Apr2019_HIGEDPhoton40_trk1Dpt2"
+OUTPUTSUBDIR="phodmva_20200924_Dpho_20200921_HIHardProbes_04Apr2019_HIGEDPhoton40_trk1Dpt2"
 
 WORKDIR="/work/$USER/phodmva/"
 
