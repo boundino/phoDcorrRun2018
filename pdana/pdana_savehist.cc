@@ -40,7 +40,8 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
       f->GetEntry(i);
 
       // event selection + hlt
-      if(!etr->presel() || etr->hiBin() < pa["centmin"]*2 || etr->hiBin() > pa["centmax"]*2) continue;
+      if(etr->hiBin() < pa["centmin"]*2 || etr->hiBin() > pa["centmax"]*2) continue;
+      if(!etr->presel()) continue;
 
       passevthlt++;
 
@@ -77,14 +78,14 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
         }
     }
   xjjc::progressbar_summary(nentries);
-  std::cout<<"Events passing HLT filter: \e[31m"<<passevt<<"\e[0m."<<std::endl;
+  std::cout<<"Events passing HLT + event filter: \e[31m"<<passevthlt<<"\e[0m."<<std::endl;
   std::cout<<"Events with qualified photons: \e[31m"<<passevt<<"\e[0m."<<std::endl;
 
   std::string outputname = "rootfiles/" + outsubdir + "_" + pa.tag() + "/savehist.root";
   xjjroot::mkdir(outputname);
   TFile* outf = new TFile(outputname.c_str(), "recreate");
-  hmass_incl->Write();
-  for(auto& hh : hmass) { xjjroot::printhist(hh, 9); hh->Write(); }
+  xjjroot::writehist(hmass_incl, 10);
+  for(auto& hh : hmass) { xjjroot::writehist(hh, 10); }
   pa.write();
   outf->Close();
 

@@ -1,19 +1,18 @@
 #!/bin/bash
 
-ikine=(0 1 2 3)
+ikine=(2)
 
 #
-ptmin=(2 3 4 5)
-ptmax=(100 100 100 100)
-ymax=(2 2 2 2)
-
-centmin=0
-centmax=90
+ptmin=(2    3   4   5   4   4   4)
+ptmax=(100  100 100 100 100 100 100)
+ymax=(1.2   1.2 1.2 1.2 2   1.2 1.2)
+centmin=(0  0   0   0   0   0   30)
+centmax=(90 90  90  90  90  30  90)
 
 # tag="prel"
 tag="prel_finebin"
 
-input=/raid5/data/wangj/DntupleRun2018/phodmva_20200924_crab_Dpho_20200921_HIHardProbes_04Apr2019_HIGEDPhoton40_trk1Dpt2.root
+input=/raid5/data/wangj/DntupleRun2018/phodmva_20200924_Dpho_20200921_HIHardProbes_04Apr2019_HIGEDPhoton40_trk1Dpt2.root
 ishi=1
 
 ##
@@ -27,9 +26,9 @@ g++ getfname.cc -I"../includes/" $(root-config --libs --cflags) -g -o getfname.e
 
 for i in ${ikine[@]}
 do
-    tagki=$(./getfname.exe $ishi ${ptmin[i]} ${ptmax[i]} ${ymax[i]} $centmin $centmax)
+    tagki=$(./getfname.exe $ishi ${ptmin[i]} ${ptmax[i]} ${ymax[i]} ${centmin[i]} ${centmax[i]})
 
-    [[ $run_savehist -eq 1 ]] && { ./pdana_savehist.exe $input $tag $ishi ${ptmin[i]} ${ptmax[i]} ${ymax[i]} $centmin $centmax ; }
+    [[ $run_savehist -eq 1 ]] && { ./pdana_savehist.exe $input $tag $ishi ${ptmin[i]} ${ptmax[i]} ${ymax[i]} ${centmin[i]} ${centmax[i]} ; }
     input_fithist=rootfiles/${tag}_${tagki}/savehist.root
     [[ $run_fithist -eq 1 ]] && { ./pdana_fithist.exe $input_fithist $tag ; }
 done
