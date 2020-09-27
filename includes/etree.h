@@ -19,6 +19,7 @@ namespace phoD
     int hiBin() { return hiBin_; }
     float Ncoll() { return Ncoll_; }
     float pthat() { return pthat_; }
+    float pthatweight() { return pthatweight_; }
     bool presel();
 
   private:
@@ -30,6 +31,7 @@ namespace phoD
     int hiBin_;
     float Ncoll_;
     float pthat_;
+    float pthatweight_;
     int HLT_HIGEDPhoton40_v1_;
     int pclusterCompatibilityFilter_;
     int pprimaryVertexFilter_;
@@ -43,6 +45,7 @@ void phoD::etree::setbranchaddress()
   if(nt_->FindBranch("hiBin")) nt_->SetBranchAddress("hiBin", &hiBin_);
   if(nt_->FindBranch("Ncoll")) nt_->SetBranchAddress("Ncoll", &Ncoll_);
   if(nt_->FindBranch("pthat")) nt_->SetBranchAddress("pthat", &pthat_);
+  if(nt_->FindBranch("pthatweight")) nt_->SetBranchAddress("pthatweight", &pthatweight_);
   if(nt_hlt_)
     {
       if(nt_hlt_->FindBranch("HLT_HIGEDPhoton40_v1"))
