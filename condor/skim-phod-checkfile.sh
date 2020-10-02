@@ -1,14 +1,18 @@
 #!/bin/bash
 
-if [[ $# -ne 4 ]]; then
-    echo "usage: ./skim-phod-checkfile.sh [input file] [output dir] [output filename] [proxy]"
+if [[ $# -ne 8 ]]; then
+    echo "usage: ./skim-phod-checkfile.sh [input file] [output dir] [output filename] [ishi] [evtfilt] [hltfilt] [mvafilt] [proxy]"
     exit 1
 fi
 
 INFILE=$1
 DESTINATION=$2
 OUTFILE=$3
-export X509_USER_PROXY=${PWD}/$4
+ISHI=$4
+EVTFILT=$5
+HLTFILT=$6
+MVAFILT=$7
+export X509_USER_PROXY=${PWD}/$8
 
 SRM_PREFIX="/mnt/hadoop/"
 SRM_PATH=${DESTINATION#${SRM_PREFIX}}
@@ -17,7 +21,7 @@ SRM_PATH=${DESTINATION#${SRM_PREFIX}}
 tar -xzvf mva.tgz
 
 echo ./skim.exe $INFILE $OUTFILE
-./skim.exe $INFILE $OUTFILE
+./skim.exe $INFILE $OUTFILE $ISHI $EVTFILT $HLTFILT $MVAFILT
 
 if [[ $? -eq 0 ]]; then
     # gfal-copy file://${PWD}/${OUTFILE}  srm://se01.cmsaf.mit.edu:8443/srm/v2/server?SFN=${DESTINATION}/${OUTFILE}

@@ -8,7 +8,10 @@ fi
 
 #
 MAXFILENO=10000
-
+ishi=1
+evtfilt=0
+hltfilt=0
+mvafilt=1
 #
 movetosubmit=${1:-0}
 runjobs=${2:-0}
@@ -65,7 +68,7 @@ if [ "$runjobs" -eq 1 ]
 then 
     if [[ $(hostname) == "submit.mit.edu" ]]
     then
-        ./skim-condor-checkfile.sh $INPUTDIR $OUTPUTDIR $MAXFILENO $LOGDIR
+        ./skim-condor-checkfile.sh $INPUTDIR $OUTPUTDIR $MAXFILENO $LOGDIR $ishi $evtfilt $hltfilt $mvafilt
     else
         echo -e "\e[31;1merror:\e[0m submit jobs on \e[32;1msubmit.mit.edu\e[0m."
     fi

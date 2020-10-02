@@ -12,9 +12,10 @@ namespace phoD
   class skimbranch
   {
   public:
-    skimbranch();
+    skimbranch(bool ishi);
     std::vector<std::string> branches(std::string tr) { return fbr[tr]; }
   private:
+    bool fishi;
     std::map<std::string, std::vector<std::string>> fbr;
   };
 }
@@ -67,7 +68,7 @@ void phoD::skimtree::Fill()
   foutf->cd();
 }
 
-phoD::skimbranch::skimbranch()
+phoD::skimbranch::skimbranch(bool ishi) : fishi(ishi)
 {
   fbr["Dfinder/ntDkpi"] = {
     "Dsize",
@@ -158,15 +159,27 @@ phoD::skimbranch::skimbranch()
     "*"
   };
 
-  fbr["hltanalysis/HltTree"] = {"HLT_HIGEDPhoton*_v*"};
+  if(fishi)
+    fbr["hltanalysis/HltTree"] = {"HLT_HIGEDPhoton*_v*"};
+  else
+    fbr["hltanalysis/HltTree"] = {"HLT_HIPhoton*_HoverELoose_v*"};
+    
+  if(fishi)
+    fbr["hltobject/HLT_HIGEDPhoton40_v"] = {"*"};
+  else
+    fbr["hltobject/HLT_HIPhoton40_HoverELoose_v"] = {"*"};
 
-  fbr["hltobject/HLT_HIGEDPhoton40_v"] = {"*"};
-
-  fbr["skimanalysis/HltTree"] = {
-    "pprimaryVertexFilter",
-    "phfCoincFilter2Th4",
-    "pclusterCompatibilityFilter"
-  };
+  if(fishi)
+    fbr["skimanalysis/HltTree"] = {
+      "pprimaryVertexFilter",
+      "phfCoincFilter2Th4",
+      "pclusterCompatibilityFilter"
+    };
+  else
+    fbr["skimanalysis/HltTree"] = {
+      "pBeamScrapingFilter",
+      "pPAprimaryVertexFilter"
+    };
 
   fbr["Dfinder/ntGen"] = {
     "GPV*",

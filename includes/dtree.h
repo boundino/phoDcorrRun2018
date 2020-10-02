@@ -18,8 +18,8 @@ namespace phoD
   class dtree
   {
   public:
-    dtree(TTree* nt);
-    dtree(TFile* outf, std::string name);
+    dtree(TTree* nt, bool ishi);
+    dtree(TFile* outf, std::string name, bool ishi);
     TTree* nt() { return nt_; }
 
     // read
@@ -42,6 +42,7 @@ namespace phoD
     TTree* nt_;
     TDirectory* dr_;
     bool newtree_;
+    bool ishi_;
     void setbranchaddress();
     void branch();
     int Dsize_;
@@ -56,6 +57,10 @@ namespace phoD
       "Dalpha",
       "DsvpvDistance",
       "DsvpvDisErr",
+      "DlxyBS",
+      "DlxyBSErr",
+      "DdthetaBS",
+      "DdthetaBScorr",
       "DsvpvDistance_2D",
       "DsvpvDisErr_2D",
       "Dtrk1Pt",
@@ -105,7 +110,7 @@ namespace phoD
   };
 }
 
-phoD::dtree::dtree(TTree* nt) : nt_(nt)
+phoD::dtree::dtree(TTree* nt, bool ishi) : nt_(nt), ishi_(ishi)
 {
   std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<"\e[0m"<<std::endl;
 
@@ -129,7 +134,7 @@ phoD::dtree::dtree(TTree* nt) : nt_(nt)
   setbranchaddress();
 }
 
-phoD::dtree::dtree(TFile* outf, std::string name)
+phoD::dtree::dtree(TFile* outf, std::string name, bool ishi) : ishi_(ishi)
 {
   std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<"\e[0m"<<std::endl;
 
@@ -186,12 +191,17 @@ void phoD::dtree::Fillall(dtree* nt, int j)
 
 bool phoD::dtree::presel(int j)
 {
-  if(
-     bvf_["Dtrk1Pt"][j] > 1.0 && bvf_["Dtrk2Pt"][j] > 1.0 && fabs(bvf_["Dtrk1Eta"][j]) < 2.4 && fabs(bvf_["Dtrk2Eta"][j]) < 2.4 &&
-     bvo_["Dtrk1highPurity"][j] && bvo_["Dtrk2highPurity"][j] && 
-     (bvf_["Dtrk1PixelHit"][j]+bvf_["Dtrk1StripHit"][j]) >= 11 && (bvf_["Dtrk2PixelHit"][j]+bvf_["Dtrk2StripHit"][j]) >= 11 && 
-     fabs(bvf_["Dtrk1PtErr"][j]/bvf_["Dtrk1Pt"][j]) < 0.1 && fabs(bvf_["Dtrk2PtErr"][j]/bvf_["Dtrk2Pt"][j]) < 0.1 && 
-     (bvf_["Dtrk1Chi2ndf"][j]/(bvf_["Dtrk1nStripLayer"][j]+bvf_["Dtrk1nPixelLayer"][j])) < 0.18 && (bvf_["Dtrk2Chi2ndf"][j]/(bvf_["Dtrk2nStripLayer"][j]+bvf_["Dtrk2nPixelLayer"][j])) < 0.18
+  bool trkcut = fabs(bvf_["Dtrk1Eta"][j]) < 2.4 && fabs(bvf_["Dtrk2Eta"][j]) < 2.4 &&
+    bvo_["Dtrk1highPurity"][j] && bvo_["Dtrk2highPurity"][j] &&
+    (bvf_["Dtrk1PixelHit"][j]+bvf_["Dtrk1StripHit"][j]) >= 11 && (bvf_["Dtrk2PixelHit"][j]+bvf_["Dtrk2StripHit"][j]) >= 11 &&
+    (bvf_["Dtrk1Chi2ndf"][j]/(bvf_["Dtrk1nStripLayer"][j]+bvf_["Dtrk1nPixelLayer"][j])) < 0.18 && (bvf_["Dtrk2Chi2ndf"][j]/(bvf_["Dtrk2nStripLayer"][j]+bvf_["Dtrk2nPixelLayer"][j])) < 0.18;
+  if(ishi_ && trkcut &&
+     bvf_["Dtrk1Pt"][j] > 1.0 && bvf_["Dtrk2Pt"][j] > 1.0 &&
+     fabs(bvf_["Dtrk1PtErr"][j]/bvf_["Dtrk1Pt"][j]) < 0.1 && fabs(bvf_["Dtrk2PtErr"][j]/bvf_["Dtrk2Pt"][j]) < 0.1
+     ) return true;
+  if(!ishi_ && trkcut &&
+     bvf_["Dtrk1Pt"][j] > 1.0 && bvf_["Dtrk2Pt"][j] > 1.0 &&
+     fabs(bvf_["Dtrk1PtErr"][j]/bvf_["Dtrk1Pt"][j]) < 0.3 && fabs(bvf_["Dtrk2PtErr"][j]/bvf_["Dtrk2Pt"][j]) < 0.3
      ) return true;
   return false;
 }

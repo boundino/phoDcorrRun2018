@@ -8,17 +8,17 @@ fi
 
 #
 MAXFILENO=2
-ishi=1
-evtfilt=1
+ishi=0
+evtfilt=0
 hltfilt=1
 mvafilt=1
 #
 movetosubmit=${1:-0}
 runjobs=${2:-0}
 
-INPUTDIR="/mnt/hadoop/cms/store/user/wangj/HIHardProbes/crab_Dpho_20200921_HIHardProbes_04Apr2019_HIGEDPhoton40_trk1Dpt2/200921_210311/0000/" # 0000
+INPUTDIR="/mnt/hadoop/cms/store/user/wangj/HighEGJet/crab_Dpho_20201002_HighEGJet_Run2017G_17Nov2017_HIPhoton_HoverELoose_trk1Dpt2_vfl2/201002_173802/0000/" # 0003
 OUTPUTPRIDIR="/mnt/hadoop/cms/store/user/jwang/DntupleRun2018condor/"
-OUTPUTSUBDIR="phodmva_20200924_Dpho_20200921_HIHardProbes_04Apr2019_HIGEDPhoton40_trk1Dpt2"
+OUTPUTSUBDIR="phodcut_20201002_Dpho_20201002_HighEGJet_17Nov2017_HIPhoton_HoverELoose_trk1Dpt2_vfl2"
 
 WORKDIR="/work/$USER/phodmva/"
 
