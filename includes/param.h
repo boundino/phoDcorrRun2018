@@ -135,6 +135,7 @@ void phoD::param::drawtex(float xleft, float ytop, float tsize)
   xjjroot::drawtex(xleft, ytop-=ls, tag_["y"].c_str(), tsize, 13);
   xjjroot::drawtex(xleft, ytop-=ls, tag_["phopt"].c_str(), tsize, 13);
   xjjroot::drawtex(xleft, ytop-=ls, tag_["phoeta"].c_str(), tsize, 13);
+  xjjroot::drawtex(xleft, ytop-=ls, tag_["cent"].c_str(), tsize, 13);
 }
 
 #endif

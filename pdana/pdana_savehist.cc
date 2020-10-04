@@ -15,7 +15,7 @@
 int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa)
 {
   TFile* inf = TFile::Open(inputname.c_str());
-  phoD::forest* f = new phoD::forest(inf);
+  phoD::forest* f = new phoD::forest(inf, pa.ishi());
   phoD::etree* etr = f->etr();
   phoD::dtree* dtr = f->dtr();
   phoD::ptree* ptr = f->ptr();
@@ -30,8 +30,6 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
     }
   TH1F* hmass_incl = new TH1F("hmass_incl", ";m_{K#pi} (GeV/c);", xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
 
-  int HLT_HIGEDPhoton40_v1; 
-
   int nentries = f->GetEntries();
   int passevt = 0, passevthlt = 0;
   for(int i=0; i<nentries; i++)
@@ -40,7 +38,7 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
       f->GetEntry(i);
 
       // event selection + hlt
-      if(etr->hiBin() < pa["centmin"]*2 || etr->hiBin() > pa["centmax"]*2) continue;
+      if(pa.ishi() && (etr->hiBin() < pa["centmin"]*2 || etr->hiBin() > pa["centmax"]*2)) continue;
       if(!etr->presel()) continue;
 
       passevthlt++;
@@ -66,7 +64,7 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
           // D selection applied in skim
           if(dtr->val<float>("Dpt", j) < pa["Dptmin"] || dtr->val<float>("Dpt", j) > pa["Dptmax"]) continue;
           if(fabs(dtr->val<float>("Dy", j)) > pa["Dymax"]) continue;
-
+          if(!dtr->presel(j)) continue;
           hmass_incl->Fill(dtr->val<float>("Dmass", j));
 
           // dphi calculation

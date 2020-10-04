@@ -15,7 +15,7 @@ namespace phoD
   class ptree
   {
   public:
-    ptree(TTree* nt);
+    ptree(TTree* nt, bool ishi);
     TTree* nt() { return nt_; }
     float val(std::string br, int j) { return (*bvf_[br])[j]; }
     bool status(std::string br) { return bvs_[br]; }
@@ -38,6 +38,7 @@ namespace phoD
     void setbranchaddress();
     int nPho_, nEle_, nMC_;
     bool isMC_;
+    bool ishi_;
     std::vector<std::string> tbvf_ = {
       "eleIP3D",
       "elePt",
@@ -74,7 +75,7 @@ namespace phoD
   };
 }
 
-phoD::ptree::ptree(TTree* nt) : nt_(nt)
+phoD::ptree::ptree(TTree* nt, bool ishi) : nt_(nt), ishi_(ishi)
 {
   std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<"\e[0m"<<std::endl;
 
