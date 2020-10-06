@@ -46,8 +46,6 @@ do
 
     ##
     echo "=========== merge >>>>"
-    # mergesuffix=${filelist##*'Pthat-*'} ; mergesuffix=${mergesuffix%%.root}
-    # mergepreffix=${filelist%%_Pthat*}
     mergesuffix=${filelist##*'pThat_*'} ; mergesuffix=${mergesuffix%%.root}
     mergepreffix=${filelist%%_pThat*}
     mergeoutput=$mergepreffix${mergesuffix}_addSamplePthat_noweight.root

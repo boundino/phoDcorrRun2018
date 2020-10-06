@@ -10,7 +10,7 @@ namespace phoD
   class etree
   {
   public:
-    etree(TTree* nt, TTree* nt_hlt = 0, TTree* nt_skim = 0) : nt_(nt), nt_hlt_(nt_hlt), nt_skim_(nt_skim) 
+    etree(TTree* nt, bool ishi, TTree* nt_hlt = 0, TTree* nt_skim = 0) : nt_(nt), nt_hlt_(nt_hlt), nt_skim_(nt_skim), ishi_(ishi)
     {  std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<"\e[0m"<<std::endl; setbranchaddress(); }
     TTree* nt() { return nt_; }
     int GetEntries() { return nt_->GetEntries(); }
@@ -21,6 +21,7 @@ namespace phoD
     float pthat() { return pthat_; }
     float pthatweight() { return pthatweight_; }
     bool presel();
+    bool hltsel();
 
   private:
     TTree* nt_;
@@ -33,9 +34,13 @@ namespace phoD
     float pthat_;
     float pthatweight_;
     int HLT_HIGEDPhoton40_v1_;
+    int HLT_HIPhoton40_HoverELoose_v1_;
     int pclusterCompatibilityFilter_;
     int pprimaryVertexFilter_;
     int phfCoincFilter2Th4_;
+    int pBeamScrapingFilter_;
+    int pPAprimaryVertexFilter_;
+    bool ishi_;
   };
 }
 
@@ -50,6 +55,8 @@ void phoD::etree::setbranchaddress()
     {
       if(nt_hlt_->FindBranch("HLT_HIGEDPhoton40_v1"))
         nt_hlt_->SetBranchAddress("HLT_HIGEDPhoton40_v1", &HLT_HIGEDPhoton40_v1_);
+      if(nt_hlt_->FindBranch("HLT_HIPhoton40_HoverELoose_v1"))
+        nt_hlt_->SetBranchAddress("HLT_HIPhoton40_HoverELoose_v1", &HLT_HIPhoton40_HoverELoose_v1_);
     }
   if(nt_skim_)
     {
@@ -59,6 +66,10 @@ void phoD::etree::setbranchaddress()
         nt_skim_->SetBranchAddress("pprimaryVertexFilter", &pprimaryVertexFilter_);
       if(nt_skim_->FindBranch("phfCoincFilter2Th4"))
         nt_skim_->SetBranchAddress("phfCoincFilter2Th4", &phfCoincFilter2Th4_);
+      if(nt_skim_->FindBranch("pBeamScrapingFilter"))
+        nt_skim_->SetBranchAddress("pBeamScrapingFilter", &pBeamScrapingFilter_);
+      if(nt_skim_->FindBranch("pPAprimaryVertexFilter"))
+        nt_skim_->SetBranchAddress("pPAprimaryVertexFilter", &pPAprimaryVertexFilter_);
     }
 }
 
@@ -71,10 +82,27 @@ void phoD::etree::GetEntry(int i)
 
 bool phoD::etree::presel()
 {
-  if(vz_ > -15 && vz_ < 15 &&
+  if(ishi_ && 
+     vz_ > -15 && vz_ < 15 &&
      hiBin_ >= 0 && hiBin_ <= 180 &&
      pclusterCompatibilityFilter_ && pprimaryVertexFilter_ && phfCoincFilter2Th4_ &&
      HLT_HIGEDPhoton40_v1_
+     ) return true; //
+  if(!ishi_ && 
+     vz_ > -15 && vz_ < 15 &&
+     pBeamScrapingFilter_ && pPAprimaryVertexFilter_ &&
+     HLT_HIPhoton40_HoverELoose_v1_
+     ) return true; //
+  return false;
+}
+
+bool phoD::etree::hltsel()
+{
+  if(ishi_ && 
+     HLT_HIGEDPhoton40_v1_
+     ) return true; //
+  if(!ishi_ && 
+     HLT_HIPhoton40_HoverELoose_v1_
      ) return true; //
   return false;
 }

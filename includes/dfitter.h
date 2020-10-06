@@ -49,7 +49,7 @@ namespace xjjroot
   class dfitter
   {
   public:
-    dfitter(Option_t* option="") {foption = option; resolveoption(); init();}
+    dfitter(Option_t* option="") { foption = option; resolveoption(); init(); }
     ~dfitter() {};
 
     TF1* fit(const TH1* hmass, const TH1* hmassMCSignal, const TH1* hmassMCSwapped, TString collisionsyst="", TString outputname="cmass", const std::vector<TString>& vtex=std::vector<TString>());
@@ -510,8 +510,10 @@ void xjjroot::dfitter::sethist(TH1* h) const
   h->GetYaxis()->SetLabelFont(42);
   h->GetXaxis()->SetLabelSize(0.04);
   h->GetYaxis()->SetLabelSize(0.04);
+  h->SetMarkerColor(kBlack);
   h->SetMarkerSize(0.8);
   h->SetMarkerStyle(20);
+  h->SetLineColor(kBlack);
   h->SetStats(0);
 }
 

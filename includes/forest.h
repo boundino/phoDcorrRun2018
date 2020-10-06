@@ -13,7 +13,7 @@ namespace phoD
   class forest
   {
   public:
-    forest(TFile* inf);
+    forest(TFile* inf, bool ishi);
     int GetEntries() { return n_; }
     void GetEntry(int i);
     etree* etr() { return etr_; }
@@ -25,19 +25,20 @@ namespace phoD
     dtree* dtr_;
     ptree* ptr_;
     int n_;
+    bool ishi_;
   };
 }
 
-phoD::forest::forest(TFile* inf) : f_(inf)
+phoD::forest::forest(TFile* inf, bool ishi) : f_(inf), ishi_(ishi)
 {
   TTree* et = (TTree*)inf->Get("hiEvtAnalyzer/HiTree");
   TTree* ht = (TTree*)inf->Get("hltanalysis/HltTree");
   TTree* st = (TTree*)inf->Get("skimanalysis/HltTree");
-  etr_ = new etree(et, ht, st);
+  etr_ = new etree(et, ishi_, ht, st);
   TTree* dt = (TTree*)inf->Get("Dfinder/ntDkpi");
-  dtr_ = new dtree(dt);
+  dtr_ = new dtree(dt, ishi_);
   TTree* pt = (TTree*)inf->Get("ggHiNtuplizerGED/EventTree");
-  ptr_ = new ptree(pt);
+  ptr_ = new ptree(pt, ishi_);
 
   n_ = etr_->GetEntries();
 }

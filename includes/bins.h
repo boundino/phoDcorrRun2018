@@ -11,7 +11,7 @@ namespace phoD
   template<typename T> class bins
   {
   public:
-    bins(const std::vector<T>& vbins) : v_(vbins) { std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<std::endl; n_ = v_.size() - 1; print(); }
+    bins(const std::vector<T>& vbins) : v_(vbins) { std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<"\e[0m"<<std::endl; n_ = v_.size() - 1; print(); }
     int ibin(T x);
     int n() { return n_; }
     const T& operator[](std::size_t i) const { return v_[i]; }
@@ -44,7 +44,7 @@ void phoD::bins<T>::print()
   std::cout << "\e[34m" << std::string(len, '-') << std::endl;;
   std::cout << "  bins<" << xjjc::gettype(x) << ">({";
   for(auto& i : v_) { std::cout << i << ", "; }
-  std::cout<<"})" << std::endl << std::string(len, '-') << "\e[0m"<<std::endl;
+  std::cout << "})" << std::endl << std::string(len, '-') << "\e[0m" << std::endl;
 }
 
 template<typename T>
