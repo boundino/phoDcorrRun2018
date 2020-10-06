@@ -48,6 +48,7 @@ int comphist(std::string inputname, std::string elements, std::string outsubdir,
   leg->Draw();
   xjjroot::drawCMSleft();
   xjjroot::drawCMSright(Form("%s #sqrt{s_{NN}} = 5.02 TeV", pa->tag("ishi").c_str()));
+  c->RedrawAxis();
   std::string output = "plots/compare/" + outsubdir + "_" + tag + "/chdphi_raw.pdf";
   xjjroot::mkdir(output);
   c->SaveAs(output.c_str());

@@ -47,17 +47,31 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
   std::map<std::string, TLegend*> leg;
   leg["scale"] = new TLegend(0.22, 0.65-0.04*4, 0.50, 0.65);
   leg["scale"]->SetHeader(Form("p = %.3f", purity), "L");
-  leg["scale"]->AddEntry(hdphi["raw_scale"], "Raw", "pl");
+  leg["scale"]->AddEntry(hdphi["raw"], "Raw", "pl");
   leg["scale"]->AddEntry(hdphi["bkg"], "Bkg (sideband)", "pl");
   leg["scale"]->AddEntry(hdphi["bkg_scale"], "Bkg (scaled)", "pl");
   leg["sub"] = new TLegend(0.22, 0.65-0.04, 0.50, 0.65);
   leg["sub"]->AddEntry(hdphi["sub"], "After sub.", "pl");
+  leg["raw"] = new TLegend(0.22, 0.65-0.04, 0.50, 0.65);
+  leg["raw"]->AddEntry(hdphi["raw"], "Raw", "pl");
   for(auto& ll : leg) xjjroot::setleg(ll.second, 0.035);
 
   xjjroot::setgstyle(1);
+  TCanvas* c;
 
-  TCanvas* c = new TCanvas("c", "", 600, 600);
-  hdphi["raw_scale"]->Draw("pe");
+  c = new TCanvas("c", "", 600, 600);
+  hdphi["raw"]->Draw("pe");
+  pa.drawtex(0.23, 0.85, 0.035);
+  leg["raw"]->Draw();
+  xjjroot::drawCMSleft();
+  xjjroot::drawCMSright(Form("%s #sqrt{s_{NN}} = 5.02 TeV", pa.tag("ishi").c_str()));
+  output = "plots/" + outsubdir + "_" + pa.tag() + "/chdphi_raw.pdf";
+  xjjroot::mkdir(output);
+  c->SaveAs(output.c_str());
+  delete c;
+
+  c = new TCanvas("c", "", 600, 600);
+  hdphi["raw"]->Draw("pe");
   hdphi["bkg"]->Draw("pe same");
   hdphi["bkg_scale"]->Draw("pe same");
   pa.drawtex(0.23, 0.85, 0.035);

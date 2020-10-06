@@ -13,7 +13,7 @@ int weighPurePthat(TString ifname, TString ofname)
   std::cout<<std::endl<<" -- Checking if input and output files are same"<<std::endl;
   if(ifname==ofname)
     {
-      std::cout<<"    Error: Input file will be overwritten."<<std::endl;
+      std::cout<<"    error: Input file will be overwritten."<<std::endl;
       return 1;
     }
   std::cout<<" -- Opening unweighed sample"<<std::endl;
@@ -96,7 +96,7 @@ bool isInsidebin(float xpthat, int i)
 {
   if(i >= nBins)
     {
-      std::cout<<"    Error: invalid input"<<std::endl;
+      std::cout<<"    error: invalid input."<<std::endl;
       return false;
     }
   if(i<(nBins-1) && xpthat>=pthatBin[i] && xpthat<pthatBin[i+1]) return true;
@@ -107,6 +107,6 @@ bool isInsidebin(float xpthat, int i)
 int main(int argc, char *argv[])
 {
   if(argc==3) { return weighPurePthat(argv[1], argv[2]); }
-  std::cout<<"Invalid argument number."<<std::endl;
+  std::cout<<"    error: Invalid argument number."<<std::endl;
   return 1;
 }
