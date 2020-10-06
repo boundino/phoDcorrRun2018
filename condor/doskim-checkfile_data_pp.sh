@@ -7,7 +7,7 @@ then
 fi
 
 #
-MAXFILENO=2
+MAXFILENO=10000
 ishi=0
 evtfilt=0
 hltfilt=1
@@ -17,7 +17,7 @@ movetosubmit=${1:-0}
 runjobs=${2:-0}
 
 INPUTDIR="/mnt/hadoop/cms/store/user/wangj/HighEGJet/crab_Dpho_20201002_HighEGJet_Run2017G_17Nov2017_HIPhoton_HoverELoose_trk1Dpt2_vfl2/201002_173802/0000/" # 0003
-OUTPUTPRIDIR="/mnt/hadoop/cms/store/user/jwang/DntupleRun2018condor/"
+OUTPUTPRIDIR="/mnt/hadoop/cms/store/user/jwang/DntupleRun2017condor/"
 OUTPUTSUBDIR="phodcut_20201002_Dpho_20201002_HighEGJet_17Nov2017_HIPhoton_HoverELoose_trk1Dpt2_vfl2"
 
 WORKDIR="/work/$USER/phodmva/"
@@ -38,7 +38,7 @@ then
     if [[ $(hostname) == "submit-hi2.mit.edu" || $(hostname) == "submit.mit.edu" || $(hostname) == "submit-hi1.mit.edu" ]]
     then
         cd ../skim
-        g++ skim.cc $(root-config --cflags --libs) -I"$HOME" -lTMVA -lXMLIO -Werror -Wall -O2 -o skim.exe || exit 1
+        g++ skim.cc $(root-config --cflags --libs) -I"../includes/" -lTMVA -lXMLIO -Werror -Wall -O2 -o skim.exe || exit 1
         cd ../condor
 
         mv -v ../skim/skim.exe $WORKDIR/

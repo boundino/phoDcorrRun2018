@@ -38,7 +38,7 @@ then
     if [[ $(hostname) == "submit-hi2.mit.edu" || $(hostname) == "submit.mit.edu" || $(hostname) == "submit-hi1.mit.edu" ]]
     then
         cd ../skim
-        g++ skim.cc $(root-config --cflags --libs) -I"$HOME" -lTMVA -lXMLIO -Werror -Wall -O2 -o skim.exe || exit 1
+        g++ skim.cc $(root-config --cflags --libs) -I"../includes/" -lTMVA -lXMLIO -Werror -Wall -O2 -o skim.exe || exit 1
         cd ../condor
 
         mv -v ../skim/skim.exe $WORKDIR/
