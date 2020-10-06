@@ -17,14 +17,15 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
   std::map<std::string, TH1F*> hdphi;
   hdphi["raw"] = (TH1F*)inf->Get("hdphi_raw");
   hdphi["bkg"] = (TH1F*)inf->Get("hdphi_bkg");
+  TH1F* hnphoton = (TH1F*)inf->Get("hnphoton");
 
   float purity = pa.ishi()?phoD::purity_aa_:phoD::purity_pp_;
-  float int_raw = hdphi["raw"]->Integral("width");
-  float int_bkg = hdphi["bkg"]->Integral("width");
+  float nphoton_raw = hnphoton->GetBinContent(1);
+  float nphoton_bkg = hnphoton->GetBinContent(2);
   hdphi["raw_scale"] = (TH1F*)hdphi["raw"]->Clone("hdphi_raw_scale");
   // hdphi["raw_scale"]->Scale(1./purity);
   hdphi["bkg_scale"] = (TH1F*)hdphi["bkg"]->Clone("hdphi_bkg_scale");
-  hdphi["bkg_scale"]->Scale((1.-purity)*int_raw/int_bkg);
+  hdphi["bkg_scale"]->Scale((1.-purity)*nphoton_raw/nphoton_bkg);
   hdphi["sub"] = (TH1F*)hdphi["raw_scale"]->Clone("hdphi_sub");
   hdphi["sub"]->Add(hdphi["bkg_scale"], -1);
 
@@ -32,6 +33,8 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
   xjjroot::mkdir(output);
   TFile* outf = new TFile(output.c_str(), "recreate");
   for(auto& hh : hdphi) xjjroot::writehist(hh.second);
+  xjjroot::writehist(hnphoton);
+  pa.write();
   outf->Close();
 
   for(auto& hh : hdphi) seth(hh.second);
@@ -43,7 +46,7 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
 
   std::map<std::string, TLegend*> leg;
   leg["scale"] = new TLegend(0.22, 0.65-0.04*4, 0.50, 0.65);
-  leg["scale"]->AddEntry((TObject*)0, Form("p = %.3f", purity), NULL);
+  leg["scale"]->SetHeader(Form("p = %.3f", purity), "L");
   leg["scale"]->AddEntry(hdphi["raw_scale"], "Raw", "pl");
   leg["scale"]->AddEntry(hdphi["bkg"], "Bkg (sideband)", "pl");
   leg["scale"]->AddEntry(hdphi["bkg_scale"], "Bkg (scaled)", "pl");

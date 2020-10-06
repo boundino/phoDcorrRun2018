@@ -14,20 +14,26 @@ int pdana_fithist(std::string inputname, std::string outsubdir)
 {
   TFile* inf = TFile::Open(inputname.c_str());
   phoD::param pa(inf);
-  phoD::bins<float> vb(phoD::bins_dphi);
+  phoD::bins<float> vb(pa.ishi()?phoD::bins_dphi_aa:phoD::bins_dphi_pp);
   std::vector<TH1F*> hmass_raw(vb.n(), 0), hmass_bkg(vb.n(), 0);
   for(int k=0; k<vb.n(); k++) { hmass_raw[k] = (TH1F*)inf->Get(Form("hmass_raw_%d", k)); }
   for(int k=0; k<vb.n(); k++) { hmass_bkg[k] = (TH1F*)inf->Get(Form("hmass_bkg_%d", k)); }
-  TH1F* hmass_incl = (TH1F*)inf->Get("hmass_incl");
+  TH1F* hmass_incl_raw = (TH1F*)inf->Get("hmass_incl_raw");
+  TH1F* hmass_incl_bkg = (TH1F*)inf->Get("hmass_incl_bkg");
   TH1F* hdphi_raw = new TH1F("hdphi_raw", ";#Delta#phi^{#gammaD} / #pi;dN^{#gammaD}/d#phi", vb.n(), vb.v().data());
   TH1F* hdphi_bkg = new TH1F("hdphi_bkg", ";#Delta#phi^{#gammaD} / #pi;dN^{#gammaD}/d#phi", vb.n(), vb.v().data());
+  TH1F* hnphoton = (TH1F*)inf->Get("hnphoton");
+
   TFile* inftpl = TFile::Open("masstpl_PbPb.root");
   TH1F* hmassmc_signal = (TH1F*)inftpl->Get("hHistoRMassSignal_pt_0_dr_0");
   TH1F* hmassmc_swapped = (TH1F*)inftpl->Get("hHistoRMassSwapped_pt_0_dr_0");
+
   xjjroot::dfitter df("YCF");
   std::string fitoutput = "plots/" + outsubdir + "_" + pa.tag() + "/idx/cmass";
   xjjroot::mkdir(fitoutput);
-  df.fit(hmass_incl, hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_incl", fitoutput.c_str()), 
+  df.fit(hmass_incl_raw, hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_incl_raw", fitoutput.c_str()), 
+         std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
+  df.fit(hmass_incl_bkg, hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_incl_bkg", fitoutput.c_str()), 
          std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
   for(int k=0; k<vb.n(); k++)
     {
@@ -41,11 +47,13 @@ int pdana_fithist(std::string inputname, std::string outsubdir)
       hdphi_bkg->SetBinContent(k+1, df.GetY()/vb.width(k)/M_PI);
       hdphi_bkg->SetBinError(k+1, df.GetYE()/vb.width(k)/M_PI);
     }
+
   std::string outputname = "rootfiles/" + outsubdir + "_" + pa.tag() + "/fithist.root";
   xjjroot::mkdir(outputname);
   TFile* outf = new TFile(outputname.c_str(), "recreate");
   xjjroot::writehist(hdphi_raw);
   xjjroot::writehist(hdphi_bkg);
+  xjjroot::writehist(hnphoton);
   pa.write();
   outf->Close();
 
