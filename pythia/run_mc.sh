@@ -1,20 +1,21 @@
 #!/bin/bash
 
-ikine=(0)
+ikine=(1)
+jsyst=(1) # ishi
 
 #
-ptmin=(2 3 4 5)
-ptmax=(100 100 100 100)
-ymax=(1.2 1.2 1.2 1.2)
+config=(
+    "2 100 1.2 0 90 40 1.442"  # 0
+    "5 100 1.2 0 90 40 1.442"  # 1
+)
 
-centmin=0
-centmax=90
-
-# tag="prel"
 tag="prel_finebin"
 
-input=/raid5/data/wangj/DntupleRun2018/phodmva_20200926_Dpho_20200924_QCDPhoton_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2_pthatweight.root
-ishi=1
+input=(
+    /raid5/data/wangj/DntupleRun2018/phodmva_20200926_Dpho_20200924_QCDPhoton_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2_pthatweight.root
+    /raid5/data/wangj/DntupleRun2018/phodgmatch_20201011_Dpho_20200924_QCDPhoton_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2_pthatweight.root
+)
+ishi=(0 1)
 
 ##
 run_savehist=${1:-0}
@@ -27,14 +28,20 @@ g++ getfname.cc -I"../includes/" $(root-config --libs --cflags) -g -o getfname.e
 
 for i in ${ikine[@]}
 do
-    tagki=$(./getfname.exe $ishi ${ptmin[i]} ${ptmax[i]} ${ymax[i]} $centmin $centmax)
+    for j in ${jsyst[@]}
+    do
+        tagki=$(./getfname.exe ${ishi[j]} ${config[i]})
 
-    [[ $run_savehist -eq 1 ]] && { ./mcana_savehist.exe $input $tag $ishi ${ptmin[i]} ${ptmax[i]} ${ymax[i]} $centmin $centmax ; }
-    input_drawhist=rootfiles/${tag}_${tagki}/savehist.root
-    # [[ $run_drawhist -eq 1 ]] && { ./mcana_drawhist.exe $input_drawhist $tag ; }
+        [[ $run_savehist -eq 1 ]] && { ./mcana_savehist.exe ${input[j]} $tag ${ishi[j]} ${config[i]} ; }
+
+        input_drawhist=rootfiles/${tag}_${tagki}/savehist.root
+        [[ $run_drawhist -eq 1 ]] && { 
+            [[ -f $input_drawhist ]] &&
+            { ./mcana_drawhist.exe $input_drawhist $tag ; } ||
+            { echo -e "\e[31;1merror:\e[0m no input file \e[4m$input_drawhist\e[0m." ; } }
+    done
 done
 
-rm getfname.exe
-[[ -f mcana_savehist.exe ]] && rm mcana_savehist.exe
-# [[ -f mcana_drawhist.exe ]] && rm mcana_drawhist.exe
-
+rm getfname.exe 2> /dev/null
+rm mcana_savehist.exe 2> /dev/null
+# rm mcana_drawhist.exe 2> /dev/null
