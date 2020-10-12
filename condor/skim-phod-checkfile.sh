@@ -10,8 +10,8 @@ DESTINATION=$2
 OUTFILE=$3
 ISHI=$4
 EVTFILT=$5
-HLTFILT=$6
-MVAFILT=$7
+MVAFILT=$6
+HLTFILT=$7
 export X509_USER_PROXY=${PWD}/$8
 
 SRM_PREFIX="/mnt/hadoop/"
@@ -21,7 +21,7 @@ SRM_PATH=${DESTINATION#${SRM_PREFIX}}
 tar -xzvf mva.tgz
 
 echo ./skim.exe $INFILE $OUTFILE
-./skim.exe $INFILE $OUTFILE $ISHI $EVTFILT $HLTFILT $MVAFILT
+./skim.exe $INFILE $OUTFILE $ISHI $EVTFILT $MVAFILT $HLTFILT
 
 if [[ $? -eq 0 ]]; then
     # gfal-copy file://${PWD}/${OUTFILE}  srm://se01.cmsaf.mit.edu:8443/srm/v2/server?SFN=${DESTINATION}/${OUTFILE}

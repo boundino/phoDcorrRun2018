@@ -11,8 +11,8 @@ MAXFILES=$3
 LOGDIR=$4
 ISHI=$5
 EVTFILT=$6
-HLTFILT=$7
-MVAFILT=$8
+MVAFILT=$7
+HLTFILT=$8
 
 PROXYFILE=$(ls /tmp/ -lt | grep $USER | grep -m 1 x509 | awk '{print $NF}')
 
@@ -55,7 +55,7 @@ Universe     = vanilla
 Initialdir   = $PWD/
 Notification = Error
 Executable   = $PWD/skim-${TAG}-checkfile.sh
-Arguments    = $INFILE $DESTINATION ${TAG}_${infn}.root $ISHI $EVTFILT $HLTFILT $MVAFILT $PROXYFILE 
+Arguments    = $INFILE $DESTINATION ${TAG}_${infn}.root $ISHI $EVTFILT $MVAFILT $HLTFILT $PROXYFILE 
 GetEnv       = True
 Output       = $LOGDIR/log-${infn}.out
 Error        = $LOGDIR/log-${infn}.err

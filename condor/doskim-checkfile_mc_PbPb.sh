@@ -11,25 +11,22 @@ MAXFILENO=10000
 ishi=1
 evtfilt=0
 hltfilt=0
-mvafilt=1
+mvafilt=3
 #
 movetosubmit=${1:-0}
 runjobs=${2:-0}
 
 INPUTDIR="/mnt/hadoop/cms/store/user/wangj/QCDPhoton_pThat-120_Filter30GeV_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_Dpho_20200924_QCDPhoton_pThat_120_Filter30GeV_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8_trk1Dpt2/200926_030512/0000/"
-OUTPUTSUBDIR="phodmva_20200926_Dpho_20200924_QCDPhoton_pThat_120_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2"
+OUTPUTSUBDIR="phodgmatch_20201011_Dpho_20200924_QCDPhoton_pThat_120_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2"
 
 # INPUTDIR="/mnt/hadoop/cms/store/user/wangj/QCDPhoton_pThat-80_Filter30GeV_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_Dpho_20200924_QCDPhoton_pThat_80_Filter30GeV_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8_trk1Dpt2/200926_022944/0000/" # 0001
-# OUTPUTSUBDIR="phodmva_20200926_Dpho_20200924_QCDPhoton_pThat_80_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2"
+# OUTPUTSUBDIR="phodgmatch_20201011_Dpho_20200924_QCDPhoton_pThat_80_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2"
 
 # INPUTDIR="/mnt/hadoop/cms/store/user/wangj/QCDPhoton_pThat-50_Filter30GeV_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_Dpho_20200924_QCDPhoton_pThat_50_Filter30GeV_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8_trk1Dpt2/200926_022456/0000/" # 0001
-# OUTPUTSUBDIR="phodmva_20200926_Dpho_20200924_QCDPhoton_pThat_50_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2"
+# OUTPUTSUBDIR="phodgmatch_20201011_Dpho_20200924_QCDPhoton_pThat_50_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2"
 
 # INPUTDIR="/mnt/hadoop/cms/store/user/wangj/QCDPhoton_pThat-30_Filter30GeV_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_Dpho_20200924_QCDPhoton_pThat_30_Filter30GeV_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8_trk1Dpt2/200926_021806/0000/" # 0001
-# OUTPUTSUBDIR="phodmva_20200926_Dpho_20200924_QCDPhoton_pThat_30_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2"
-
-# INPUTDIR="/mnt/hadoop/cms/store/user/wangj/QCDPhoton_pThat-15_Filter30GeV_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_Dpho_20200924_QCDPhoton_pThat_15_Filter30GeV_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8_trk1Dpt2/200926_010834/0000/" # 0001
-# OUTPUTSUBDIR="phodmva_20200926_Dpho_20200924_QCDPhoton_pThat_15_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2"
+# OUTPUTSUBDIR="phodgmatch_20201011_Dpho_20200924_QCDPhoton_pThat_30_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2"
 
 OUTPUTPRIDIR="/mnt/hadoop/cms/store/user/jwang/DntupleRun2018condor/"
 
@@ -68,7 +65,7 @@ if [ "$runjobs" -eq 1 ]
 then 
     if [[ $(hostname) == "submit.mit.edu" ]]
     then
-        ./skim-condor-checkfile.sh $INPUTDIR $OUTPUTDIR $MAXFILENO $LOGDIR $ishi $evtfilt $hltfilt $mvafilt
+        ./skim-condor-checkfile.sh $INPUTDIR $OUTPUTDIR $MAXFILENO $LOGDIR $ishi $evtfilt $mvafilt $hltfilt
     else
         echo -e "\e[31;1merror:\e[0m submit jobs on \e[32;1msubmit.mit.edu\e[0m."
     fi
