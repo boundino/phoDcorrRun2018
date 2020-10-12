@@ -90,24 +90,29 @@ int skim(std::string inputname, std::string outputname,
         {
           if(!dt->presel(j)) continue;
 
-          if(mvafilt && ishi)
+          switch(mvafilt)
             {
-              float mvaval = mva->eval(dt, j, hiBin);
-              if(!mva->pass(mvaval, dt->val<float>("Dpt", j), hiBin)) continue;
-              dt_new->Fillone("BDT", mvaval);
-            }
-          if(mvafilt && !ishi)
-            {
-              if(!dt->presel(j) || 
-                 dt->val<float>("DlxyBS", j)/dt->val<float>("DlxyBSErr", j) <= 3.5 ||
-                 dt->val<float>("DdthetaBScorr", j) >= 0.2
-                 ) continue;
+            case 1:
+              {
+                float mvaval = mva->eval(dt, j, hiBin);
+                if(!mva->pass(mvaval, dt->val<float>("Dpt", j), hiBin)) continue;
+                dt_new->Fillone("BDT", mvaval);
+              }
+            case 2:
+              {
+                if(!dt->val<float>("DlxyBS", j)/dt->val<float>("DlxyBSErr", j) <= 3.5 ||
+                   dt->val<float>("DdthetaBScorr", j) >= 0.2
+                   ) continue;
+              }
+            case 3:
+              {
+                if(dt->val<int>("Dgen", j) != 23333 && dt->val<int>("Dgen", j) != 23344) continue;
+              }
             }
           dt_new->Fillall(dt, j);
           dt_new->Dsizepp();
         }
       dt_new->Fill();
-
     }
   xjjc::progressbar_summary(nentries);
 
