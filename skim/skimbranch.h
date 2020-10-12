@@ -146,6 +146,7 @@ phoD::skimbranch::skimbranch(bool ishi) : fishi(ishi)
     "pho_hcalRechitIsoR3",
     "pho_trackIsoR3PtCut20",
     "pho_genMatchedIndex",
+    "nMC",
     "mcPID",
     "mcStatus",
     "mcPt",
