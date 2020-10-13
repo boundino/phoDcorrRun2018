@@ -47,7 +47,7 @@ namespace phoD
     bool ishi() { return (bool)ishi_; }
     std::string tag(std::string var = "") { return tag_[var]; }
     void print();
-    void drawtex(float xleft, float ytop, float tsize, std::string exlude="");
+    void drawtex(float xleft, float ytop, float tsize, std::string exclude="");
   private:
     int ishi_;
     std::map<std::string, float> val_;
@@ -143,9 +143,9 @@ void phoD::param::print()
             << std::left << std::setw(len) << "  "+tag_[""] << "" << std::endl << std::string(len, '-') << "\e[0m" << std::endl;
 }
 
-void phoD::param::drawtex(float xleft, float ytop, float tsize, std::string exlude)
+void phoD::param::drawtex(float xleft, float ytop, float tsize, std::string exclude)
 {
-  std::vector<std::string> ex = xjjc::str_divide(exlude, ",");
+  std::vector<std::string> ex = xjjc::str_divide(exclude, ",");
   float ls = tsize*1.4;
 
   float ytop_ = ytop + ls;
