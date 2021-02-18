@@ -19,6 +19,7 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
   phoD::etree* etr = f->etr();
   phoD::dtree* dtr = f->dtr();
   phoD::ptree* ptr = f->ptr();
+  bool ignorehlt = xjjc::str_contains(inputname, "Bias");
 
   phoD::bins<float> vb(pa.ishi()?phoD::bins_dphi_aa:phoD::bins_dphi_pp);
   std::vector<TH1F*> hmass_raw(vb.n(), 0), hmass_bkg(vb.n(), 0);
@@ -33,9 +34,9 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
     }
   TH1F* hmass_incl_raw = new TH1F("hmass_incl_raw", ";m_{K#pi} (GeV/c);", xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
   TH1F* hmass_incl_bkg = new TH1F("hmass_incl_bkg", ";m_{K#pi} (GeV/c);", xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
-  TH1F* hnphoton = new TH1F("hnphoton", ";;", 2, 0, 1);
+  TH1F* hnphoton = new TH1F("hnphoton", ";;", 2, 0, 2);
   int nentries = f->GetEntries();
-  int passevtraw = 0, passevtbkg = 0, passevthlt = 0;
+  int passevtraw = 0, passevtbkg = 0, passevthlt = 0, passevtphoki = 0, passevtqual = 0;
   for(int i=0; i<nentries; i++)
     {
       if(i%10000==0 || i==nentries-1) xjjc::progressbar(i, nentries);
@@ -43,22 +44,27 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
 
       // event selection + hlt
       if(pa.ishi() && (etr->hiBin() < pa["centmin"]*2 || etr->hiBin() > pa["centmax"]*2)) continue;
-      if(!etr->presel()) continue;
+      if(!etr->presel(ignorehlt)) continue;
 
       passevthlt++;
 
       // photon selection
-      int jlead = -1;
+      int jlead = -1, passki = 0;
       for(int j=0; j<ptr->nPho(); j++) 
         {
           // pt, eta
-          if(ptr->val("phoEt", j) <= pa["phoptmin"] || fabs(ptr->val("phoSCEta", j)) >= pa["phoetamax"]) continue;
+          if(ptr->val<float>("phoEt", j) <= pa["phoptmin"] || fabs(ptr->val<float>("phoSCEta", j)) >= pa["phoetamax"]) continue;
+          passki++;
           // hovere
           if(!ptr->presel(j)) continue;
           jlead = j;
           break;
         }
+      if(passki) passevtphoki++;
       if(jlead < 0) continue;
+
+      if(passki) passevtqual++;
+
       if(!ptr->sel_hem(jlead) || !ptr->sel_iso(jlead, false)) continue;
       bool see_raw = ptr->sel_see_raw(jlead);
       bool see_bkg = ptr->sel_see_bkg(jlead);
@@ -74,9 +80,11 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
           if(dtr->val<float>("Dpt", j) < pa["Dptmin"] || dtr->val<float>("Dpt", j) > pa["Dptmax"]) continue;
           if(fabs(dtr->val<float>("Dy", j)) > pa["Dymax"]) continue;
           if(!dtr->presel(j)) continue;
+          if(!dtr->tightsel(j)) continue;
+
           // dphi calculation
           float dphi = phoD::cal_dphi_01(dtr->val<float>("Dphi", j), 
-                                         ptr->val("phoPhi", jlead)); // 0 ~ 1
+                                         ptr->val<float>("phoPhi", jlead)); // 0 ~ 1
           int ibin = vb.ibin(dphi);
           if(see_raw)
             {
@@ -92,7 +100,9 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
     }
   xjjc::progressbar_summary(nentries);
   std::cout<<"Events passing HLT + event filter: \e[31m"<<passevthlt<<"\e[0m."<<std::endl;
-  std::cout<<"Events with qualified photons: \e[31m"<<passevtraw<<"\e[0m."<<std::endl;
+  std::cout<<"Events with passed-kinematic photons: \e[31m"<<passevtphoki<<"\e[0m."<<std::endl;
+  std::cout<<"Events with photons passing hovere selection: \e[31m"<<passevtqual<<"\e[0m."<<std::endl;
+  std::cout<<"Events with raw photons: \e[31m"<<passevtraw<<"\e[0m."<<std::endl;
   std::cout<<"Events with decay photons: \e[31m"<<passevtbkg<<"\e[0m."<<std::endl;
   hnphoton->SetBinContent(1, passevtraw);
   hnphoton->SetBinContent(2, passevtbkg);
@@ -113,9 +123,9 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
 
 int main(int argc, char* argv[])
 {
-  if(argc==11)
+  if(argc==12)
     {
-      phoD::param pa(atoi(argv[3]), atof(argv[4]), atof(argv[5]), atof(argv[6]), atof(argv[7]), atof(argv[8]), atof(argv[9]), atof(argv[10]));
+      phoD::param pa(atoi(argv[3]), atof(argv[4]), atof(argv[5]), atof(argv[6]), atof(argv[7]), atof(argv[8]), atof(argv[9]), atof(argv[10]), atoi(argv[11]));
       return pdana_savehist(argv[1], argv[2], pa);
     }
   return 1;

@@ -31,6 +31,7 @@ namespace phoD
     // tools
     int Dsize() { return Dsize_; }
     bool presel(int j);
+    bool tightsel(int j);
 
     // fill new file tree
     void ClearDsize() { if(newtree_) { Dsize_ = 0; } }
@@ -206,5 +207,10 @@ bool phoD::dtree::presel(int j)
   return false;
 }
 
-
+bool phoD::dtree::tightsel(int j)
+{
+  bool cut = bvf_["DlxyBS"][j]/bvf_["DlxyBSErr"][j] > 3.5 && bvf_["DdthetaBScorr"][j] < 0.2;
+  if(ishi_) cut = true; 
+  return cut;
+}
 #endif

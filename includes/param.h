@@ -39,7 +39,7 @@ namespace phoD
   class param
   {
   public:
-    param(int isheavyion, float Dptmin, float Dptmax, float Dymax, float centmin, float centmax, float phoptmin, float phoetamax, std::string opt="");
+    param(int isheavyion, float Dptmin, float Dptmax, float Dymax, float centmin, float centmax, float phoptmin, float phoetamax, int ismc, std::string opt="");
     param(TFile* inf, std::string opt="");
     void write();
     // float v(std::string var) { return val_[var]; }
@@ -49,7 +49,7 @@ namespace phoD
     void print();
     void drawtex(float xleft, float ytop, float tsize, std::string exclude="");
   private:
-    int ishi_;
+    int ishi_, ismc_;
     std::map<std::string, float> val_;
     std::map<std::string, std::string> tag_;
     void parsetag();
@@ -70,11 +70,12 @@ namespace phoD
 
 phoD::param::param(int isheavyion, float Dptmin, float Dptmax, float Dymax, 
                    float centmin, float centmax, 
-                   float phoptmin, float phoetamax,
+                   float phoptmin, float phoetamax, int ismc,
                    std::string opt) : opt_(opt)
 {
   if(opt_!="Q") std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<"\e[0m"<<std::endl;
   ishi_ = isheavyion;
+  ismc_ = ismc;
   val_["Dptmin"] = Dptmin;
   val_["Dptmax"] = Dptmax;
   val_["Dymax"] = Dymax;
@@ -93,6 +94,7 @@ phoD::param::param(TFile* inf, std::string opt) : opt_(opt)
   if(opt_!="Q") std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<"\e[0m"<<std::endl;
   TTree* p = (TTree*)inf->Get("param");
   p->SetBranchAddress("ishi", &ishi_);
+  p->SetBranchAddress("ismc", &ismc_);
   for(auto pp : list_) p->SetBranchAddress(pp.c_str(), &(val_[pp]));
   p->GetEntry(0);
 
@@ -104,6 +106,7 @@ void phoD::param::write()
 {
   TTree* p = new TTree("param", "parameters");
   p->Branch("ishi", &ishi_);
+  p->Branch("ismc", &ismc_);
   for(auto& v : val_) p->Branch(v.first.c_str(), &(v.second));
   p->Fill();
   p->Write();
@@ -113,8 +116,9 @@ void phoD::param::parsetag()
 {
   tag_[""] = "";
   tag_[""] += (ishi_?"PbPb":"pp");
+  tag_[""] += (ismc_?"_MC":"_data");
   tag_[""] += ("_phopt" + xjjc::number_remove_zero(val_["phoptmin"]));
-  // tag_[""] += ("_phoeta" + xjjc::number_remove_zero(val_["phoetamax"]));
+  tag_[""] += ("_phoeta" + xjjc::number_remove_zero(val_["phoetamax"]));
   tag_[""] += ("_pt" + xjjc::number_remove_zero(val_["Dptmin"]) + "-" + xjjc::number_remove_zero(val_["Dptmax"]));
   tag_[""] += ("_y" + xjjc::number_remove_zero(val_["Dymax"]));
   if(ishi_) tag_[""] += ("_cent" + xjjc::number_remove_zero(val_["centmin"]) + xjjc::number_remove_zero(val_["centmax"]));
@@ -125,6 +129,7 @@ void phoD::param::parsetag()
   if(ishi_) tag_["cent"] = "Cent. " + xjjc::number_remove_zero(val_["centmin"]) + " - " + xjjc::number_remove_zero(val_["centmax"]) + "%";
   else tag_["cent"] = "";
   tag_["ishi"] = ishi_?"PbPb":"pp";
+  tag_["ismc"] = ismc_?"MC":"data";
 
   tag_["phopt"] = "p_{T}^{#gamma} > " + xjjc::number_remove_zero(val_["phoptmin"]) + " GeV/c";
   tag_["phoeta"] = "|#eta^{#gamma}| < " + xjjc::number_remove_zero(val_["phoetamax"]);
@@ -135,6 +140,7 @@ void phoD::param::print()
   int len = 35;
   std::cout << "\e[34m" << std::string(len, '-') << std::endl
             << std::left << std::setw(len) << "  "+tag_["ishi"] << "" << std::endl << std::string(len, '-') << std::endl
+            << std::left << std::setw(len) << "  "+tag_["ismc"] << "" << std::endl << std::string(len, '-') << std::endl
             << std::left << std::setw(len) << "  "+tag_["cent"] << "" << std::endl << std::string(len, '-') << std::endl
             << std::left << std::setw(len) << "  "+tag_["pt"] << "" << std::endl << std::string(len, '-') << std::endl
             << std::left << std::setw(len) << "  "+tag_["y"] << "" << std::endl << std::string(len, '-') << std::endl

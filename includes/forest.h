@@ -41,7 +41,8 @@ phoD::forest::forest(TFile* inf, bool ishi) : f_(inf), ishi_(ishi)
   TTree* dt = (TTree*)inf->Get("Dfinder/ntDkpi");
   dtr_ = new dtree(dt, ishi_);
   TTree* gt = (TTree*)inf->Get("Dfinder/ntGen");
-  gtr_ = new gtree(gt, ishi_);
+  if(gt) gtr_ = new gtree(gt, ishi_);
+  else gtr_ = 0;
   TTree* pt = (TTree*)inf->Get("ggHiNtuplizerGED/EventTree");
   ptr_ = new ptree(pt, ishi_);
 
@@ -52,7 +53,7 @@ void phoD::forest::GetEntry(int i)
 {
   etr_->GetEntry(i);
   dtr_->GetEntry(i);
-  gtr_->GetEntry(i);
+  if(gtr_) gtr_->GetEntry(i);
   ptr_->GetEntry(i);
 }
 

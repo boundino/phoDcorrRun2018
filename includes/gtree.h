@@ -98,7 +98,7 @@ template<typename T> T phoD::gtree::val(std::string br, int j)
 
 bool phoD::gtree::presel(int j)
 {
-  bool p = (bvi_["GisSignal"][j]==1 || bvi_["GisSignal"][j]==2) && bvi_["GcollisionId"]==0;
+  bool p = (bvi_["GisSignal"][j]==1 || bvi_["GisSignal"][j]==2) && bvi_["GcollisionId"][j]==0;
   return p;
 }
 

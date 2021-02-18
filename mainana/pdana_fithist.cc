@@ -23,6 +23,8 @@ int pdana_fithist(std::string inputname, std::string outsubdir)
   TH1F* hdphi_raw = new TH1F("hdphi_raw", ";#Delta#phi^{#gammaD} / #pi;dN^{#gammaD}/d#phi", vb.n(), vb.v().data());
   TH1F* hdphi_bkg = new TH1F("hdphi_bkg", ";#Delta#phi^{#gammaD} / #pi;dN^{#gammaD}/d#phi", vb.n(), vb.v().data());
   TH1F* hnphoton = (TH1F*)inf->Get("hnphoton");
+  float nphoton_raw = hnphoton->GetBinContent(1);
+  float nphoton_bkg = hnphoton->GetBinContent(2);
 
   TFile* inftpl = TFile::Open("masstpl_PbPb.root");
   TH1F* hmassmc_signal = (TH1F*)inftpl->Get("hHistoRMassSignal_pt_0_dr_0");
@@ -47,13 +49,14 @@ int pdana_fithist(std::string inputname, std::string outsubdir)
       hdphi_bkg->SetBinContent(k+1, df.GetY()/vb.width(k)/M_PI);
       hdphi_bkg->SetBinError(k+1, df.GetYE()/vb.width(k)/M_PI);
     }
+  hdphi_raw->SetTitle(Form("%f", nphoton_raw));
+  hdphi_bkg->SetTitle(Form("%f", nphoton_bkg));
 
   std::string outputname = "rootfiles/" + outsubdir + "_" + pa.tag() + "/fithist.root";
   xjjroot::mkdir(outputname);
   TFile* outf = new TFile(outputname.c_str(), "recreate");
   xjjroot::writehist(hdphi_raw);
   xjjroot::writehist(hdphi_bkg);
-  xjjroot::writehist(hnphoton);
   pa.write();
   outf->Close();
 

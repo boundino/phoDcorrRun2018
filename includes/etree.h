@@ -20,7 +20,7 @@ namespace phoD
     float Ncoll() { return Ncoll_; }
     float pthat() { return pthat_; }
     float pthatweight() { return pthatweight_; }
-    bool presel();
+    bool presel(bool ignorehlt);
     bool hltsel();
 
   private:
@@ -80,18 +80,18 @@ void phoD::etree::GetEntry(int i)
   if(nt_skim_) nt_skim_->GetEntry(i);
 }
 
-bool phoD::etree::presel()
+bool phoD::etree::presel(bool ignorehlt)
 {
   if(ishi_ && 
      vz_ > -15 && vz_ < 15 &&
      hiBin_ >= 0 && hiBin_ <= 180 &&
      pclusterCompatibilityFilter_ && pprimaryVertexFilter_ && phfCoincFilter2Th4_ &&
-     HLT_HIGEDPhoton40_v1_
+     (HLT_HIGEDPhoton40_v1_ || ignorehlt)
      ) return true; //
   if(!ishi_ && 
      vz_ > -15 && vz_ < 15 &&
      pBeamScrapingFilter_ && pPAprimaryVertexFilter_ &&
-     HLT_HIPhoton40_HoverELoose_v1_
+     (HLT_HIPhoton40_HoverELoose_v1_ || ignorehlt)
      ) return true; //
   return false;
 }

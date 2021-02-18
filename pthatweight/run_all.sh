@@ -1,15 +1,17 @@
 #!/bin/bash
 
-ichan=(1)
+ichan=(2)
 ###
 filelists=(
     "/raid5/data/wangj/DntupleRun2018/phodmva_20200926_Dpho_20200924_QCDPhoton_pThat_*_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2.root" # 0: QCDphoton + 30GeV filter (mva)
-    "/raid5/data/wangj/DntupleRun2018/phodgmatch_20201011_Dpho_20200924_QCDPhoton_pThat_*_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2.root" # 0: QCDphoton + 30GeV filter (gen-match)
+    "/raid5/data/wangj/DntupleRun2018/phodgmatch_20201019_Dpho_20200924_QCDPhoton_pThat_*_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2.root" # 0: QCDphoton + 30GeV filter (gen-match)
+    "/raid5/data/wangj/DntupleRun2017/phodgmatch_20201104_Dpho_20201104_QCDPhoton_pThat_*_mc2017_realistic_forppRef5TeV_trk1Dpt2.root"
 )
 ##
 crosssec=(
     'const int nBins=4; float pthatBin[nBins]={30, 50, 80, 120}; float crosssec[nBins+1]={1002508., 341974., 88321., 21579., 0.};'
     'const int nBins=4; float pthatBin[nBins]={30, 50, 80, 120}; float crosssec[nBins+1]={1002508., 341974., 88321., 21579., 0.};'
+    'const int nBins=5; float pthatBin[nBins]={30, 50, 80, 120, 170}; float crosssec[nBins+1]={926002., 230007., 48984., 10728., 2472., 0.};'
 )
 
 ##
