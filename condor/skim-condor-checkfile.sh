@@ -11,18 +11,20 @@ MAXFILES=$3
 LOGDIR=$4
 ISHI=$5
 EVTFILT=$6
-MVAFILT=$7
-HLTFILT=$8
+HLTFILT=$7
+MVAFILT=$8
 
 PROXYFILE=$(ls /tmp/ -lt | grep $USER | grep -m 1 x509 | awk '{print $NF}')
 
-TAG="phod"
+tag="phod"
 
 rm filelist.txt
-ls $DATASET | grep -v "/" | grep -v -e '^[[:space:]]*$' | awk '{print "" $0}' >> filelist.txt
+# ls $DATASET | grep -v "/" | grep -v -e '^[[:space:]]*$' | awk '{print "" $0}' >> filelist.txt
+ls -d $DATASET/* >> filelist.txt
 
+DEST_CONDOR=${DESTINATION/\/T2_US_MIT/}
 SRM_PREFIX="/mnt/hadoop/"
-SRM_PATH=${DESTINATION#${SRM_PREFIX}}
+SRM_PATH=${DEST_CONDOR#${SRM_PREFIX}}
 
 if [ ! -d $DESTINATION ]
 then
@@ -39,23 +41,23 @@ do
     then
         break
     fi
-    #ifexist=`ls ${DESTINATION}/skim_${TAG}_$i`
-    #if [ -z $ifexist ]
-    if [ ! -f ${DESTINATION}/${TAG}_$i ] && [ -f ${DATASET}/$i ]
+    inputname=${i/\/T2_US_MIT/}
+    infn=${inputname##*/}
+    infn=${infn%%.*} # no .root
+    outputfile=${tag}_${infn}.root
+    if [ ! -f ${DESTINATION}/${outputfile} ] && [ -f $i ]
     then
-        if [ -s ${DATASET}/$i ] || [ $ifCHECKEMPTY -eq 0 ]
+        if [ -s $i ]
         then
-            echo -e "\033[38;5;242mSubmitting a job for output\033[0m ${DESTINATION}/${TAG}_$i"
-            infn=`echo $i | awk -F "." '{print $1}'`
-            INFILE="${DATASET}/$i"
+            echo -e "\033[38;5;242mSubmitting a job for output\033[0m ${DESTINATION}/${outputfile}"
                 
-                cat > skim-${TAG}.condor <<EOF
+                cat > skim-${tag}.condor <<EOF
 
 Universe     = vanilla
 Initialdir   = $PWD/
 Notification = Error
-Executable   = $PWD/skim-${TAG}-checkfile.sh
-Arguments    = $INFILE $DESTINATION ${TAG}_${infn}.root $ISHI $EVTFILT $MVAFILT $HLTFILT $PROXYFILE 
+Executable   = $PWD/skim-${tag}-checkfile.sh
+Arguments    = $inputname $DEST_CONDOR ${outputfile} $ISHI $EVTFILT $HLTFILT $MVAFILT $PROXYFILE 
 GetEnv       = True
 Output       = $LOGDIR/log-${infn}.out
 Error        = $LOGDIR/log-${infn}.err
@@ -70,9 +72,9 @@ transfer_input_files = skim.exe,mva.tgz,/tmp/$PROXYFILE
 Queue 
 EOF
 
-condor_submit skim-${TAG}.condor -name submit.mit.edu
-# condor_submit -pool submit.mit.edu:9615 -name submit.mit.edu -spool skim-${TAG}.condor
-mv skim-${TAG}.condor $LOGDIR/log-${infn}.condor
+condor_submit skim-${tag}.condor -name submit.mit.edu
+# condor_submit -pool submit.mit.edu:9615 -name submit.mit.edu -spool skim-${tag}.condor
+mv skim-${tag}.condor $LOGDIR/log-${infn}.condor
 counter=$(($counter+1))
         fi
     fi

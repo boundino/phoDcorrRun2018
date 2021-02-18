@@ -6,9 +6,12 @@
 
 #include "skimbranch.h"
 #include "dtree.h"
+#include "ptree.h"
 #include "dmva.h"
 #include "xjjcuti.h"
 
+float phoEtCut = 30.;
+bool removeevent = false;
 int skim(std::string inputname, std::string outputname,
          int ishi, int evtfilt, int mvafilt, int hltfilt)
 {
@@ -18,42 +21,35 @@ int skim(std::string inputname, std::string outputname,
   phoD::skimbranch* sb = new phoD::skimbranch(ishi);
   std::map<std::string, phoD::skimtree*> s;
   s["hlt"] = new phoD::skimtree("hltanalysis/HltTree", inf, outf, sb->branches("hltanalysis/HltTree"));
-  if(ishi) s["obj"] = new phoD::skimtree("hltobject/HLT_HIGEDPhoton40_v", inf, outf, sb->branches("hltobject/HLT_HIGEDPhoton40_v"));
+  // if(ishi) s["obj"] = new phoD::skimtree("hltobject/HLT_HIGEDPhoton40_v", inf, outf, sb->branches("hltobject/HLT_HIGEDPhoton40_v"));
   // else s["obj"] = new phoD::skimtree("hltobject/HLT_HIPhoton40_HoverELoose_v", inf, outf, sb->branches("hltobject/HLT_HIPhoton40_HoverELoose_v"));
-  s["ggGED"] = new phoD::skimtree("ggHiNtuplizerGED/EventTree", inf, outf, sb->branches("ggHiNtuplizerGED/EventTree"));
+  // s["ggGED"] = new phoD::skimtree("ggHiNtuplizerGED/EventTree", inf, outf, sb->branches("ggHiNtuplizerGED/EventTree"));
   s["skim"] = new phoD::skimtree("skimanalysis/HltTree", inf, outf, sb->branches("skimanalysis/HltTree"));
   s["hi"] = new phoD::skimtree("hiEvtAnalyzer/HiTree", inf, outf, sb->branches("hiEvtAnalyzer/HiTree"));
   s["forest"] = new phoD::skimtree("HiForest/HiForestInfo", inf, outf, sb->branches("HiForest/HiForestInfo"));
   s["ntGen"] = new phoD::skimtree("Dfinder/ntGen", inf, outf, sb->branches("Dfinder/ntGen"));
-  TTree* nt = (TTree*)inf->Get("Dfinder/ntDkpi");
-  phoD::dtree* dt = new phoD::dtree(nt, ishi);
+  phoD::dtree* dt = new phoD::dtree((TTree*)inf->Get("Dfinder/ntDkpi"), ishi);
   phoD::dtree* dt_new = new phoD::dtree(outf, "Dfinder/ntDkpi", ishi);
+  phoD::ptree* pt = new phoD::ptree((TTree*)inf->Get("ggHiNtuplizerGED/EventTree"), ishi);
+  phoD::ptree* pt_new = new phoD::ptree(outf, "ggHiNtuplizerGED/EventTree", ishi, pt->isMC());
 
   // hiBin
   int hiBin = -1;
   if(ishi) { s["hi"]->t()->SetBranchAddress("hiBin", &hiBin); }
   // event filter
-  std::map<std::string, int> vevt;
-  if(ishi)
+  std::map<std::string, std::map<bool, std::vector<std::string>>> path;
+  path["skim"][true] = std::vector<std::string>{"pprimaryVertexFilter", "phfCoincFilter2Th4", "pclusterCompatibilityFilter"}; // HI
+  path["skim"][false] = std::vector<std::string>{"pBeamScrapingFilter", "pPAprimaryVertexFilter"}; // pp
+  path["hlt"][true] = std::vector<std::string>{"HLT_HIGEDPhoton40_v1"}; // HI
+  path["hlt"][false] = std::vector<std::string>{"HLT_HIPhoton40_HoverELoose_v1"}; // pp
+
+  std::map<std::string, std::map<std::string, int>> vevt;
+  for(auto& sh : path)
     {
-      s["skim"]->t()->SetBranchAddress("pprimaryVertexFilter", &(vevt["pprimaryVertexFilter"]));
-      s["skim"]->t()->SetBranchAddress("phfCoincFilter2Th4", &(vevt["phfCoincFilter2Th4"]));
-      s["skim"]->t()->SetBranchAddress("pclusterCompatibilityFilter", &(vevt["pclusterCompatibilityFilter"]));
-    }
-  else
-    {
-      s["skim"]->t()->SetBranchAddress("pBeamScrapingFilter", &(vevt["pBeamScrapingFilter"]));
-      s["skim"]->t()->SetBranchAddress("pPAprimaryVertexFilter", &(vevt["pPAprimaryVertexFilter"]));
-    }
-  // hlt filter
-  std::map<std::string, int> vhlt;
-  if(ishi)
-    {
-      s["hlt"]->t()->SetBranchAddress("HLT_HIGEDPhoton40_v1", &(vhlt["HLT_HIGEDPhoton40_v1"]));
-    }
-  else
-    {
-      s["hlt"]->t()->SetBranchAddress("HLT_HIPhoton40_HoverELoose_v1", &(vhlt["HLT_HIPhoton40_HoverELoose_v1"]));
+      auto sorh = sh.first;
+      auto vv = sh.second[ishi];
+      for(auto& p : vv)
+        s[sorh]->t()->SetBranchAddress(p.c_str(), &(vevt[sorh][p]));
     }
   s["forest"]->GetEntry(0);
   s["forest"]->Fill();
@@ -67,52 +63,104 @@ int skim(std::string inputname, std::string outputname,
       if(i%100==0 || i==nentries-1) xjjc::progressbar(i, nentries);
       for(auto& ss : s) { if(ss.first != "forest") { ss.second->GetEntry(i); } }
       dt->GetEntry(i);
+      pt->GetEntry(i);
 
       // event selection [and]
       if(evtfilt)
         {
           int sflag = 1;
-          for(auto& e : vevt) { if(!e.second) { sflag = 0; break; } }
+          for(auto& e : vevt["skim"]) { if(!e.second) { sflag = 0; break; } }
           if(!sflag) continue;
         }
       // hlt selection [or]
       if(hltfilt)
         {
           int sflag = 0;
-          for(auto& h : vhlt) { if(h.second) { sflag++; break; } }
+          for(auto& e : vevt["hlt"]) { if(e.second) { sflag++; break; } }
           if(!sflag) continue;
         }
 
-      for(auto& ss : s) { if(ss.first != "forest") { ss.second->Fill(); } }
+      // Egamma
+      pt_new->ClearnPhoEleMC();
+      // fill photon
+      for(int j=0; j<pt->nPho(); j++)
+        { 
+          bool fill = pt->val("phoEt", j) > phoEtCut;
+          if(!fill) continue;
+          pt_new->Fillall("pho", pt, j);
+          pt_new->nPhopp();
+        }
+      // fill electron
+      for(int j=0; j<pt->nEle(); j++)
+        {
+          bool fill = pt->val("elePt", j) > phoEtCut;
+          if(!fill) continue;
+          pt_new->Fillall("ele", pt, j);
+          pt_new->nElepp();
+        }
+      // fill gen
+      if(pt->isMC())
+        {
+          for(int j=0; j<pt->nMC(); j++)
+            {
+              bool fill = true;
+              if(!fill) continue;
+              pt_new->Fillall("mc", pt, j);
+              pt_new->nMCpp();
+            }
+        }
+      if(removeevent && pt_new->nPho()==0 && pt_new->nEle()==0 && pt_new->nMC()==0) continue;
 
+      // fill D
       dt_new->ClearDsize();
       for(int j=0; j<dt->Dsize(); j++)
         {
           if(!dt->presel(j)) continue;
 
+          bool fill = true;
           switch(mvafilt)
             {
             case 1:
               {
                 float mvaval = mva->eval(dt, j, hiBin);
-                if(!mva->pass(mvaval, dt->val<float>("Dpt", j), hiBin)) continue;
-                dt_new->Fillone("BDT", mvaval);
+                if(mva->pass(mvaval, dt->val<float>("Dpt", j), hiBin))
+                  {
+                    dt_new->Fillone("BDT", mvaval);
+                    // std::cout<<j<<" "<<mvaval<<" (";
+                    // std::cout<<mva->pass(mvaval, dt->val<float>("Dpt", j), hiBin);
+                    // std::cout<<")"<<std::endl;
+                  }
+                else
+                  fill = false;
+                break;
               }
             case 2:
               {
-                if(!dt->val<float>("DlxyBS", j)/dt->val<float>("DlxyBSErr", j) <= 3.5 ||
+                if(dt->val<float>("DlxyBS", j)/dt->val<float>("DlxyBSErr", j) <= 3.5 ||
                    dt->val<float>("DdthetaBScorr", j) >= 0.2
-                   ) continue;
+                   ) fill = false;
+                break;
               }
             case 3:
               {
-                if(dt->val<int>("Dgen", j) != 23333 && dt->val<int>("Dgen", j) != 23344) continue;
+                if(dt->val<int>("Dgen", j) != 23333 && dt->val<int>("Dgen", j) != 23344)
+                  fill = false;
+                break;
               }
             }
+          if(!fill) continue;
+          // std::cout<<"  --> filled"<<std::endl;
           dt_new->Fillall(dt, j);
           dt_new->Dsizepp();
         }
+
+      if(removeevent && dt_new->Dsize()==0) continue;
+
+      // ---------------------------- Fill ----------------------------
+      for(auto& ss : s) { if(ss.first != "forest") { ss.second->Fill(); } }
+      pt_new->Fill();
       dt_new->Fill();
+
     }
   xjjc::progressbar_summary(nentries);
 

@@ -16,7 +16,7 @@ mvafilt=1
 movetosubmit=${1:-0}
 runjobs=${2:-0}
 
-INPUTDIR="/mnt/hadoop/cms/store/user/wangj/HighEGJet/crab_Dpho_20201002_HighEGJet_Run2017G_17Nov2017_HIPhoton_HoverELoose_trk1Dpt2_vfl2/201002_173802/0000/" # 0003
+INPUTDIR="/mnt/hadoop/cms/store/user/wangj/HighEGJet/crab_Dpho_20201002_HighEGJet_Run2017G_17Nov2017_HIPhoton_HoverELoose_trk1Dpt2_vfl2/201002_173802/0003/" # 0003
 OUTPUTPRIDIR="/mnt/hadoop/cms/store/user/jwang/DntupleRun2017condor/"
 OUTPUTSUBDIR="phodcut_20201002_Dpho_20201002_HighEGJet_17Nov2017_HIPhoton_HoverELoose_trk1Dpt2_vfl2"
 
