@@ -36,9 +36,9 @@ namespace phoD
     bool sel_hem(int j);
     bool sel_see_raw(int j);
     bool sel_see_bkg(int j);
-    bool sel_iso(int j, bool gen_iso, std::string R="3");
-    bool sel_iso_gen(int j, std::string R="4");
-    bool sel(int j, bool gen_iso, std::string R="3") { return (sel_hem(j) && sel_see_raw(j) && sel_iso(j, gen_iso, R)); }
+    bool sel_iso(int j, bool gen_iso);
+    bool sel_iso_gen(int j);
+    bool sel(int j, bool gen_iso) { return (sel_hem(j) && sel_see_raw(j) && sel_iso(j, gen_iso)); }
 
     // fill new file tree
     void ClearnPhoEleMC();
@@ -168,6 +168,7 @@ void phoD::ptree::branch()
       // if(xjjc::str_contains(b, "ele")) nt_->Branch(b.c_str(), bvf_[b], Form("%s[nEle]/F", b.c_str()));
       // if(xjjc::str_contains(b, "mc") && isMC_) nt_->Branch(b.c_str(), bvf_[b], Form("%s[nMC]/F", b.c_str()));
     }
+}
 
 template<typename T> T phoD::ptree::val(std::string br, int j)
 {
@@ -190,7 +191,8 @@ void phoD::ptree::setbranchaddress()
 void phoD::ptree::Fillall(std::string tag, ptree* nt, int j)
 {
   if(!newtree_) return;
-  for(auto& b : tbvf_) { if(nt->status(b) && xjjc::str_contains(b, tag)) { bvf_[b]->push_back(nt->val(b, j)); } }
+  for(auto& b : tbvf_) { if(nt->status(b) && xjjc::str_contains(b, tag)) { bvf_[b]->push_back(nt->val<float>(b, j)); } }
+  for(auto& b : tbvi_) { if(nt->status(b) && xjjc::str_contains(b, tag)) { bvi_[b]->push_back(nt->val<int>(b, j)); } }
 }
 
 bool phoD::ptree::presel(int j)
@@ -223,24 +225,24 @@ bool phoD::ptree::sel_see_bkg(int j)
   return see;
 }
 
-bool phoD::ptree::sel_iso(int j, bool gen_iso, std::string R)
+bool phoD::ptree::sel_iso(int j, bool gen_iso)
 {
-  float isolation = (*bvf_["pho_ecalClusterIsoR"+R])[j] + (*bvf_["pho_hcalRechitIsoR"+R])[j] + (*bvf_["pho_trackIsoR"+R+"PtCut20"])[j];
+  float isolation = (*bvf_["pho_ecalClusterIsoR3"])[j] + (*bvf_["pho_hcalRechitIsoR3"])[j] + (*bvf_["pho_trackIsoR3PtCut20"])[j];
   bool match = true;
   if(gen_iso && isMC_)
     {
-      int gen_index = (*bvi_["pho_genMatchedIndex"])[j];
-      if(gen_index < 0) { match = false; }
-      isolation = (*bvf_["mcCalIsoDR0"+R])[gen_index];
+      auto gen_index = (*bvi_["pho_genMatchedIndex"])[j];
+      if(gen_index == -1) { match = false; }
+      isolation = (*bvf_["mcCalIsoDR04"])[gen_index];
     }
   float iso_max_ = ishi_?iso_max_aa_:iso_max_pp_;
   bool iso = (isolation <= iso_max_) && match;
   return iso;
 }
 
-bool phoD::ptree::sel_iso_gen(int j, std::string R)
+bool phoD::ptree::sel_iso_gen(int j)
 {
-  float isolation = (*bvf_["mcCalIsoDR0"+R])[j];
+  float isolation = (*bvf_["mcCalIsoDR04"])[j];
   float iso_max_ = ishi_?iso_max_aa_:iso_max_pp_;
   bool iso = isolation <= iso_max_;
   return iso;
