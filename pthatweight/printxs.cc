@@ -10,7 +10,7 @@
 int printxs(std::string inputname)
 {
   TFile* inf = TFile::Open(inputname.c_str()); // lowest pthat sample
-  phoD::forest* f = new phoD::forest(inf);
+  phoD::forest* f = new phoD::forest(inf, true);
   phoD::etree* etr = f->etr();
 
   std::vector<float> pthats = {30, 50, 80, 120};

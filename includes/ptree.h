@@ -36,6 +36,7 @@ namespace phoD
     bool sel_see_raw(int j);
     bool sel_see_bkg(int j);
     bool sel_iso(int j, bool gen_iso);
+    bool sel_iso_gen(int j);
     bool sel(int j, bool gen_iso) { return (sel_hem(j) && sel_see_raw(j) && sel_iso(j, gen_iso)); }
 
     // fill new file tree
@@ -100,6 +101,7 @@ phoD::ptree::ptree(TTree* nt, bool ishi) : nt_(nt), ishi_(ishi)
   nt_->SetBranchStatus("*", 0);
   nt_->SetBranchStatus("nEle", 1);
   nt_->SetBranchStatus("nPho", 1);
+
   isMC_ = nt_->FindBranch("nMC");
   if(isMC_) { nt_->SetBranchStatus("nMC", 1); }
 
@@ -214,6 +216,14 @@ bool phoD::ptree::sel_iso(int j, bool gen_iso)
     }
   float iso_max_ = ishi_?iso_max_aa_:iso_max_pp_;
   bool iso = (isolation <= iso_max_) && match;
+  return iso;
+}
+
+bool phoD::ptree::sel_iso_gen(int j)
+{
+  float isolation = (*bvf_["mcCalIsoDR04"])[j];
+  float iso_max_ = ishi_?iso_max_aa_:iso_max_pp_;
+  bool iso = isolation <= iso_max_;
   return iso;
 }
 
