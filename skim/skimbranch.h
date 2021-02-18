@@ -134,26 +134,9 @@ phoD::skimbranch::skimbranch(bool ishi) : fishi(ishi)
     "eleSigmaIEtaIEta_2012",
     "eleMissHits",
     "nPho",
-    "phoE",
-    "phoEt",
-    "phoEta",
-    "phoPhi",
-    "phoSCEta",
-    "phoSCPhi",
-    "phoHoverE",
-    "phoSigmaIEtaIEta_2012",
-    "pho_ecalClusterIsoR3",
-    "pho_hcalRechitIsoR3",
-    "pho_trackIsoR3PtCut20",
-    "pho_genMatchedIndex",
+    "pho*",
     "nMC",
-    "mcPID",
-    "mcStatus",
-    "mcPt",
-    "mcEta",
-    "mcPhi",
-    "mcEt",
-    "mcCalIsoDR04"
+    "mc*"
   };
 
   fbr["hiEvtAnalyzer/HiTree"] = {
