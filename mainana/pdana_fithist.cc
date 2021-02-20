@@ -15,13 +15,19 @@ int pdana_fithist(std::string inputname, std::string outsubdir)
   TFile* inf = TFile::Open(inputname.c_str());
   phoD::param pa(inf);
   phoD::bins<float> vb(pa.ishi()?phoD::bins_dphi_aa:phoD::bins_dphi_pp);
-  std::vector<TH1F*> hmass_raw(vb.n(), 0), hmass_bkg(vb.n(), 0);
+  std::vector<TH1F*> hmass_raw(vb.n(), 0), hmass_bkg(vb.n(), 0), hmass_raw_unweight(vb.n(), 0), hmass_bkg_unweight(vb.n(), 0);
   for(int k=0; k<vb.n(); k++) { hmass_raw[k] = (TH1F*)inf->Get(Form("hmass_raw_%d", k)); }
   for(int k=0; k<vb.n(); k++) { hmass_bkg[k] = (TH1F*)inf->Get(Form("hmass_bkg_%d", k)); }
+  for(int k=0; k<vb.n(); k++) { hmass_raw_unweight[k] = (TH1F*)inf->Get(Form("hmass_raw_unweight_%d", k)); }
+  for(int k=0; k<vb.n(); k++) { hmass_bkg_unweight[k] = (TH1F*)inf->Get(Form("hmass_bkg_unweight_%d", k)); }
   TH1F* hmass_incl_raw = (TH1F*)inf->Get("hmass_incl_raw");
   TH1F* hmass_incl_bkg = (TH1F*)inf->Get("hmass_incl_bkg");
+  TH1F* hmass_incl_raw_unweight = (TH1F*)inf->Get("hmass_incl_raw_unweight");
+  TH1F* hmass_incl_bkg_unweight = (TH1F*)inf->Get("hmass_incl_bkg_unweight");
   TH1F* hdphi_raw = new TH1F("hdphi_raw", ";#Delta#phi^{#gammaD} / #pi;dN^{#gammaD}/d#phi", vb.n(), vb.v().data());
+  TH1F* hdphi_raw_unweight = new TH1F("hdphi_raw_unweight", ";#Delta#phi^{#gammaD} / #pi;dN^{#gammaD}/d#phi", vb.n(), vb.v().data());
   TH1F* hdphi_bkg = new TH1F("hdphi_bkg", ";#Delta#phi^{#gammaD} / #pi;dN^{#gammaD}/d#phi", vb.n(), vb.v().data());
+  TH1F* hdphi_bkg_unweight = new TH1F("hdphi_bkg_unweight", ";#Delta#phi^{#gammaD} / #pi;dN^{#gammaD}/d#phi", vb.n(), vb.v().data());
   TH1F* hnphoton = (TH1F*)inf->Get("hnphoton");
   float nphoton_raw = hnphoton->GetBinContent(1);
   float nphoton_bkg = hnphoton->GetBinContent(2);
@@ -37,6 +43,10 @@ int pdana_fithist(std::string inputname, std::string outsubdir)
          std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
   df.fit(hmass_incl_bkg, hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_incl_bkg", fitoutput.c_str()), 
          std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
+  df.fit(hmass_incl_raw_unweight, hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_incl_raw_unweight", fitoutput.c_str()), 
+         std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
+  df.fit(hmass_incl_bkg_unweight, hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_incl_bkg_unweight", fitoutput.c_str()), 
+         std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
   for(int k=0; k<vb.n(); k++)
     {
       df.fit(hmass_raw[k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_raw_%d", fitoutput.c_str(), k), 
@@ -48,15 +58,29 @@ int pdana_fithist(std::string inputname, std::string outsubdir)
              std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb.tag(k, "#Delta#phi/#pi").c_str()}));
       hdphi_bkg->SetBinContent(k+1, df.GetY()/vb.width(k)/M_PI);
       hdphi_bkg->SetBinError(k+1, df.GetYE()/vb.width(k)/M_PI);
+
+      df.fit(hmass_raw_unweight[k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_raw_unweight_%d", fitoutput.c_str(), k), 
+             std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb.tag(k, "#Delta#phi/#pi").c_str()}));
+      hdphi_raw_unweight->SetBinContent(k+1, df.GetY()/vb.width(k)/M_PI);
+      hdphi_raw_unweight->SetBinError(k+1, df.GetYE()/vb.width(k)/M_PI);
+
+      df.fit(hmass_bkg_unweight[k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_bkg_unweight_%d", fitoutput.c_str(), k), 
+             std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb.tag(k, "#Delta#phi/#pi").c_str()}));
+      hdphi_bkg_unweight->SetBinContent(k+1, df.GetY()/vb.width(k)/M_PI);
+      hdphi_bkg_unweight->SetBinError(k+1, df.GetYE()/vb.width(k)/M_PI);
     }
   hdphi_raw->SetTitle(Form("%f", nphoton_raw));
   hdphi_bkg->SetTitle(Form("%f", nphoton_bkg));
+  hdphi_raw_unweight->SetTitle(Form("%f", nphoton_raw));
+  hdphi_bkg_unweight->SetTitle(Form("%f", nphoton_bkg));
 
   std::string outputname = "rootfiles/" + outsubdir + "_" + pa.tag() + "/fithist.root";
   xjjroot::mkdir(outputname);
   TFile* outf = new TFile(outputname.c_str(), "recreate");
   xjjroot::writehist(hdphi_raw);
   xjjroot::writehist(hdphi_bkg);
+  xjjroot::writehist(hdphi_raw_unweight);
+  xjjroot::writehist(hdphi_bkg_unweight);
   pa.write();
   outf->Close();
 
