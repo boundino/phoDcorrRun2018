@@ -45,7 +45,7 @@ int eff_savehist(std::string inputname, std::string outputname, bool ishi)
 
           int iycent = ebin.iycent(fabs(dtr->val<float>("Dy", j)), etr->hiBin());
           if(iycent < 0) continue;
-          heff_reco[iycent]->Fill(dtr->val<float>("Dpt", j));
+          heff_reco[iycent]->Fill(dtr->val<float>("Dpt", j), etr->Ncoll());
         }
 
       // Gen
@@ -55,7 +55,7 @@ int eff_savehist(std::string inputname, std::string outputname, bool ishi)
 
           int iycent = ebin.iycent(fabs(gtr->val<float>("Gy", j)), etr->hiBin());
           if(iycent < 0) continue;
-          heff_gen[iycent]->Fill(gtr->val<float>("Gpt", j));
+          heff_gen[iycent]->Fill(gtr->val<float>("Gpt", j), etr->Ncoll());
         }
     }
   xjjc::progressbar_summary(nentries);

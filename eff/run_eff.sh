@@ -1,6 +1,6 @@
 #!/bin/bash
 
-isyst=(0 1 2)
+isyst=(0 1)
 
 #
 input=(

@@ -193,6 +193,7 @@ TF1* xjjroot::dfitter::fit(const TH1* hmass, const TH1* hmassMCSignal, const TH1
   setgstyle();
   TCanvas* c = new TCanvas("c", "" , 600, 600);
   
+  fun_f->SetParLimits(0,  0, 1.e+4);
   fun_f->SetParLimits(4,  -1000, 1000);
   fun_f->SetParLimits(10, 0.001, 0.05);
   fun_f->SetParLimits(2,  0.01,  0.5);

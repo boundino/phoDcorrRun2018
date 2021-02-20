@@ -8,6 +8,8 @@ namespace eff
   {
   public:
     effbins(bool ishi) : fishi(ishi) { fcentbins = fishi?fcentbins_PbPb:fcentbins_pp; }
+    effbins(std::string inputfile, bool ishi);
+    float geteff(float pt, float absy, int hiBin);
     int npt() { return fptbins.size()-1; }
     int ny() { return fybins.size()-1; }
     int ncent() { return fcentbins.size()-1; }
@@ -21,6 +23,7 @@ namespace eff
     std::vector<int> index(int iycent);
   private:
     bool fishi;
+    std::vector<TH1F*> fheff;
     std::vector<float> fcentbins;
     std::vector<float> fcentbins_PbPb = {0, 30, 50, 90};
     std::vector<float> fcentbins_pp = {-1, 0};
@@ -30,6 +33,23 @@ namespace eff
     std::string fty(int iy);
     std::string ftcent(int icent);
   };
+}
+
+eff::effbins::effbins(std::string inputfile, bool ishi) : fishi(ishi)
+{
+  TFile* inf = TFile::Open(inputfile.c_str());
+  fcentbins = fishi?fcentbins_PbPb:fcentbins_pp;
+  for(int k=0; k<nycent(); k++)
+    {
+      TH1F* h = (TH1F*)inf->Get(Form("heff_%d", k));
+      fheff.push_back(h);
+    }
+}
+
+float eff::effbins::geteff(float pt, float absy, int hiBin)
+{
+  // std::cout<<pt<<" "<<absy<<" "<<hiBin<<" "<<ipt(pt)<<" "<<iycent(absy, hiBin)<<std::endl;
+  return fheff[iycent(absy, hiBin)]->GetBinContent(ipt(pt)+1);
 }
 
 int eff::effbins::ipt(float pt)
@@ -42,6 +62,7 @@ int eff::effbins::ipt(float pt)
 int eff::effbins::iycent(float y, int hiBin)
 {
   int iiy = iy(y), iicent = icent(hiBin), nncent = ncent();
+  // std::cout<<" ("<<iiy<<" "<<iicent<<")";
   if(iicent < 0 || iiy < 0) return -1;
   return iiy*nncent+iicent;
 }
