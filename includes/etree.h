@@ -4,6 +4,7 @@
 #include <TTree.h>
 
 #include <string>
+#include <iostream>
 
 namespace phoD
 {
@@ -16,8 +17,8 @@ namespace phoD
     int GetEntries() { return nt_->GetEntries(); }
     void GetEntry(int i);
     float vz() { return vz_; }
-    int hiBin() { return hiBin_; }
-    float Ncoll() { return Ncoll_; }
+    int hiBin() { return ishi_?hiBin_:-1; }
+    float Ncoll() { return ishi_?Ncoll_:(float)1.; }
     float pthat() { return pthat_; }
     float pthatweight() { return pthatweight_; }
     bool presel(bool ignorehlt);
