@@ -78,6 +78,8 @@ namespace xjjroot
     
     Double_t GetMassL() const {return min_hist_dzero;}
     Double_t GetMassH() const {return max_hist_dzero;}
+    Double_t GetSigMassL() const {return mass_dzero_signal_l;}
+    Double_t GetSigMassH() const {return mass_dzero_signal_h;}
 
   private:
     Double_t S;
@@ -109,6 +111,7 @@ namespace xjjroot
     Bool_t ffitverbose;
     Bool_t fdrawdetail;
     Bool_t fsaveplot;
+    Bool_t fweightedhist;
 
     const Double_t setparam0 = 100.;
     const Double_t setparam1 = 1.865;
@@ -175,6 +178,8 @@ void xjjroot::dfitter::resolveoption()
   if(foption.Contains("V")) ffitverbose = true;
   fsaveplot = true;
   if(foption.Contains("X")) fsaveplot = false;
+  fweightedhist = false;
+  if(foption.Contains("W")) fweightedhist = true;
 }
 
 TF1* xjjroot::dfitter::fit(const TH1* hmass, const TH1* hmassMCSignal, const TH1* hmassMCSwapped, TString collisionsyst/*=""*/, TString outputname/*="cmass"*/, const std::vector<TString> &vtex/*=std::vector<TString>()*/)
@@ -189,7 +194,8 @@ TF1* xjjroot::dfitter::fit(const TH1* hmass, const TH1* hmassMCSignal, const TH1
   sethist(hMCSignal);
   sethist(hMCSwapped);
 
-  TString fitoption = ffitverbose?"L m":"L m q";
+  TString fitll = fweightedhist?"WL":"L";
+  TString fitoption = ffitverbose?(fitll+" m"):(fitll+"m q");
   setgstyle();
   TCanvas* c = new TCanvas("c", "" , 600, 600);
   
@@ -267,9 +273,9 @@ TF1* xjjroot::dfitter::fit(const TH1* hmass, const TH1* hmassMCSignal, const TH1
       fun_f->ReleaseParameter(11);
       fun_f->SetParLimits(11, -0.5, 0.5);
     }
-  h->Fit("fun_f", "L q", "", min_hist_dzero, max_hist_dzero);
-  h->Fit("fun_f", "L q", "", min_hist_dzero, max_hist_dzero);
-  h->Fit("fun_f", "L q", "", min_hist_dzero, max_hist_dzero);
+  h->Fit("fun_f", Form("%s q", fweightedhist?"WL":"L"), "", min_hist_dzero, max_hist_dzero);
+  h->Fit("fun_f", Form("%s q", fweightedhist?"WL":"L"), "", min_hist_dzero, max_hist_dzero);
+  h->Fit("fun_f", Form("%s q", fweightedhist?"WL":"L"), "", min_hist_dzero, max_hist_dzero);
   r = h->Fit("fun_f", Form("%s S",fitoption.Data()),"", min_hist_dzero, max_hist_dzero);
 
   fparamfun_f = true;

@@ -8,10 +8,11 @@
 
 #include "xjjcuti.h"
 #include "xjjrootuti.h"
+#include "pdg.h"
 
 namespace pdana_calchist_
 {
-  void seth(TH1F* h, std::string ytitle="#frac{1}{N^{#gamma}} #frac{dN^{#gammaD}}{d#phi}");
+  void seth(TH1F* h, std::string ytitle="#frac{1}{N^{#gamma}} #frac{dN^{#gammaD}}{d#phi}", bool forcemaxdigits=true);
   std::string outputdir;
   void makecanvas(TCanvas* c, phoD::param& pa, TLegend* leg, std::string name, std::string comment="");
 }
@@ -23,31 +24,28 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
   float purity = pa.ishi()?phoD::purity_aa_:phoD::purity_pp_;
   pdana_calchist_::outputdir = outsubdir + "_" + pa.tag();
 
+  std::vector<std::string> types = {"fitweigh", "unweight", "effcorr"};
   std::map<std::string, TH1F*> hdphi;
-  hdphi["raw"] = (TH1F*)inf->Get("hdphi_raw");
-  hdphi["bkg"] = (TH1F*)inf->Get("hdphi_bkg");
-  hdphi["raw_unweight"] = (TH1F*)inf->Get("hdphi_raw_unweight");
-  hdphi["bkg_unweight"] = (TH1F*)inf->Get("hdphi_bkg_unweight");
-  float nphoton_raw = atof(hdphi["raw"]->GetTitle());
-  float nphoton_bkg = atof(hdphi["bkg"]->GetTitle());
-  hdphi["raw"]->Scale(1./nphoton_raw);
-  hdphi["bkg"]->Scale(1./nphoton_bkg);
-  hdphi["raw_unweight"]->Scale(1./nphoton_raw);
-  hdphi["bkg_unweight"]->Scale(1./nphoton_bkg);
+  for(auto& tt : types)
+    {
+      hdphi["raw_"+tt] = (TH1F*)inf->Get(Form("hdphi_raw_%s", tt.c_str()));
+      hdphi["bkg_"+tt] = (TH1F*)inf->Get(Form("hdphi_bkg_%s", tt.c_str()));
+      float nphoton_raw = atof(hdphi["raw_"+tt]->GetTitle());
+      float nphoton_bkg = atof(hdphi["bkg_"+tt]->GetTitle());
+      hdphi["raw_"+tt]->Scale(1./nphoton_raw);
+      hdphi["bkg_"+tt]->Scale(1./nphoton_bkg);
 
-  hdphi["raw_p"] = (TH1F*)hdphi["raw"]->Clone("hdphi_raw_p");
-  hdphi["raw_p"]->Scale(1./purity);
-  hdphi["bkg_p"] = (TH1F*)hdphi["bkg"]->Clone("hdphi_bkg_p");
-  hdphi["bkg_p"]->Scale((1-purity)/purity);
-  hdphi["sub"] = (TH1F*)hdphi["raw_p"]->Clone("hdphi_sub");
-  hdphi["sub"]->Add(hdphi["bkg_p"], -1);
-
-  hdphi["raw_unweight_p"] = (TH1F*)hdphi["raw_unweight"]->Clone("hdphi_raw_unweight_p");
-  hdphi["raw_unweight_p"]->Scale(1./purity);
-  hdphi["bkg_unweight_p"] = (TH1F*)hdphi["bkg_unweight"]->Clone("hdphi_bkg_unweight_p");
-  hdphi["bkg_unweight_p"]->Scale((1-purity)/purity);
-  hdphi["sub_unweight"] = (TH1F*)hdphi["raw_unweight_p"]->Clone("hdphi_sub_unweight");
-  hdphi["sub_unweight"]->Add(hdphi["bkg_unweight_p"], -1);
+      hdphi["raw_"+tt+"_p"] = (TH1F*)hdphi["raw_"+tt]->Clone(Form("hdphi_raw_%s_p", tt.c_str()));
+      hdphi["raw_"+tt+"_p"]->Scale(1./purity);
+      hdphi["bkg_"+tt+"_p"] = (TH1F*)hdphi["bkg_"+tt]->Clone(Form("hdphi_bkg_%s_p", tt.c_str()));
+      hdphi["bkg_"+tt+"_p"]->Scale((1-purity)/purity);
+      hdphi["sub_"+tt] = (TH1F*)hdphi["raw_"+tt+"_p"]->Clone(Form("hdphi_sub_%s", tt.c_str()));
+      hdphi["sub_"+tt]->Add(hdphi["bkg_"+tt+"_p"], -1);
+      hdphi["sbr_"+tt] = (TH1F*)hdphi["sub_"+tt]->Clone(Form("hdphi_sbr_%s", tt.c_str()));
+      hdphi["sbr_"+tt]->Scale(1./pdg::BR_DZERO_KPI);
+    }
+  hdphi["eff_raw"] = (TH1F*)inf->Get("heff_raw");
+  hdphi["eff_bkg"] = (TH1F*)inf->Get("heff_bkg");
 
   std::string output = "rootfiles/" + pdana_calchist_::outputdir + "/calchist.root";
   xjjroot::mkdir(output);
@@ -56,28 +54,34 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
   pa.write();
   outf->Close();
 
-  for(auto& hh : hdphi) pdana_calchist_::seth(hh.second);
-  xjjroot::setthgrstyle(hdphi["raw"], kBlack, 20, 1, kBlack, 1, 2);
-  xjjroot::setthgrstyle(hdphi["raw_unweight"], kBlack, 20, 1, kBlack, 1, 2);
-  xjjroot::setthgrstyle(hdphi["bkg"], kGray, 24, 1, kGray, 1, 2);
-  xjjroot::setthgrstyle(hdphi["bkg_unweight"], kGray, 24, 1, kGray, 1, 2);
-  xjjroot::setthgrstyle(hdphi["raw_p"], kBlack, 20, 1, kBlack, 1, 2);
-  xjjroot::setthgrstyle(hdphi["raw_unweight_p"], kBlack, 20, 1, kBlack, 1, 2);
-  xjjroot::setthgrstyle(hdphi["bkg_p"], kBlack, 24, 1, kBlack, 1, 2);
-  xjjroot::setthgrstyle(hdphi["bkg_unweight_p"], kBlack, 24, 1, kBlack, 1, 2);
-  xjjroot::setthgrstyle(hdphi["sub"], kBlack, 20, 1, kBlack, 1, 2);
-  xjjroot::setthgrstyle(hdphi["sub_unweight"], kBlack, 20, 1, kBlack, 1, 2);
+  for(auto& hh : hdphi)
+    {
+      // seth
+      if(xjjc::str_contains(hh.first, "eff_"))
+        pdana_calchist_::seth(hh.second, "< 1 / #alpha #times #epsilon >", false);
+      else
+        pdana_calchist_::seth(hh.second);
+      // setthgrstyle
+      if(xjjc::str_contains(hh.first, "bkg"))
+        xjjroot::setthgrstyle(hh.second, kBlack, 24, 1, kBlack, 1, 2);
+      else
+        xjjroot::setthgrstyle(hh.second, kBlack, 20, 1, kBlack, 1, 2);
+    }
 
   std::map<std::string, TLegend*> leg;
   leg["scale"] = new TLegend(0.22, 0.65-0.04*5, 0.50, 0.65);
   leg["scale"]->SetHeader(Form("p = %.3f", purity), "L");
-  leg["scale"]->AddEntry(hdphi["raw_p"], "#frac{1}{p} #times Raw", "pl");
-  // leg["scale"]->AddEntry(hdphi["bkg"], "Bkg (sideband)", "pl");
-  leg["scale"]->AddEntry(hdphi["bkg_p"], "#frac{1-p}{p} #times Bkg", "pl");
+  leg["scale"]->AddEntry(hdphi["raw_fitweigh_p"], "#frac{1}{p} #times Raw", "pl");
+  leg["scale"]->AddEntry(hdphi["bkg_fitweigh_p"], "#frac{1-p}{p} #times Bkg", "pl");
   leg["sub"] = new TLegend(0.22, 0.65-0.04, 0.50, 0.65);
-  leg["sub"]->AddEntry(hdphi["sub"], "After sub.", "pl");
+  leg["sub"]->AddEntry(hdphi["sub_fitweigh"], "After sub.", "pl");
+  leg["sbr"] = new TLegend(0.22, 0.65-0.04, 0.50, 0.65);
+  leg["sbr"]->AddEntry(hdphi["sbr_fitweigh"], "After sub. / BR", "pl");
   leg["raw"] = new TLegend(0.22, 0.65-0.04, 0.50, 0.65);
-  leg["raw"]->AddEntry(hdphi["raw"], "Raw", "pl");
+  leg["raw"]->AddEntry(hdphi["raw_fitweigh"], "Raw", "pl");
+  leg["eff"] = new TLegend(0.22, 0.65-0.04*2, 0.50, 0.65);
+  leg["eff"]->AddEntry(hdphi["eff_raw"], "Raw", "pl");
+  leg["eff"]->AddEntry(hdphi["eff_bkg"], "Bkg", "pl");
   for(auto& ll : leg) xjjroot::setleg(ll.second, 0.035);
 
   TGaxis::SetExponentOffset(-0.1, 0, "y");
@@ -85,41 +89,44 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
   TCanvas* c;
 
   c = new TCanvas("c", "", 600, 600);
-  hdphi["raw"]->Draw("pe");
-  pdana_calchist_::makecanvas(c, pa, leg["raw"], "chdphi_raw", "D eff corr");
+  hdphi["eff_raw"]->Draw("pe");
+  hdphi["eff_bkg"]->Draw("pe same");
+  pdana_calchist_::makecanvas(c, pa, leg["eff"], "cheff", "");
 
-  c = new TCanvas("c", "", 600, 600);
-  hdphi["raw_unweight"]->Draw("pe");
-  pdana_calchist_::makecanvas(c, pa, leg["raw"], "chdphi_raw_unweight", "D eff uncorr");
+  std::map<std::string, std::string> tags;
+  tags["fitweigh"] = "D eff weight fit";
+  tags["unweight"] = "D eff uncorr";
+  tags["effcorr"] = "D eff corr";
+  for(auto& tt :types)
+    {
+      c = new TCanvas("c", "", 600, 600);
+      hdphi["raw_"+tt]->Draw("pe");
+      pdana_calchist_::makecanvas(c, pa, leg["raw"], "chdphi_raw_"+tt, tags[tt]);
 
-  c = new TCanvas("c", "", 600, 600);
-  hdphi["raw_p"]->Draw("pe");
-  hdphi["bkg_p"]->Draw("pe same");
-  pdana_calchist_::makecanvas(c, pa, leg["scale"], "chdphi", "D eff corr");
+      c = new TCanvas("c", "", 600, 600);
+      hdphi["raw_"+tt+"_p"]->Draw("pe");
+      hdphi["bkg_"+tt+"_p"]->Draw("pe same");
+      pdana_calchist_::makecanvas(c, pa, leg["scale"], "chdphi_bkg_"+tt, tags[tt]);
 
-  c = new TCanvas("c", "", 600, 600);
-  hdphi["raw_unweight_p"]->Draw("pe");
-  hdphi["bkg_unweight_p"]->Draw("pe same");
-  pdana_calchist_::makecanvas(c, pa, leg["scale"], "chdphi_unweight", "D eff uncorr");
+      c = new TCanvas("c", "", 600, 600);
+      hdphi["sub_"+tt]->Draw("pe");
+      pdana_calchist_::makecanvas(c, pa, leg["sub"], "chdphi_sub_"+tt, tags[tt]);
 
-  c = new TCanvas("c", "", 600, 600);
-  hdphi["sub"]->Draw("pe");
-  pdana_calchist_::makecanvas(c, pa, leg["sub"], "chdphi_sub", "D eff corr");
-
-  c = new TCanvas("c", "", 600, 600);
-  hdphi["sub_unweight"]->Draw("pe");
-  pdana_calchist_::makecanvas(c, pa, leg["sub"], "chdphi_sub_unweight", "D eff uncorr");
+      c = new TCanvas("c", "", 600, 600);
+      hdphi["sbr_"+tt]->Draw("pe");
+      pdana_calchist_::makecanvas(c, pa, leg["sbr"], "chdphi_sbr_"+tt, tags[tt]);
+    }
 
   return 0;
 }
 
-void pdana_calchist_::seth(TH1F* h, std::string ytitle)
+void pdana_calchist_::seth(TH1F* h, std::string ytitle, bool forcemaxdigits)
 {
   xjjroot::sethempty(h, 0, 0.1);
   h->SetMinimum(0);
   h->SetMaximum(h->GetMaximum()*1.4);
   h->GetXaxis()->SetNdivisions(-505);
-  h->GetYaxis()->SetMaxDigits(1);
+  if(forcemaxdigits) h->GetYaxis()->SetMaxDigits(1);
   h->GetYaxis()->SetTitle(ytitle.c_str());
 }
 

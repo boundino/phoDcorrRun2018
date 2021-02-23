@@ -12,6 +12,7 @@
 #include "xjjrootuti.h"
 #include "dfitter.h"
 #include "eff.h"
+#include "pdg.h"
 
 int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa)
 {
@@ -25,26 +26,30 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
   eff::effbins ebin(pa.ishi()?"effrootfiles/eff_PbPb_prompt.root":"effrootfiles/eff_pp_prompt.root", pa.ishi());
 
   phoD::bins<float> vb(pa.ishi()?phoD::bins_dphi_aa:phoD::bins_dphi_pp);
-  std::vector<TH1F*> hmass_raw(vb.n(), 0), hmass_bkg(vb.n(), 0), hmass_raw_unweight(vb.n(), 0), hmass_bkg_unweight(vb.n(), 0);
+  std::vector<TH1F*> hmass_raw_fitweigh(vb.n(), 0), hmass_bkg_fitweigh(vb.n(), 0), hmass_raw_unweight(vb.n(), 0), hmass_bkg_unweight(vb.n(), 0);
   for(int k=0; k<vb.n(); k++)
     {
-      hmass_raw[k] = new TH1F(Form("hmass_raw_%d", k), 
+      hmass_raw_fitweigh[k] = new TH1F(Form("hmass_raw_fitweigh_%d", k), 
                               Form("#Delta#phi/#pi: %s - %s;m_{K#pi} (GeV/c);", xjjc::number_remove_zero(vb[k]).c_str(), xjjc::number_remove_zero(vb[k+1]).c_str()), 
                               xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
-      hmass_bkg[k] = new TH1F(Form("hmass_bkg_%d", k), 
+      hmass_bkg_fitweigh[k] = new TH1F(Form("hmass_bkg_fitweigh_%d", k), 
                               Form("#Delta#phi/#pi: %s - %s;m_{K#pi} (GeV/c);", xjjc::number_remove_zero(vb[k]).c_str(), xjjc::number_remove_zero(vb[k+1]).c_str()), 
                               xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
       hmass_raw_unweight[k] = new TH1F(Form("hmass_raw_unweight_%d", k), 
-                              Form("#Delta#phi/#pi: %s - %s;m_{K#pi} (GeV/c);", xjjc::number_remove_zero(vb[k]).c_str(), xjjc::number_remove_zero(vb[k+1]).c_str()), 
-                              xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
+                                       Form("#Delta#phi/#pi: %s - %s;m_{K#pi} (GeV/c);", xjjc::number_remove_zero(vb[k]).c_str(), xjjc::number_remove_zero(vb[k+1]).c_str()), 
+                                       xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
       hmass_bkg_unweight[k] = new TH1F(Form("hmass_bkg_unweight_%d", k), 
-                              Form("#Delta#phi/#pi: %s - %s;m_{K#pi} (GeV/c);", xjjc::number_remove_zero(vb[k]).c_str(), xjjc::number_remove_zero(vb[k+1]).c_str()), 
-                              xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
+                                       Form("#Delta#phi/#pi: %s - %s;m_{K#pi} (GeV/c);", xjjc::number_remove_zero(vb[k]).c_str(), xjjc::number_remove_zero(vb[k+1]).c_str()), 
+                                       xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
     }
-  TH1F* hmass_incl_raw = new TH1F("hmass_incl_raw", ";m_{K#pi} (GeV/c);", xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
-  TH1F* hmass_incl_bkg = new TH1F("hmass_incl_bkg", ";m_{K#pi} (GeV/c);", xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
+  TH1F* hmass_incl_raw_fitweigh = new TH1F("hmass_incl_raw_fitweigh", ";m_{K#pi} (GeV/c);", xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
+  TH1F* hmass_incl_bkg_fitweigh = new TH1F("hmass_incl_bkg_fitweigh", ";m_{K#pi} (GeV/c);", xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
   TH1F* hmass_incl_raw_unweight = new TH1F("hmass_incl_raw_unweight", ";m_{K#pi} (GeV/c);", xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
   TH1F* hmass_incl_bkg_unweight = new TH1F("hmass_incl_bkg_unweight", ";m_{K#pi} (GeV/c);", xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
+  TH1F* heff_raw = new TH1F("heff_raw", ";#Delta#phi^{#gammaD} / #pi;1 / #alpha #times #epsilon", vb.n(), vb.v().data());
+  TH1F* heff_bkg = new TH1F("heff_bkg", ";#Delta#phi^{#gammaD} / #pi;1 / #alpha #times #epsilon", vb.n(), vb.v().data());
+  TH1F* heffnorm_raw = new TH1F("heffnorm_raw", ";#Delta#phi^{#gammaD} / #pi;1 / #alpha #times #epsilon", vb.n(), vb.v().data());
+  TH1F* heffnorm_bkg = new TH1F("heffnorm_bkg", ";#Delta#phi^{#gammaD} / #pi;1 / #alpha #times #epsilon", vb.n(), vb.v().data());
   TH1F* hnphoton = new TH1F("hnphoton", ";;", 2, 0, 2);
   int nentries = f->GetEntries();
   int passevtraw = 0, passevtbkg = 0, passevthlt = 0, passevtphoki = 0, passevtqual = 0;
@@ -102,17 +107,27 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
           int ibin = vb.ibin(dphi);
           if(see_raw)
             {
-              hmass_incl_raw->Fill(dtr->val<float>("Dmass", j), 1./effweight);
-              hmass_raw[ibin]->Fill(dtr->val<float>("Dmass", j), 1./effweight);
+              hmass_incl_raw_fitweigh->Fill(dtr->val<float>("Dmass", j), 1./effweight);
+              hmass_raw_fitweigh[ibin]->Fill(dtr->val<float>("Dmass", j), 1./effweight);
               hmass_incl_raw_unweight->Fill(dtr->val<float>("Dmass", j));
               hmass_raw_unweight[ibin]->Fill(dtr->val<float>("Dmass", j));
+              if(dtr->val<float>("Dmass", j) > pdg::DZERO_MASS-0.045 && dtr->val<float>("Dmass", j) < pdg::DZERO_MASS+0.045)
+                {
+                  heff_raw->Fill(dphi, 1./effweight);
+                  heffnorm_raw->Fill(dphi);
+                }
             }
           if(see_bkg)
             {
-              hmass_incl_bkg->Fill(dtr->val<float>("Dmass", j), 1./effweight);
-              hmass_bkg[ibin]->Fill(dtr->val<float>("Dmass", j), 1./effweight);
+              hmass_incl_bkg_fitweigh->Fill(dtr->val<float>("Dmass", j), 1./effweight);
+              hmass_bkg_fitweigh[ibin]->Fill(dtr->val<float>("Dmass", j), 1./effweight);
               hmass_incl_bkg_unweight->Fill(dtr->val<float>("Dmass", j));
               hmass_bkg_unweight[ibin]->Fill(dtr->val<float>("Dmass", j));
+              if(dtr->val<float>("Dmass", j) > pdg::DZERO_MASS-0.045 && dtr->val<float>("Dmass", j) < pdg::DZERO_MASS+0.045)
+                {
+                  heff_bkg->Fill(dphi, 1./effweight);
+                  heffnorm_bkg->Fill(dphi);
+                }
             }
         }
     }
@@ -125,18 +140,28 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
   hnphoton->SetBinContent(1, passevtraw);
   hnphoton->SetBinContent(2, passevtbkg);
 
+  for(int i=0; i<vb.n(); i++)
+    {
+      heff_raw->SetBinContent(i+1, heff_raw->GetBinContent(i+1)/heffnorm_raw->GetBinContent(i+1));
+      heff_raw->SetBinError(i+1, heff_raw->GetBinError(i+1)/heffnorm_raw->GetBinContent(i+1));
+      heff_bkg->SetBinContent(i+1, heff_bkg->GetBinContent(i+1)/heffnorm_bkg->GetBinContent(i+1));
+      heff_bkg->SetBinError(i+1, heff_bkg->GetBinError(i+1)/heffnorm_bkg->GetBinContent(i+1));
+    }
+
   std::string outputname = "rootfiles/" + outsubdir + "_" + pa.tag() + "/savehist.root";
   xjjroot::mkdir(outputname);
   TFile* outf = new TFile(outputname.c_str(), "recreate");
-  xjjroot::writehist(hmass_incl_raw, 10);
-  xjjroot::writehist(hmass_incl_bkg, 10);
+  xjjroot::writehist(hmass_incl_raw_fitweigh, 10);
+  xjjroot::writehist(hmass_incl_bkg_fitweigh, 10);
   xjjroot::writehist(hmass_incl_raw_unweight, 10);
   xjjroot::writehist(hmass_incl_bkg_unweight, 10);
-  for(auto& hh : hmass_raw) { xjjroot::writehist(hh, 10); }
-  for(auto& hh : hmass_bkg) { xjjroot::writehist(hh, 10); }
+  for(auto& hh : hmass_raw_fitweigh) { xjjroot::writehist(hh, 10); }
+  for(auto& hh : hmass_bkg_fitweigh) { xjjroot::writehist(hh, 10); }
   for(auto& hh : hmass_raw_unweight) { xjjroot::writehist(hh, 10); }
   for(auto& hh : hmass_bkg_unweight) { xjjroot::writehist(hh, 10); }
   xjjroot::writehist(hnphoton, 10);
+  xjjroot::writehist(heff_raw, 10);
+  xjjroot::writehist(heff_bkg, 10);
   pa.write();
   outf->Close();
 
