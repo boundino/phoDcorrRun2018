@@ -58,7 +58,7 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
     {
       // seth
       if(xjjc::str_contains(hh.first, "eff_"))
-        pdana_calchist_::seth(hh.second, "< 1 / #alpha #times #epsilon >", false);
+        pdana_calchist_::seth(hh.second, "< 1 / #alpha #times #varepsilon >", false);
       else
         pdana_calchist_::seth(hh.second);
       // setthgrstyle
@@ -82,6 +82,8 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
   leg["eff"] = new TLegend(0.22, 0.65-0.04*2, 0.50, 0.65);
   leg["eff"]->AddEntry(hdphi["eff_raw"], "Raw", "pl");
   leg["eff"]->AddEntry(hdphi["eff_bkg"], "Bkg", "pl");
+  leg["eff_raw"] = new TLegend(0.22, 0.65-0.04, 0.50, 0.65);
+  leg["eff_raw"]->AddEntry(hdphi["eff_raw"], "Raw", "pl");
   for(auto& ll : leg) xjjroot::setleg(ll.second, 0.035);
 
   TGaxis::SetExponentOffset(-0.1, 0, "y");
@@ -92,6 +94,10 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
   hdphi["eff_raw"]->Draw("pe");
   hdphi["eff_bkg"]->Draw("pe same");
   pdana_calchist_::makecanvas(c, pa, leg["eff"], "cheff", "");
+
+  c = new TCanvas("c", "", 600, 600);
+  hdphi["eff_raw"]->Draw("pe");
+  pdana_calchist_::makecanvas(c, pa, leg["eff_raw"], "cheff_raw", "");
 
   std::map<std::string, std::string> tags;
   tags["fitweigh"] = "D eff weight fit";
