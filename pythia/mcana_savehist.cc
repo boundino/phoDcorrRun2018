@@ -24,7 +24,7 @@ int mcana_savehist(std::string inputname, std::string outsubdir, int isembed, ph
   phoD::gtree* gtr = f->gtr();
   phoD::ptree* ptr = f->ptr();
 
-  phoD::bins<float> vb(phoD::bins_dphi_pp);
+  phoD::bins<float> vb(isembed?phoD::bins_dphi_aa:phoD::bins_dphi_pp);
   for(auto& tt : mcana_::types)
     mcana_::hdphi[tt] = new TH1F(Form("hdphi_%s", tt.c_str()), ";#Delta#phi^{#gammaD} / #pi;#frac{dN^{#gammaD}}{d#phi}", vb.n(), vb.v().data());
   float nphoton_mc_isoR4 = 0, nphoton_mc_isoR3 = 0, 

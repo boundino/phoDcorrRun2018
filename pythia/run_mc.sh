@@ -34,20 +34,23 @@ do
     inputfile=${inputs[0]}
     ishi=${inputs[1]}
     isembed=${inputs[2]}
-    tag=${tags_isembed[$isembed]}
-    echo -e "\e[32;1m$tag\e[0m"
+    tag="mc_"${tags_isembed[$isembed]}
+
     for i in ${ikine[@]}
     do
+        outputdir=${tag}_$(./getfname.exe $ishi ${config[i]} $ismc)
+        echo -e "--> \e[42m$outputdir\e[0m"
+
         set -x
         [[ $run_savehist -eq 1 ]] && { ./mcana_savehist.exe $inputfile $tag $isembed $ishi ${config[i]} $ismc ; }
         set +x
         
-        outputdir=${tag}_$(./getfname.exe $ishi ${config[i]} $ismc)
         input_drawhist=rootfiles/${outputdir}/savehist.root
         [[ $run_drawhist -eq 1 ]] && { 
             [[ -f $input_drawhist ]] &&
             { ./mcana_drawhist.exe $input_drawhist $tag $isembed; } ||
-            { echo -e "\e[31;1merror:\e[0m no input file \e[4m$input_drawhist\e[0m." ; } }
+            { echo -e "\e[31;1merror:\e[0m no input file \e[4m$input_drawhist\e[0m." ; } 
+        }
     done
 done
 
