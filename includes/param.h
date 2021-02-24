@@ -16,6 +16,7 @@
 namespace phoD
 {
   std::vector<float> bins_dphi_aa = {0, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+  // std::vector<float> bins_dphi_aa = {0, 0.3, 0.5, 0.7, 0.9, 1.0};
   std::vector<float> bins_dphi_pp = {0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
 
   // photon selection
@@ -31,6 +32,8 @@ namespace phoD
   const float see_max_aa_bkg_ = 0.02;
   const float iso_max_pp_ = -0.014755;
   const float iso_max_aa_ = 2.099277;
+  const float iso_max_pp_gen_ = 5;
+  const float iso_max_aa_gen_ = 5;
 
   // photon purity
   const float purity_pp_ = 0.844;
@@ -137,16 +140,12 @@ void phoD::param::parsetag()
 
 void phoD::param::print()
 {
-  int len = 35;
-  std::cout << "\e[34m" << std::string(len, '-') << std::endl
-            << std::left << std::setw(len) << "  "+tag_["ishi"] << "" << std::endl << std::string(len, '-') << std::endl
-            << std::left << std::setw(len) << "  "+tag_["ismc"] << "" << std::endl << std::string(len, '-') << std::endl
-            << std::left << std::setw(len) << "  "+tag_["cent"] << "" << std::endl << std::string(len, '-') << std::endl
-            << std::left << std::setw(len) << "  "+tag_["pt"] << "" << std::endl << std::string(len, '-') << std::endl
-            << std::left << std::setw(len) << "  "+tag_["y"] << "" << std::endl << std::string(len, '-') << std::endl
-            << std::left << std::setw(len) << "  "+tag_["phopt"] << "" << std::endl << std::string(len, '-') << std::endl
-            << std::left << std::setw(len) << "  "+tag_["phoeta"] << "" << std::endl << std::string(len, '-') << std::endl
-            << std::left << std::setw(len) << "  "+tag_[""] << "" << std::endl << std::string(len, '-') << "\e[0m" << std::endl;
+  xjjc::prt_divider("\e[34m");
+  for(auto& t : tag_)
+    {
+      std::cout << "\e[34m  " << t.second << "\e[0m" << std::endl;
+      xjjc::prt_divider("\e[34m");
+    }
 }
 
 void phoD::param::drawtex(float xleft, float ytop, float tsize, std::string exclude)

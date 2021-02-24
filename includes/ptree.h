@@ -36,8 +36,8 @@ namespace phoD
     bool sel_hem(int j);
     bool sel_see_raw(int j);
     bool sel_see_bkg(int j);
-    bool sel_iso(int j, bool gen_iso);
-    bool sel_iso_gen(int j);
+    bool sel_iso(int j, bool gen_iso=false, std::string var="R3");
+    bool sel_iso_gen(int j, std::string var="mcCalIsoDR04");
     bool sel(int j, bool gen_iso) { return (sel_hem(j) && sel_see_raw(j) && sel_iso(j, gen_iso)); }
 
     // fill new file tree
@@ -86,7 +86,7 @@ namespace phoD
       "mcEta",
       "mcPhi",
       "mcEt",
-      "mcCalIsoDR04",
+      "mcCalIsoDR04", // https://github.com/CmsHI/cmssw/blob/forest_CMSSW_10_3_1/HeavyIonsAnalysis/PhotonAnalysis/plugins/ggHiNtuplizer.cc#L1207
       "mcCalIsoDR03"
     };
     std::vector<std::string> tbvi_ = {
@@ -225,25 +225,27 @@ bool phoD::ptree::sel_see_bkg(int j)
   return see;
 }
 
-bool phoD::ptree::sel_iso(int j, bool gen_iso)
+bool phoD::ptree::sel_iso(int j, bool gen_iso, std::string var)
 {
-  float isolation = (*bvf_["pho_ecalClusterIsoR3"])[j] + (*bvf_["pho_hcalRechitIsoR3"])[j] + (*bvf_["pho_trackIsoR3PtCut20"])[j];
+  float isolation = (*bvf_["pho_ecalClusterIso"+var])[j] + (*bvf_["pho_hcalRechitIso"+var])[j] + (*bvf_["pho_trackIso"+var+"PtCut20"])[j];
   bool match = true;
+  float iso_max_ = ishi_?iso_max_aa_:iso_max_pp_;
   if(gen_iso && isMC_)
     {
       auto gen_index = (*bvi_["pho_genMatchedIndex"])[j];
       if(gen_index == -1) { match = false; }
-      isolation = (*bvf_["mcCalIsoDR04"])[gen_index];
+      std::string genvar = var=="R4"?"mcCalIsoDR04":"mcCalIsoDR03";
+      isolation = (*bvf_[genvar])[gen_index];
+      iso_max_ = ishi_?iso_max_aa_gen_:iso_max_pp_gen_;
     }
-  float iso_max_ = ishi_?iso_max_aa_:iso_max_pp_;
   bool iso = (isolation <= iso_max_) && match;
   return iso;
 }
 
-bool phoD::ptree::sel_iso_gen(int j)
+bool phoD::ptree::sel_iso_gen(int j, std::string var)
 {
-  float isolation = (*bvf_["mcCalIsoDR04"])[j];
-  float iso_max_ = ishi_?iso_max_aa_:iso_max_pp_;
+  float isolation = (*bvf_[var])[j];
+  float iso_max_ = ishi_?iso_max_aa_gen_:iso_max_pp_gen_;
   bool iso = isolation <= iso_max_;
   return iso;
 }

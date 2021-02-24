@@ -40,11 +40,11 @@ template<typename T>
 void phoD::bins<T>::print()
 {
   T x;
-  int len = 35;
-  std::cout << "\e[34m" << std::string(len, '-') << std::endl;;
-  std::cout << "  bins<" << xjjc::gettype(x) << ">({";
+  xjjc::prt_divider("\e[34m");
+  std::cout << "\e[34m  bins<" << xjjc::gettype(x) << ">({";
   for(auto& i : v_) { std::cout << i << ", "; }
-  std::cout << "})" << std::endl << std::string(len, '-') << "\e[0m" << std::endl;
+  std::cout << "})" << std::endl;
+  xjjc::prt_divider("\e[34m");
 }
 
 template<typename T>
