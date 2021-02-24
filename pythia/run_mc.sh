@@ -1,26 +1,23 @@
 #!/bin/bash
 
-jsyst=(0 1) # ishi
+jsyst=(0 1 2)
 ikine=(0)
-kcut=(1)
-ismc=1
 
-# jsyst
+###
+ismc=1
+# jsyst: input, ishi, isembed
 input=(
-    /raid5/data/wangj/DntupleRun2017/phodgmatch_20201104_Dpho_20201104_QCDPhoton_mc2017_realistic_forppRef5TeV_trk1Dpt2_pthatweight.root # pp
-    /raid5/data/wangj/DntupleRun2018/phodgmatch_20201019_Dpho_20200924_QCDPhoton_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2_pthatweight.root # PbPb
+    /raid5/data/wangj/DntupleRun2017/phodgmatch_20201104_Dpho_20201104_QCDPhoton_mc2017_realistic_forppRef5TeV_trk1Dpt2_pthatweight.root,0,0    # 0
+    /raid5/data/wangj/DntupleRun2018/phodgmatch_20201019_Dpho_20200924_QCDPhoton_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2_pthatweight.root,1,0 # 1
+    /raid5/data/wangj/DntupleRun2018/phodgmatch_20201019_Dpho_20200924_QCDPhoton_Filter30GeV_TuneCP5_HydjetDrumMB_trk1Dpt2_pthatweight.root,1,1 # 2
 )
-ishi=(0 1)
 # ikine
 config=(
     "5 100 1.2 0 90 40 1.442"  # 0
 )
-#kcut
-tag=(
-    "prel_default 0"
-    "prel_recoiso 1"
-    "prel_hydjet 4"
-)
+
+##
+tags_isembed=("pythia" "embed")
 
 ##
 run_savehist=${1:-0}
@@ -31,24 +28,26 @@ g++ getfname.cc -I"../includes/" $(root-config --libs --cflags) -g -o getfname.e
 [[ $run_savehist -eq 1 || $# == 0 ]] && { g++ mcana_savehist.cc $(root-config --libs --cflags) -I"../includes/" -g -o mcana_savehist.exe || exit 1 ; }
 [[ $run_drawhist -eq 1 || $# == 0 ]] && { g++ mcana_drawhist.cc $(root-config --libs --cflags) -I"../includes/" -g -o mcana_drawhist.exe || exit 1 ; }
 
-for i in ${ikine[@]}
+for j in ${jsyst[@]}
 do
-    for j in ${jsyst[@]}
+    IFS=','; inputs=(${input[j]}); unset IFS;
+    inputfile=${inputs[0]}
+    ishi=${inputs[1]}
+    isembed=${inputs[2]}
+    tag=${tags_isembed[$isembed]}
+    echo -e "\e[32;1m$tag\e[0m"
+    for i in ${ikine[@]}
     do
-        for k in ${kcut[@]}
-        do
-            tagki=$(./getfname.exe ${ishi[j]} ${config[i]} $ismc)
-            IFS=' '; tagstr=(${tag[k]}); unset IFS;
-            set -x
-            [[ $run_savehist -eq 1 ]] && { ./mcana_savehist.exe ${input[j]} ${tag[k]} ${ishi[j]} ${config[i]} $ismc ; }
-            set +x
-
-            input_drawhist=rootfiles/${tagstr[0]}_${tagki}/savehist.root
-            [[ $run_drawhist -eq 1 ]] && { 
-                [[ -f $input_drawhist ]] &&
-                { ./mcana_drawhist.exe $input_drawhist ${tag[k]} ; } ||
-                { echo -e "\e[31;1merror:\e[0m no input file \e[4m$input_drawhist\e[0m." ; } }
-        done
+        set -x
+        [[ $run_savehist -eq 1 ]] && { ./mcana_savehist.exe $inputfile $tag $isembed $ishi ${config[i]} $ismc ; }
+        set +x
+        
+        outputdir=${tag}_$(./getfname.exe $ishi ${config[i]} $ismc)
+        input_drawhist=rootfiles/${outputdir}/savehist.root
+        [[ $run_drawhist -eq 1 ]] && { 
+            [[ -f $input_drawhist ]] &&
+            { ./mcana_drawhist.exe $input_drawhist $tag $isembed; } ||
+            { echo -e "\e[31;1merror:\e[0m no input file \e[4m$input_drawhist\e[0m." ; } }
     done
 done
 
