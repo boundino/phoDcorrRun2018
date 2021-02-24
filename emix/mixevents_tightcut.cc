@@ -24,6 +24,7 @@ int mixevents(std::string inputname_trig, std::string inputname_mb,
   TFile* inf_trig = TFile::Open(inputname_trig.c_str());           
   phoD::forest* f_trig = new phoD::forest(inf_trig, ishi);
   phoD::etree* etr_trig = f_trig->etr();
+  phoD::ptree* ptr_trig = f_trig->ptr();
   TFile* outf = new TFile(outputname.c_str(), "recreate");
 
   phoD::skimbranch* sb = new phoD::skimbranch(ishi);
@@ -84,6 +85,24 @@ int mixevents(std::string inputname_trig, std::string inputname_mb,
       for(auto& ss : s) { if(ss.first != "ntDkpi") { ss.second->GetEntry(i); } } // GetEntry -> trig
 
       if(!etr_trig->presel(true)) continue;
+      
+      // photon selection --------->
+      int jlead = -1;
+      for(int j=0; j<ptr_trig->nPho(); j++)
+        {
+          // eta
+          if(fabs(ptr_trig->val<float>("phoSCEta", j)) >= 1.442) continue;
+          // hovere
+          if(!ptr_trig->presel(j)) continue;
+          jlead = j;
+          break;
+        }
+      if(jlead < 0) continue;
+      if(!ptr_trig->sel_hem(jlead) || !ptr_trig->sel_iso(jlead, false)) continue;
+      bool see_raw = ptr_trig->sel_see_raw(jlead);
+      bool see_bkg = ptr_trig->sel_see_bkg(jlead);
+      if(!see_raw && !see_bkg) continue;
+      // photon selection <----------
 
       int ihibin = mix.ihibin(etr_trig->hiBin());
       if(ihibin < 0) { std::cout<<"error: bad hiBin."<<std::endl; return 2; }
