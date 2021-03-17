@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [[ $# -ne 8 ]]; then
-    echo "usage: ./skim-phod-checkfile.sh [input file] [output dir] [output filename] [ishi] [evtfilt] [hltfilt] [mvafilt] [proxy]"
+if [[ $# -ne 10 ]]; then
+    echo "usage: ./skim-skimd-checkfile.sh [input file] [output dir] [output filename] [ishi] [evtfilt] [hltfilt] [mvafilt] [ptcut] [removeevent] [proxy]"
     exit 1
 fi
 
@@ -12,7 +12,10 @@ ISHI=$4
 EVTFILT=$5
 HLTFILT=$6
 MVAFILT=$7
-export X509_USER_PROXY=${PWD}/$8
+PTCUT=$8
+RMEVENT=$9
+export X509_USER_PROXY=${PWD}/${10}
+echo $X509_USER_PROXY
 
 SRM_PREFIX="/mnt/hadoop/"
 SRM_PATH=${DESTINATION#${SRM_PREFIX}}
@@ -21,7 +24,7 @@ SRM_PATH=${DESTINATION#${SRM_PREFIX}}
 tar -xzvf mva.tgz
 
 set -x
-./skim.exe $INFILE $OUTFILE $ISHI $EVTFILT $MVAFILT $HLTFILT
+./skim.exe $INFILE $OUTFILE $ISHI $EVTFILT $HLTFILT $MVAFILT $PTCUT $RMEVENT
 set +x
 
 if [[ $? -eq 0 ]]; then

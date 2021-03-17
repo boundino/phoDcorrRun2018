@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [[ $# -ne 8 ]]; then
-    echo "usage: ./skim-condor-checkfile.sh [input dir] [output dir] [max jobs] [log dir] [ishi] [evtfilt] [hltfilt] [mvafilt]"
+if [[ $# -ne 10 ]]; then
+    echo "usage: ./skim-condor-checkfile.sh [input dir] [output dir] [max jobs] [log dir] [ishi] [evtfilt] [hltfilt] [mvafilt] [ptcut] [removeevent]"
     exit 1
 fi
 
@@ -13,10 +13,12 @@ ISHI=$5
 EVTFILT=$6
 HLTFILT=$7
 MVAFILT=$8
+PTCUT=$9
+RMEVENT=${10}
 
 PROXYFILE=$(ls /tmp/ -lt | grep $USER | grep -m 1 x509 | awk '{print $NF}')
 
-tag="phod"
+tag="skimd"
 
 rm filelist.txt
 # ls $DATASET | grep -v "/" | grep -v -e '^[[:space:]]*$' | awk '{print "" $0}' >> filelist.txt
@@ -57,7 +59,7 @@ Universe     = vanilla
 Initialdir   = $PWD/
 Notification = Error
 Executable   = $PWD/skim-${tag}-checkfile.sh
-Arguments    = $inputname $DEST_CONDOR ${outputfile} $ISHI $EVTFILT $HLTFILT $MVAFILT $PROXYFILE 
+Arguments    = $inputname $DEST_CONDOR ${outputfile} $ISHI $EVTFILT $HLTFILT $MVAFILT $PTCUT $RMEVENT $PROXYFILE 
 GetEnv       = True
 Output       = $LOGDIR/log-${infn}.out
 Error        = $LOGDIR/log-${infn}.err
