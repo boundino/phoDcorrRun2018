@@ -10,10 +10,9 @@
 #include "dmva.h"
 #include "xjjcuti.h"
 
-float phoEtCut = 30.;
-bool removeevent = false;
 int skim(std::string inputname, std::string outputname,
-         int ishi, int evtfilt, int mvafilt, int hltfilt)
+         int ishi, int evtfilt, int hltfilt, int mvafilt,
+         float phoEtCut=35., bool removeevent=true)
 {
   TFile* inf = TFile::Open(inputname.c_str());
   TFile* outf = new TFile(outputname.c_str(), "recreate");
@@ -31,7 +30,7 @@ int skim(std::string inputname, std::string outputname,
   phoD::dtree* dt = new phoD::dtree((TTree*)inf->Get("Dfinder/ntDkpi"), ishi);
   phoD::dtree* dt_new = new phoD::dtree(outf, "Dfinder/ntDkpi", ishi);
   phoD::ptree* pt = new phoD::ptree((TTree*)inf->Get("ggHiNtuplizerGED/EventTree"), ishi);
-  phoD::ptree* pt_new = new phoD::ptree(outf, "ggHiNtuplizerGED/EventTree", ishi, pt->isMC());
+  phoD::ptree* pt_new = new phoD::ptree(outf, "ggHiNtuplizerGED/EventTree", ishi, pt->isMC(), pt->nt());
 
   // hiBin
   int hiBin = -1;
@@ -85,7 +84,7 @@ int skim(std::string inputname, std::string outputname,
       // fill photon
       for(int j=0; j<pt->nPho(); j++)
         { 
-          bool fill = pt->val("phoEt", j) > phoEtCut;
+          bool fill = pt->val<float>("phoEt", j) > phoEtCut;
           if(!fill) continue;
           pt_new->Fillall("pho", pt, j);
           pt_new->nPhopp();
@@ -93,7 +92,7 @@ int skim(std::string inputname, std::string outputname,
       // fill electron
       for(int j=0; j<pt->nEle(); j++)
         {
-          bool fill = pt->val("elePt", j) > phoEtCut;
+          bool fill = pt->val<float>("elePt", j) > phoEtCut;
           if(!fill) continue;
           pt_new->Fillall("ele", pt, j);
           pt_new->nElepp();
@@ -172,7 +171,8 @@ int skim(std::string inputname, std::string outputname,
 
 int main(int argc, char* argv[])
 {
-  if(argc==7) { return skim(argv[1], argv[2],
-                            atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6])); }
+  if(argc==9) { return skim(argv[1], argv[2],
+                            atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6]),
+                            atof(argv[7]), atoi(argv[8])); }
   return 1;
 }

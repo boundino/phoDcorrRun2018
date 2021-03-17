@@ -17,7 +17,7 @@ namespace phoD
   {
   public:
     ptree(TTree* nt, bool ishi);
-    ptree(TFile* outf, std::string name, bool ishi, bool isMC);
+    ptree(TFile* outf, std::string name, bool ishi, bool isMC, TTree* nt_template=0);
     TTree* nt() { return nt_; }
 
     // read
@@ -56,6 +56,7 @@ namespace phoD
     bool isMC_, ishi_;
     void setbranchaddress();
     void branch();
+    template<typename T> bool checkbranchstatus(std::string b, TTree* nt_template=0);
     int nPho_, nEle_, nMC_;
     std::vector<std::string> tbvf_ = {
       "eleIP3D",
@@ -87,7 +88,7 @@ namespace phoD
       "mcPhi",
       "mcEt",
       "mcCalIsoDR04", // https://github.com/CmsHI/cmssw/blob/forest_CMSSW_10_3_1/HeavyIonsAnalysis/PhotonAnalysis/plugins/ggHiNtuplizer.cc#L1207
-      "mcCalIsoDR03"
+      "mcCalIsoDR03",
     };
     std::vector<std::string> tbvi_ = {
       "pho_genMatchedIndex",
@@ -101,39 +102,56 @@ namespace phoD
   };
 }
 
+template<typename T>
+bool phoD::ptree::checkbranchstatus(std::string b, TTree* nt_template)
+{
+  bool bvs = false;
+  if(nt_template)
+    {
+      if(nt_template->FindBranch(b.c_str()))
+        {
+          bvs = true;
+          std::cout<<"  \e[34m--> "<<b<<"\e[0m"<<std::endl;
+        }
+      else
+        std::cout<<"  \e[31m(x) "<<b<<"\e[0m"<<std::endl;
+    }
+  else
+    {
+      bvs = true;
+      std::cout<<"  \e[32m--> "<<b<<"\e[0m"<<std::endl;
+    }
+  bvs_[b] = bvs;
+  return bvs;
+}
+
+// read existing trees
 phoD::ptree::ptree(TTree* nt, bool ishi) : nt_(nt), ishi_(ishi)
 {
   std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<"\e[0m"<<std::endl;
 
   newtree_ = false;
+  isMC_ = nt_->FindBranch("nMC");
 
   nt_->SetBranchStatus("*", 0);
-  nt_->SetBranchStatus("nEle", 1);
-  nt_->SetBranchStatus("nPho", 1);
 
-  isMC_ = nt_->FindBranch("nMC");
-  if(isMC_) { nt_->SetBranchStatus("nMC", 1); }
+  // check + set [bvs]
+  for(auto& b : tbvf_) { if(checkbranchstatus<float>(b, nt_)) bvf_[b] = 0; }
+  for(auto& b : tbvi_) { if(checkbranchstatus<int>(b, nt_)) bvi_[b] = 0; }
 
-  for(auto& b : tbvf_) { bvs_[b] = false;
-    if(nt_->FindBranch(b.c_str())) { nt_->SetBranchStatus(b.c_str(), 1); bvs_[b] = true; } }
-  for(auto& b : tbvi_) { bvs_[b] = false;
-    if(nt_->FindBranch(b.c_str())) { nt_->SetBranchStatus(b.c_str(), 1); bvs_[b] = true; } }
-  for(auto& b : tbvf_) bvf_[b] = 0;
-  for(auto& b : tbvi_) bvi_[b] = 0;
   setbranchaddress();
 }
 
-phoD::ptree::ptree(TFile* outf, std::string name, bool ishi, bool isMC) : isMC_(isMC), ishi_(ishi)
+// create new trees
+phoD::ptree::ptree(TFile* outf, std::string name, bool ishi, bool isMC, TTree* nt_template) : isMC_(isMC), ishi_(ishi)
 {
   std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<"\e[0m"<<std::endl;
 
   newtree_ = true;
 
-  for(auto& i : tbvf_)
-    { 
-      bvf_[i] = new std::vector<float>;
-      bvs_[i] = false;
-    }
+  // check + set [bvs]
+  for(auto& b : tbvf_) { if(checkbranchstatus<float>(b, nt_template)) bvf_[b] = new std::vector<float>; }
+  for(auto& b : tbvi_) { if(checkbranchstatus<int>(b, nt_template)) bvi_[b] = new std::vector<int>; }
 
   std::vector<std::string> p = xjjc::str_divide(name, "/");
   if(p.size() > 1)
@@ -144,7 +162,9 @@ phoD::ptree::ptree(TFile* outf, std::string name, bool ishi, bool isMC) : isMC_(
   else { dr_ = outf; }
   dr_->cd();
   nt_ = new TTree(p.back().c_str(), "");
+
   branch();
+
   outf->cd();
 }
 
@@ -152,7 +172,7 @@ void phoD::ptree::ClearnPhoEleMC()
 { 
   if(!newtree_) return;
   nPho_ = 0; nEle_ = 0; nMC_ = 0;
-  for(auto& b : tbvf_) bvf_[b]->clear();
+  for(auto& b : tbvf_) { if(bvs_[b]) bvf_[b]->clear(); }
 }
 
 void phoD::ptree::branch()
@@ -160,14 +180,17 @@ void phoD::ptree::branch()
   nt_->Branch("nPho", &nPho_, "nPho/I");
   nt_->Branch("nEle", &nEle_, "nEle/I");
   if(isMC_) nt_->Branch("nMC", &nMC_, "nMC/I");
-  for(auto& b : tbvf_) 
-    {
-      if(!isMC_ && xjjc::str_contains(b, "mc")) continue;
-      nt_->Branch(b.c_str(), bvf_[b]);
-      // if(xjjc::str_contains(b, "pho")) nt_->Branch(b.c_str(), bvf_[b], Form("%s[nPho]/F", b.c_str()));
-      // if(xjjc::str_contains(b, "ele")) nt_->Branch(b.c_str(), bvf_[b], Form("%s[nEle]/F", b.c_str()));
-      // if(xjjc::str_contains(b, "mc") && isMC_) nt_->Branch(b.c_str(), bvf_[b], Form("%s[nMC]/F", b.c_str()));
-    }
+  for(auto& b : tbvf_) { if(bvs_[b]) { nt_->Branch(b.c_str(), bvf_[b]); } }
+  for(auto& b : tbvi_) { if(bvs_[b]) { nt_->Branch(b.c_str(), bvi_[b]); } }
+}
+
+void phoD::ptree::setbranchaddress()
+{
+  nt_->SetBranchStatus("nPho", 1); nt_->SetBranchAddress("nPho", &nPho_);
+  nt_->SetBranchStatus("nEle", 1); nt_->SetBranchAddress("nEle", &nEle_);
+  if(nt_->FindBranch("nMC")) { nt_->SetBranchStatus("nMC", 1); nt_->SetBranchAddress("nMC", &nMC_); }
+  for(auto& b : tbvf_) { if(bvs_[b]) { nt_->SetBranchStatus(b.c_str(), 1); nt_->SetBranchAddress(b.c_str(), &(bvf_[b])); } }
+  for(auto& b : tbvi_) { if(bvs_[b]) { nt_->SetBranchStatus(b.c_str(), 1); nt_->SetBranchAddress(b.c_str(), &(bvi_[b])); } }
 }
 
 template<typename T> T phoD::ptree::val(std::string br, int j)
@@ -178,21 +201,11 @@ template<typename T> T phoD::ptree::val(std::string br, int j)
   return (T)0;
 }
 
-void phoD::ptree::setbranchaddress()
-{
-  nt_->SetBranchAddress("nPho", &nPho_);
-  nt_->SetBranchAddress("nEle", &nEle_);
-  if(nt_->FindBranch("nMC")) { nt_->SetBranchAddress("nMC", &nMC_); }
-  for(auto& b : tbvf_) { if(bvs_[b]) { nt_->SetBranchAddress(b.c_str(), &(bvf_[b])); } }
-  for(auto& b : tbvi_) { if(bvs_[b]) { nt_->SetBranchAddress(b.c_str(), &(bvi_[b])); } }
-}
-
-
 void phoD::ptree::Fillall(std::string tag, ptree* nt, int j)
 {
   if(!newtree_) return;
-  for(auto& b : tbvf_) { if(nt->status(b) && xjjc::str_contains(b, tag)) { bvf_[b]->push_back(nt->val<float>(b, j)); } }
-  for(auto& b : tbvi_) { if(nt->status(b) && xjjc::str_contains(b, tag)) { bvi_[b]->push_back(nt->val<int>(b, j)); } }
+  for(auto& b : tbvf_) { if(nt->status(b) && bvs_[b] && xjjc::str_contains(b, tag)) { bvf_[b]->push_back(nt->val<float>(b, j)); } }
+  for(auto& b : tbvi_) { if(nt->status(b) && bvs_[b] && xjjc::str_contains(b, tag)) { bvi_[b]->push_back(nt->val<int>(b, j)); } }
 }
 
 bool phoD::ptree::presel(int j)
