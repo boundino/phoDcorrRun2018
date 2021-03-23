@@ -28,7 +28,7 @@ namespace eff
     std::vector<float> fcentbins_PbPb = {0, 30, 50, 90};
     std::vector<float> fcentbins_pp = {-1, 0};
     std::vector<float> fptbins = {2, 2.5, 3., 3.5, 4., 4.5, 5., 5.5, 6., 6.5, 7., 8., 9., 10., 12., 14., 16., 20., 30.};
-    std::vector<float> fybins = {0., 1.2};
+    std::vector<float> fybins = {0., 1.2, 2.4};
     std::string ftpt(int ipt);
     std::string fty(int iy);
     std::string ftcent(int icent);
