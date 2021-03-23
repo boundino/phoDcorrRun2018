@@ -29,7 +29,6 @@ int skim(std::string inputname, std::string outputname,
   std::map<std::string, phoD::jtree*> jt, jt_new;
   if(ishi)
     {
-
       jt["4Calo"] = new phoD::jtree((TTree*)inf->Get("akPu4CaloJetAnalyzer/t"), ishi);
       jt_new["4Calo"] = new phoD::jtree(outf, "akPu4CaloJetAnalyzer/t", ishi, jt["4Calo"]->isMC(), jt["4Calo"]->nt());
       jt["4PF"] = new phoD::jtree((TTree*)inf->Get("akPu4PFJetAnalyzer/t"), ishi);
@@ -53,8 +52,8 @@ int skim(std::string inputname, std::string outputname,
   std::map<std::string, std::map<bool, std::vector<std::string>>> path;
   path["skim"][true] = std::vector<std::string>{"pprimaryVertexFilter", "phfCoincFilter2Th4", "pclusterCompatibilityFilter"}; // HI
   path["skim"][false] = std::vector<std::string>{"pBeamScrapingFilter", "pPAprimaryVertexFilter"}; // pp
-  path["hlt"][true] = std::vector<std::string>{"HLT_HIGEDPhoton40_v1"}; // HI
-  path["hlt"][false] = std::vector<std::string>{"HLT_HIPhoton40_HoverELoose_v1"}; // pp
+  path["hlt"][true] = std::vector<std::string>{"HLT_HIPuAK4CaloJet80Eta5p1_v1", "HLT_HIPuAK4CaloJet100Eta5p1_v1"}; // HI
+  path["hlt"][false] = std::vector<std::string>{"HLT_HIAK4CaloJet80_v1"}; // pp
 
   std::map<std::string, std::map<std::string, int>> vevt;
   for(auto& sh : path)

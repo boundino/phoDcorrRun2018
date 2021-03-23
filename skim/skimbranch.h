@@ -144,9 +144,9 @@ phoD::skimbranch::skimbranch(bool ishi) : fishi(ishi)
   };
 
   if(fishi)
-    fbr["hltanalysis/HltTree"] = {"HLT_HIGEDPhoton*_v*"};
+    fbr["hltanalysis/HltTree"] = {"HLT_HIGEDPhoton*_v*", "HLT_HIPuAK4CaloJet*_v*"};
   else
-    fbr["hltanalysis/HltTree"] = {"HLT_HIPhoton*_HoverELoose_v*"};
+    fbr["hltanalysis/HltTree"] = {"HLT_HIPhoton*_HoverELoose_v*", "HLT_HIAK4CaloJet*_v*"};
     
   if(fishi)
     fbr["hltobject/HLT_HIGEDPhoton40_v"] = {"*"};
