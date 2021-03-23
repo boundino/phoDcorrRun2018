@@ -30,11 +30,11 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
   for(int k=0; k<vb.n(); k++)
     {
       hmass_raw_fitweigh[k] = new TH1F(Form("hmass_raw_fitweigh_%d", k), 
-                              Form("#Delta#phi/#pi: %s - %s;m_{K#pi} (GeV/c);", xjjc::number_remove_zero(vb[k]).c_str(), xjjc::number_remove_zero(vb[k+1]).c_str()), 
-                              xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
+                                       Form("#Delta#phi/#pi: %s - %s;m_{K#pi} (GeV/c);", xjjc::number_remove_zero(vb[k]).c_str(), xjjc::number_remove_zero(vb[k+1]).c_str()), 
+                                       xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
       hmass_bkg_fitweigh[k] = new TH1F(Form("hmass_bkg_fitweigh_%d", k), 
-                              Form("#Delta#phi/#pi: %s - %s;m_{K#pi} (GeV/c);", xjjc::number_remove_zero(vb[k]).c_str(), xjjc::number_remove_zero(vb[k+1]).c_str()), 
-                              xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
+                                       Form("#Delta#phi/#pi: %s - %s;m_{K#pi} (GeV/c);", xjjc::number_remove_zero(vb[k]).c_str(), xjjc::number_remove_zero(vb[k+1]).c_str()), 
+                                       xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
       hmass_raw_unweight[k] = new TH1F(Form("hmass_raw_unweight_%d", k), 
                                        Form("#Delta#phi/#pi: %s - %s;m_{K#pi} (GeV/c);", xjjc::number_remove_zero(vb[k]).c_str(), xjjc::number_remove_zero(vb[k+1]).c_str()), 
                                        xjjroot::n_hist_dzero, xjjroot::min_hist_dzero, xjjroot::max_hist_dzero);
@@ -51,6 +51,9 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
   TH1F* heffnorm_raw = new TH1F("heffnorm_raw", ";#Delta#phi^{#gammaD} / #pi;1 / #alpha #times #epsilon", vb.n(), vb.v().data());
   TH1F* heffnorm_bkg = new TH1F("heffnorm_bkg", ";#Delta#phi^{#gammaD} / #pi;1 / #alpha #times #epsilon", vb.n(), vb.v().data());
   TH1F* hnphoton = new TH1F("hnphoton", ";;", 2, 0, 2);
+  std::map<std::string, TH1F*> hd;
+  hd["pt_raw"] = new TH1F("hdpt_raw", ";D p_{T} (GeV/c);", 40, 2, 42);
+  hd["pt_bkg"] = new TH1F("hdpt_bkg", ";D p_{T} (GeV/c);", 40, 2, 42);
   int nentries = f->GetEntries();
   int passevtraw = 0, passevtbkg = 0, passevthlt = 0, passevtphoki = 0, passevtqual = 0;
   for(int i=0; i<nentries; i++)
@@ -60,7 +63,8 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
 
       // event selection + hlt
       if(pa.ishi() && (etr->hiBin() < pa["centmin"]*2 || etr->hiBin() > pa["centmax"]*2)) continue;
-      if(!etr->presel(ignorehlt)) continue;
+      if(!etr->hltsel_photon() && !ignorehlt) continue;
+      if(!etr->evtsel()) continue;
 
       passevthlt++;
 
@@ -69,7 +73,7 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
       for(int j=0; j<ptr->nPho(); j++) 
         {
           // pt, eta
-          if(ptr->val<float>("phoEt", j) <= pa["phoptmin"] || fabs(ptr->val<float>("phoSCEta", j)) >= pa["phoetamax"]) continue;
+          if((*ptr)["phoEt"][j] <= pa["phoptmin"] || fabs((*ptr)["phoSCEta"][j]) >= pa["phoetamax"]) continue;
           passki++;
           // hovere
           if(!ptr->presel(j)) continue;
@@ -93,25 +97,36 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
       for(int j=0; j<dtr->Dsize(); j++)
         {
           // D selection applied in skim
-          if(dtr->val<float>("Dpt", j) < pa["Dptmin"] || dtr->val<float>("Dpt", j) > pa["Dptmax"]) continue;
-          if(fabs(dtr->val<float>("Dy", j)) > pa["Dymax"]) continue;
           if(!dtr->presel(j)) continue;
           if(!dtr->tightsel(j)) continue;
+          if(see_raw)
+            {
+              // D kinematic
+              if(fabs((*dtr)["Dy"][j]) < pa["Dymax"])
+                {
+                  if(pdg::dzero_sigreg((*dtr)["Dmass"][j]))
+                    hd["pt_raw"]->Fill((*dtr)["Dpt"][j]);
+                  if(pdg::dzero_sideband((*dtr)["Dmass"][j]))
+                    hd["pt_bkg"]->Fill((*dtr)["Dpt"][j]);
+                }
+            }
+          if((*dtr)["Dpt"][j] < pa["Dptmin"] || (*dtr)["Dpt"][j] > pa["Dptmax"]) continue;
+          if(fabs((*dtr)["Dy"][j]) > pa["Dymax"]) continue;
 
           // std::cout<<etr->hiBin()<<std::endl;
-          float effweight = ebin.geteff(dtr->val<float>("Dpt", j), fabs(dtr->val<float>("Dy", j)), etr->hiBin());
+          float effweight = ebin.geteff((*dtr)["Dpt"][j], fabs((*dtr)["Dy"][j]), etr->hiBin());
 
           // dphi calculation
-          float dphi = phoD::cal_dphi_01(dtr->val<float>("Dphi", j), 
-                                         ptr->val<float>("phoPhi", jlead)); // 0 ~ 1
+          float dphi = phoD::cal_dphi_01((*dtr)["Dphi"][j], 
+                                         (*ptr)["phoPhi"][jlead]); // 0 ~ 1
           int ibin = vb.ibin(dphi);
           if(see_raw)
             {
-              hmass_incl_raw_fitweigh->Fill(dtr->val<float>("Dmass", j), 1./effweight);
-              hmass_raw_fitweigh[ibin]->Fill(dtr->val<float>("Dmass", j), 1./effweight);
-              hmass_incl_raw_unweight->Fill(dtr->val<float>("Dmass", j));
-              hmass_raw_unweight[ibin]->Fill(dtr->val<float>("Dmass", j));
-              if(dtr->val<float>("Dmass", j) > pdg::DZERO_MASS-0.045 && dtr->val<float>("Dmass", j) < pdg::DZERO_MASS+0.045)
+              hmass_incl_raw_fitweigh->Fill((*dtr)["Dmass"][j], 1./effweight);
+              hmass_raw_fitweigh[ibin]->Fill((*dtr)["Dmass"][j], 1./effweight);
+              hmass_incl_raw_unweight->Fill((*dtr)["Dmass"][j]);
+              hmass_raw_unweight[ibin]->Fill((*dtr)["Dmass"][j]);
+              if((*dtr)["Dmass"][j] > pdg::DZERO_MASS-0.045 && (*dtr)["Dmass"][j] < pdg::DZERO_MASS+0.045)
                 {
                   heff_raw->Fill(dphi, 1./effweight);
                   heffnorm_raw->Fill(dphi);
@@ -119,11 +134,11 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
             }
           if(see_bkg)
             {
-              hmass_incl_bkg_fitweigh->Fill(dtr->val<float>("Dmass", j), 1./effweight);
-              hmass_bkg_fitweigh[ibin]->Fill(dtr->val<float>("Dmass", j), 1./effweight);
-              hmass_incl_bkg_unweight->Fill(dtr->val<float>("Dmass", j));
-              hmass_bkg_unweight[ibin]->Fill(dtr->val<float>("Dmass", j));
-              if(dtr->val<float>("Dmass", j) > pdg::DZERO_MASS-0.045 && dtr->val<float>("Dmass", j) < pdg::DZERO_MASS+0.045)
+              hmass_incl_bkg_fitweigh->Fill((*dtr)["Dmass"][j], 1./effweight);
+              hmass_bkg_fitweigh[ibin]->Fill((*dtr)["Dmass"][j], 1./effweight);
+              hmass_incl_bkg_unweight->Fill((*dtr)["Dmass"][j]);
+              hmass_bkg_unweight[ibin]->Fill((*dtr)["Dmass"][j]);
+              if((*dtr)["Dmass"][j] > pdg::DZERO_MASS-0.045 && (*dtr)["Dmass"][j] < pdg::DZERO_MASS+0.045)
                 {
                   heff_bkg->Fill(dphi, 1./effweight);
                   heffnorm_bkg->Fill(dphi);
@@ -148,9 +163,16 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
       heff_bkg->SetBinError(i+1, heff_bkg->GetBinError(i+1)/heffnorm_bkg->GetBinContent(i+1));
     }
 
+  hd["pt_raw"]->Sumw2();
+  hd["pt_bkg"]->Sumw2();
+  hd["pt_bkg"]->Scale(pdg::DZERO_SCALE);
+  hd["pt_sig"] = (TH1F*)hd["pt_raw"]->Clone("hdpt_sig");
+  hd["pt_sig"]->Add(hd["pt_bkg"], -1);
+
   std::string outputname = "rootfiles/" + outsubdir + "_" + pa.tag() + "/savehist.root";
   xjjroot::mkdir(outputname);
   TFile* outf = new TFile(outputname.c_str(), "recreate");
+  for(auto& hh : hd) { xjjroot::writehist(hh.second, 10); }
   xjjroot::writehist(hmass_incl_raw_fitweigh, 10);
   xjjroot::writehist(hmass_incl_bkg_fitweigh, 10);
   xjjroot::writehist(hmass_incl_raw_unweight, 10);

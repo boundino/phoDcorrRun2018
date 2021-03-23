@@ -1,30 +1,26 @@
 #!/bin/bash
 
 ikine=(0)
-jsyst=(0 1 2)
+jsyst=(1)
 
 # ikine
 # Dptmin Dptmax Dymax centmin centmax phoptmin phoetamax
 config=(
     "5 100 1.2 0 90 40 1.442"  # 0 default
     "2 100 1.2 0 90 20 1.442"  # 1
-    "3 100 1.2 0 90 20 1.442"  # 2
-    "5 100 1.2 0 90 20 1.442"  # 3
-    "2 100 1.2 0 90 20 2.4"    # 4
-    "5 100 1.2 0 30 40 1.442"  # 5
-    "5 100 1.2 30 90 40 1.442"  # 6
+    "5 100 1.2 0 90 20 1.442"  # 2
+    "5 100 2.4 0 90 40 2.4"    # 3
+    "5 100 1.2 0 30 40 1.442"  # 4
+    "5 100 1.2 30 90 40 1.442"  # 5
 )
 
-# binning
-tagpri="ana_finebin"
-
 # jsyst
-# inputfile, ishi, tag, ismc
+# inputfile, ishi, tag, ismc, binning
 input=(
-    /raid5/data/wangj/DntupleRun2017/phodcut_20201002_Dpho_20201002_HighEGJet_17Nov2017_HIPhoton_HoverELoose_trk1Dpt2_vfl2.root,0,trig,0
-    /raid5/data/wangj/DntupleRun2018/phodmva_20200924_Dpho_20200921_HIHardProbes_04Apr2019_HIGEDPhoton40_trk1Dpt2.root,1,trig,0
-    /raid5/data/wangj/DntupleRun2018/phodmva_20210217_Dpho_20200921_HIHardProbes_04Apr2019_HIGEDPhoton40_trk1Dpt2_phoEt35_hlt40_NMIX40_photight.root,1,emix,0
-    /raid5/data/wangj/DntupleRun2018/phodmva_20210201_Dpho_20210120_HIMinimumBias_trk1Dpt2_phoEt19_rm0size_f171113.root,1,mb27p,0
+    /raid5/data/wangj/DntupleRun2017/phodcut_20201002_Dpho_20201002_HighEGJet_17Nov2017_HIPhoton_HoverELoose_trk1Dpt2_vfl2.root,0,trig,0,finebin
+    /raid5/data/wangj/DntupleRun2018/phodmva_20200924_Dpho_20200921_HIHardProbes_04Apr2019_HIGEDPhoton40_trk1Dpt2.root,1,trig,0,widebin
+    /raid5/data/wangj/DntupleRun2018/phodmva_20210217_Dpho_20200921_HIHardProbes_04Apr2019_HIGEDPhoton40_trk1Dpt2_phoEt35_hlt40_NMIX40_photight.root,1,emix,0,widebin
+    /raid5/data/wangj/DntupleRun2018/phodmva_20210201_Dpho_20210120_HIMinimumBias_trk1Dpt2_phoEt19_rm0size_f171113.root,1,mb27p,0,widebin
 )
 
 ##
@@ -45,11 +41,12 @@ do
     ishi=${inputs[1]}
     tag_sample=${inputs[2]}
     ismc=${inputs[3]}
+    tagpri="ana_${inputs[4]}"
     tag=${tagpri}_${tag_sample}
 
     for i in ${ikine[@]}
     do
-        tagki=$(./getfname.exe $ishi ${config[i]} $ismc)
+        tagki=$(./getfname.exe $ishi ${config[i]} $ismc "phoD")
         echo -e "--> \e[42m$tag, $tagki\e[0m"
         
         [[ $run_savehist -eq 1 ]] && { ./pdana_savehist.exe $inputfile $tag $ishi ${config[i]} $ismc ; }

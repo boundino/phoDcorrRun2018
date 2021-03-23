@@ -35,6 +35,10 @@ int pdana_fithist(std::string inputname, std::string outsubdir)
   float nphoton_bkg = hnphoton->GetBinContent(2);
   TH1F* heff_raw = (TH1F*)inf->Get("heff_raw");
   TH1F* heff_bkg = (TH1F*)inf->Get("heff_bkg");
+  // get hdpt
+  TH1F* hdpt_raw = (TH1F*)inf->Get("hdpt_raw");
+  TH1F* hdpt_bkg = (TH1F*)inf->Get("hdpt_bkg");
+  TH1F* hdpt_sig = (TH1F*)inf->Get("hdpt_sig");
   // create hdphi
   TH1F* hdphi_raw_fitweigh = new TH1F("hdphi_raw_fitweigh", ";#Delta#phi^{#gammaD} / #pi;dN^{#gammaD}/d#phi", vb.n(), vb.v().data());
   TH1F* hdphi_raw_unweight = new TH1F("hdphi_raw_unweight", ";#Delta#phi^{#gammaD} / #pi;dN^{#gammaD}/d#phi", vb.n(), vb.v().data());
@@ -103,6 +107,9 @@ int pdana_fithist(std::string inputname, std::string outsubdir)
   xjjroot::writehist(hdphi_bkg_effcorr);
   xjjroot::writehist(heff_raw);
   xjjroot::writehist(heff_bkg);
+  xjjroot::writehist(hdpt_raw);
+  xjjroot::writehist(hdpt_bkg);
+  xjjroot::writehist(hdpt_sig);
   pa.write();
   outf->Close();
 
