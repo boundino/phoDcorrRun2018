@@ -22,7 +22,7 @@ namespace phoD
 
     // read
     template<typename T> T val(std::string br, int j);
-
+    std::vector<float> &operator[](std::string br) { return *(bvf_[br]); }
     bool status(std::string br) { return bvs_[br]; }
     int GetEntries() { return nt_->GetEntries(); }
     void GetEntry(int i) { nt_->GetEntry(i); }
