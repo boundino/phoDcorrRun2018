@@ -15,6 +15,14 @@
 
 namespace phoD
 {
+  std::vector<std::string> var = {"dphi"};
+  std::map<std::string, std::string> vartex = {
+    {"dphi", "#Delta#phi^{jD} / #pi"},
+  };
+  std::map<std::string, std::string> varytex = {
+    {"dphi", "#frac{dN^{jD}}{d#Delta#phi}"},
+  };
+
   // std::vector<float> bins_dphi_aa = {0, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
   std::vector<float> bins_dphi_aa = {0, 0.3, 0.5, 0.7, 0.9, 1.0};
   std::vector<float> bins_dphi_pp = {0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
@@ -169,8 +177,23 @@ void phoD::param::drawtex(float xleft, float ytop, float tsize, std::string excl
 
 namespace Djet
 {
-  std::vector<float> bins_dphi_aa = {0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
-  std::vector<float> bins_dphi_pp = {0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+  std::vector<std::string> var = {"dphi", "dr"};
+  std::map<std::string, std::string> vartex = {
+    {"dphi", "#Delta#phi^{jD} / #pi"},
+    {"dr", "#Deltar^{jD}"}
+  };
+  std::map<std::string, std::string> varytex = {
+    {"dphi", "#frac{dN^{jD}}{d#Delta#phi}"},
+    {"dr", "#frac{dN^{jD}}{d#Deltar}"}
+  };
+  std::map<std::string, std::vector<float>> bins_pp = {
+    {"dphi", {0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}},
+    {"dr", {0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0}},
+  };
+  std::map<std::string, std::vector<float>> bins_aa = {
+    {"dphi", {0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}},
+    {"dr", {0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0}},
+  };
 
   // jet selection
   // const float iso_max_aa_gen_ = 5;
