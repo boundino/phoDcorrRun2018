@@ -185,7 +185,7 @@ void phoD::jtree::branch()
 void phoD::jtree::setbranchaddress()
 {
   nt_->SetBranchStatus("nref", 1); nt_->SetBranchAddress("nref", &nref_);
-  if(isMC_) nt_->SetBranchStatus("ngen", 1); nt_->SetBranchAddress("ngen", &ngen_);
+  if(isMC_) { nt_->SetBranchStatus("ngen", 1); nt_->SetBranchAddress("ngen", &ngen_); }
   for(auto& b : tbvf_) { if(bvs_[b]) { nt_->SetBranchStatus(b.c_str(), 1); nt_->SetBranchAddress(b.c_str(), bvf_[b]); } }
   for(auto& b : tbvi_) { if(bvs_[b]) { nt_->SetBranchStatus(b.c_str(), 1); nt_->SetBranchAddress(b.c_str(), bvi_[b]); } }
   for(auto& b : tbvo_) { if(bvs_[b]) { nt_->SetBranchStatus(b.c_str(), 1); nt_->SetBranchAddress(b.c_str(), bvo_[b]); } }
