@@ -39,7 +39,8 @@ namespace phoD
 
     // fill new file tree
     void Clearnrefngen() { if(newtree_) { nref_ = 0; ngen_ = 0; } }
-    void Fillall(jtree* nt, int j);
+    void Fillall_nref(jtree* nt, int j);
+    void Fillall_ngen(jtree* nt, int j);
     void Fillone(std::string br, float val, int i=-1) { int i_ = i<0?nref_:i; if(newtree_) { bvf_[br][i_] = val; } }
     void nrefpp() { if(newtree_) nref_++; }
     void ngenpp() { if(newtree_) ngen_++; }
@@ -199,12 +200,20 @@ template<typename T> T phoD::jtree::val(std::string br, int j)
   return (T)0;
 }
 
-void phoD::jtree::Fillall(jtree* nt, int j)
+void phoD::jtree::Fillall_nref(jtree* nt, int j)
 {
   if(!newtree_) return;
-  for(auto& b : tbvf_) { if(nt->status(b) && bvs_[b]) { bvf_[b][xjjc::str_contains(b, "gen")?ngen_:nref_] = nt->val<float>(b, j); } }
-  for(auto& b : tbvi_) { if(nt->status(b) && bvs_[b]) { bvi_[b][xjjc::str_contains(b, "gen")?ngen_:nref_] = nt->val<int>(b, j); } }
-  for(auto& b : tbvo_) { if(nt->status(b) && bvs_[b]) { bvo_[b][xjjc::str_contains(b, "gen")?ngen_:nref_] = nt->val<bool>(b, j); } }
+  for(auto& b : tbvf_) { if(nt->status(b) && bvs_[b] && !xjjc::str_contains(b, "gen")) { bvf_[b][nref_] = nt->val<float>(b, j); } }
+  for(auto& b : tbvi_) { if(nt->status(b) && bvs_[b] && !xjjc::str_contains(b, "gen")) { bvi_[b][nref_] = nt->val<int>(b, j); } }
+  for(auto& b : tbvo_) { if(nt->status(b) && bvs_[b] && !xjjc::str_contains(b, "gen")) { bvo_[b][nref_] = nt->val<bool>(b, j); } }
+}
+
+void phoD::jtree::Fillall_ngen(jtree* nt, int j)
+{
+  if(!newtree_) return;
+  for(auto& b : tbvf_) { if(nt->status(b) && bvs_[b] && xjjc::str_contains(b, "gen")) { bvf_[b][ngen_] = nt->val<float>(b, j); } }
+  for(auto& b : tbvi_) { if(nt->status(b) && bvs_[b] && xjjc::str_contains(b, "gen")) { bvi_[b][ngen_] = nt->val<int>(b, j); } }
+  for(auto& b : tbvo_) { if(nt->status(b) && bvs_[b] && xjjc::str_contains(b, "gen")) { bvo_[b][ngen_] = nt->val<bool>(b, j); } }
 }
 
 bool phoD::jtree::presel(int j)

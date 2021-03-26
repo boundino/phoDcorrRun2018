@@ -93,7 +93,7 @@ int skim(std::string inputname, std::string outputname,
         }
 
       // jet
-      for(auto& jj : jt_new) jj.second->Clearnref();
+      for(auto& jj : jt_new) jj.second->Clearnrefngen();
       // fill jet
       for(auto& jj : jt)
         {
@@ -102,13 +102,26 @@ int skim(std::string inputname, std::string outputname,
             { 
               bool fill = jt[t]->val<float>("jtpt", j) > jetptcut;
               if(!fill) continue;
-              jt_new[t]->Fillall(jt[t], j);
+              jt_new[t]->Fillall_nref(jt[t], j);
               jt_new[t]->nrefpp();
             }
         }
       int njet = 0;
       for(auto& jj : jt_new) njet += jj.second->nref(); 
       if(removeevent && njet==0) continue;
+      // fill gen jet
+      for(auto& jj : jt)
+        {
+          std::string t = jj.first;
+          if(!jt[t]->isMC()) break;
+          for(int j=0; j<jt[t]->ngen(); j++)
+            { 
+              bool fill = jt[t]->val<float>("genpt", j) > jetptcut;
+              if(!fill) continue;
+              jt_new[t]->Fillall_ngen(jt[t], j);
+              jt_new[t]->ngenpp();
+            }
+        }
 
       // fill D
       dt_new->ClearDsize();
