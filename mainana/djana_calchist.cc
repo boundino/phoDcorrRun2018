@@ -10,9 +10,9 @@
 #include "xjjrootuti.h"
 #include "pdg.h"
 
-namespace djana_calchist_
+namespace djana_
 {
-  void seth(TH1F* h, std::string ytitle="#frac{1}{N^{jet}} #frac{dN^{jD}}{d#phi}", bool forcemaxdigits=true, bool setminmax=true);
+  void seth(TH1F* h, std::string ytitle, bool forcemaxdigits=true, bool setminmax=true);
   std::string outputdir;
   void makecanvas(TCanvas* c, Djet::param& pa, TLegend* leg, std::string name, std::string comment="");
 }
@@ -21,98 +21,78 @@ int djana_calchist(std::string inputname, std::string outsubdir)
 {
   TFile* inf = TFile::Open(inputname.c_str());
   Djet::param pa(inf);
-  djana_calchist_::outputdir = outsubdir + "_" + pa.tag();
+  djana_::outputdir = outsubdir + "_" + pa.tag();
 
-  std::vector<std::string> types = {"fitweigh", "unweight", "effcorr"};
-  std::map<std::string, TH1F*> hdphi;
-  for(auto& tt : types)
+  std::vector<std::string> type = {"fitweigh", "unweight", "effcorr"};
+  std::map<std::string, std::string> tags;
+  tags["fitweigh"] = "D eff weight fit";
+  tags["unweight"] = "D eff uncorr";
+  tags["effcorr"] = "D eff corr";
+  std::map<std::string, TH1F*> hd, heff;
+  for(auto& v : Djet::var) // dphi, dr
     {
-      hdphi["raw_"+tt] = (TH1F*)inf->Get(Form("hdphi_raw_%s", tt.c_str()));
-      float njet_raw = atof(hdphi["raw_"+tt]->GetTitle());
-      hdphi["raw_"+tt]->Scale(1./njet_raw);
+      for(auto& t : type)
+        {
+          hd[v+"_"+t] = xjjroot::gethist<TH1F>(inf, Form("h%s_%s", v.c_str(), t.c_str()));
+          float njet = atof(hd[v+"_"+t]->GetTitle());
+          hd[v+"_"+t]->Scale(1./njet);
 
-      hdphi["sbr_"+tt] = (TH1F*)hdphi["raw_"+tt]->Clone(Form("hdphi_sbr_%s", tt.c_str()));
-      hdphi["sbr_"+tt]->Scale(1./pdg::BR_DZERO_KPI);
+          hd[v+"_"+t+"_sbr"] = (TH1F*)hd[v+"_"+t]->Clone(Form("h%s_sbr_%s", v.c_str(), t.c_str()));
+          hd[v+"_"+t+"_sbr"]->Scale(1./pdg::BR_DZERO_KPI);
+        }
+      heff[v] = xjjroot::gethist<TH1F>(inf, Form("heff_%s", v.c_str()));
+      djana_::seth(heff[v], "< 1 / #alpha #times #varepsilon >", false);
+      xjjroot::setthgrstyle(heff[v], kBlack, 20, 1, kBlack, 1, 2);
     }
-  hdphi["eff_raw"] = (TH1F*)inf->Get("heff_raw");
-  hdphi["dpt_raw"] = (TH1F*)inf->Get("hdpt_raw");
-  hdphi["dpt_bkg"] = (TH1F*)inf->Get("hdpt_bkg");
-  hdphi["dpt_sig"] = (TH1F*)inf->Get("hdpt_sig");
 
-  std::string output = "rootfiles/" + djana_calchist_::outputdir + "/calchist.root";
+  std::string output = "rootfiles/" + djana_::outputdir + "/calchist.root";
   xjjroot::mkdir(output);
   TFile* outf = new TFile(output.c_str(), "recreate");
-  for(auto& hh : hdphi) xjjroot::writehist(hh.second);
+  for(auto& hh : hd) xjjroot::writehist(hh.second);
   pa.write();
   outf->Close();
 
-  for(auto& hh : hdphi)
+  for(auto& hh : hd)
     {
-      // seth
-      if(xjjc::str_contains(hh.first, "eff_"))
-        djana_calchist_::seth(hh.second, "< 1 / #alpha #times #varepsilon >", false);
-      else if(xjjc::str_contains(hh.first, "dpt_"))
-        djana_calchist_::seth(hh.second, "", false, false);
-      else
-        djana_calchist_::seth(hh.second);
-      // setthgrstyle
-      if(xjjc::str_contains(hh.first, "bkg"))
-        xjjroot::setthgrstyle(hh.second, kBlack, 24, 1, kBlack, 7, 2);
-      else if(xjjc::str_contains(hh.first, "sig"))
-        xjjroot::setthgrstyle(hh.second, kAzure, 20, 1, kAzure, 1, 2);
-      else
-        xjjroot::setthgrstyle(hh.second, kBlack, 20, 1, kBlack, 1, 2);
+      djana_::seth(hh.second, Form("#frac{1}{N^{jet}} %s", hh.second->GetYaxis()->GetTitle()));
+      xjjroot::setthgrstyle(hh.second, kBlack, 20, 1, kBlack, 1, 2);
     }
-  hdphi["dpt_raw"]->SetMinimum(hdphi["dpt_sig"]->GetMinimum()*0.1);
-  hdphi["dpt_raw"]->SetMaximum(hdphi["dpt_raw"]->GetMaximum()*5);
 
   std::map<std::string, TLegend*> leg;
   leg["sbr"] = new TLegend(0.22, 0.65-0.04, 0.50, 0.65);
-  leg["sbr"]->AddEntry(hdphi["sbr_fitweigh"], "After sub. / BR", "pl");
+  leg["sbr"]->AddEntry(hd["dphi_effcorr_sbr"], "Raw / BR", "pl");
   leg["raw"] = new TLegend(0.22, 0.65-0.04, 0.50, 0.65);
-  leg["raw"]->AddEntry(hdphi["raw_fitweigh"], "Raw", "pl");
+  leg["raw"]->AddEntry(hd["dphi_effcorr"], "Raw", "pl");
   leg["eff"] = new TLegend(0.22, 0.65-0.04, 0.50, 0.65);
-  leg["eff"]->AddEntry(hdphi["eff_raw"], "Raw", "pl");
-  leg["dpt"] = new TLegend(0.72, 0.75-0.04*3, 0.90, 0.75);
-  leg["dpt"]->AddEntry(hdphi["dpt_sig"], "Signal", "pl");
-  leg["dpt"]->AddEntry(hdphi["dpt_raw"], "Raw", "pl");
-  leg["dpt"]->AddEntry(hdphi["dpt_bkg"], "Bkg", "pl");
+  leg["eff"]->AddEntry(heff["dphi"], "Raw", "pl");
   for(auto& ll : leg) xjjroot::setleg(ll.second, 0.035);
 
   TGaxis::SetExponentOffset(-0.1, 0, "y");
   xjjroot::setgstyle(1);
   TCanvas* c;
 
-  c = new TCanvas("c", "", 600, 600);
-  hdphi["eff_raw"]->Draw("pe");
-  djana_calchist_::makecanvas(c, pa, leg["eff"], "cheff", "");
-
-  c = new TCanvas("c", "", 600, 600);
-  c->SetLogy();
-  hdphi["dpt_raw"]->Draw("pe");
-  hdphi["dpt_bkg"]->Draw("pe same");
-  hdphi["dpt_sig"]->Draw("pe same");
-  djana_calchist_::makecanvas(c, pa, leg["dpt"], "chdpt", "");
-
-  std::map<std::string, std::string> tags;
-  tags["fitweigh"] = "D eff weight fit";
-  tags["unweight"] = "D eff uncorr";
-  tags["effcorr"] = "D eff corr";
-  for(auto& tt :types)
+  for(auto& v : Djet::var)
     {
       c = new TCanvas("c", "", 600, 600);
-      hdphi["raw_"+tt]->Draw("pe");
-      djana_calchist_::makecanvas(c, pa, leg["raw"], "chdphi_raw_"+tt, tags[tt]);
+      heff[v]->Draw("pe");
+      djana_::makecanvas(c, pa, leg["eff"], "ch"+v+"_eff", "");
 
-      c = new TCanvas("c", "", 600, 600);
-      hdphi["sbr_"+tt]->Draw("pe");
-      djana_calchist_::makecanvas(c, pa, leg["sbr"], "chdphi_sbr_"+tt, tags[tt]);
+      for(auto& t :type)
+        {
+          c = new TCanvas("c", "", 600, 600);
+          hd[v+"_"+t]->Draw("pe");
+          djana_::makecanvas(c, pa, leg["raw"], "c"+std::string(hd[v+"_"+t]->GetName()), tags[t]);
+
+          c = new TCanvas("c", "", 600, 600);
+          hd[v+"_"+t+"_sbr"]->Draw("pe");
+          djana_::makecanvas(c, pa, leg["sbr"], "c"+std::string(hd[v+"_"+t+"_sbr"]->GetName()), tags[t]);
+        }
     }
 
   return 0;
 }
 
-void djana_calchist_::seth(TH1F* h, std::string ytitle, bool forcemaxdigits, bool setminmax)
+void djana_::seth(TH1F* h, std::string ytitle, bool forcemaxdigits, bool setminmax)
 {
   xjjroot::sethempty(h, 0, 0.1);
   if(setminmax)
@@ -132,7 +112,7 @@ int main(int argc, char* argv[])
   return 1;
 }
 
-void djana_calchist_::makecanvas(TCanvas* c, Djet::param& pa, TLegend* leg, std::string name, std::string comment)
+void djana_::makecanvas(TCanvas* c, Djet::param& pa, TLegend* leg, std::string name, std::string comment)
 {
   c->cd();
   pa.drawtex(0.23, 0.85, 0.035);
@@ -140,8 +120,8 @@ void djana_calchist_::makecanvas(TCanvas* c, Djet::param& pa, TLegend* leg, std:
   xjjroot::drawCMSleft();
   xjjroot::drawCMSright(Form("%s #sqrt{s_{NN}} = 5.02 TeV", pa.tag("ishi").c_str()));
   xjjroot::drawtex(0.92, 0.80, comment.c_str(), 0.035, 33, 62);
-  xjjroot::drawcomment(djana_calchist_::outputdir, "lb");
-  std::string output = "plots/" + djana_calchist_::outputdir + "/" + name + ".pdf";
+  xjjroot::drawcomment(djana_::outputdir, "lb");
+  std::string output = "plots/" + djana_::outputdir + "/" + name + ".pdf";
   xjjroot::mkdir(output);
   c->SaveAs(output.c_str());
   delete c;

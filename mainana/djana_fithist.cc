@@ -14,69 +14,80 @@ int djana_fithist(std::string inputname, std::string outsubdir)
 {
   TFile* inf = TFile::Open(inputname.c_str());
   Djet::param pa(inf);
-  phoD::bins<float> vb(pa.ishi()?Djet::bins_dphi_aa:Djet::bins_dphi_pp);
-  // get hmass
-  std::vector<TH1F*> hmass_raw_fitweigh(vb.n(), 0), hmass_raw_unweight(vb.n(), 0);
-  for(int k=0; k<vb.n(); k++)
+  std::vector<std::string> type = {"fitweigh", "unweight"};
+
+  // binning
+  std::map<std::string, xjjana::bins<float>> vb;
+  vb["dphi"] = xjjana::bins<float>(pa.ishi()?Djet::bins_aa["dphi"]:Djet::bins_pp["dphi"]);
+  vb["dr"] = xjjana::bins<float>(pa.ishi()?Djet::bins_aa["dr"]:Djet::bins_pp["dr"]);
+
+  xjjc::prt_divider();
+
+  // get hmass, heff
+  std::map<std::string, std::vector<TH1F*>> hmass;
+  std::map<std::string, TH1F*> hmass_incl, heff, hd;
+  for(auto& v : Djet::var) // dphi, dr
     {
-      hmass_raw_fitweigh[k] = (TH1F*)inf->Get(Form("hmass_raw_fitweigh_%d", k));
-      hmass_raw_unweight[k] = (TH1F*)inf->Get(Form("hmass_raw_unweight_%d", k));
+      heff[v] = xjjroot::gethist<TH1F>(inf, Form("heff_%s", v.c_str()));
+      for(auto& t : type) // fitweight, unweight
+        {
+          hmass_incl[v+"_"+t] = xjjroot::gethist<TH1F>(inf, Form("hmass_incl_%s_%s", v.c_str(), t.c_str()));
+          for(int k=0; k<vb[v].n(); k++)
+            {
+              TH1F* h = xjjroot::gethist<TH1F>(inf, Form("hmass_%s_%s_%d", v.c_str(), t.c_str(), k));
+              hmass[v+"_"+t].push_back(h);
+            }
+          hd[v+"_"+t] = new TH1F(Form("h%s_%s", v.c_str(), t.c_str()), Form(";%s;%s", Djet::vartex[v].c_str(), Djet::varytex[v].c_str()), vb[v].n(), vb[v].v().data());
+        }
+      hd[v+"_effcorr"] = new TH1F(Form("h%s_effcorr", v.c_str()), Form(";%s;%s", Djet::vartex[v].c_str(), Djet::varytex[v].c_str()), vb[v].n(), vb[v].v().data());
     }
-  TH1F* hmass_incl_raw_fitweigh = (TH1F*)inf->Get("hmass_incl_raw_fitweigh");
-  TH1F* hmass_incl_raw_unweight = (TH1F*)inf->Get("hmass_incl_raw_unweight");
-  // get njet & heff
-  TH1F* hnjet = (TH1F*)inf->Get("hnjet");
-  float njet_raw = hnjet->GetBinContent(1);
-  TH1F* heff_raw = (TH1F*)inf->Get("heff_raw");
-  // get hdpt
-  TH1F* hdpt_raw = (TH1F*)inf->Get("hdpt_raw");
-  TH1F* hdpt_bkg = (TH1F*)inf->Get("hdpt_bkg");
-  TH1F* hdpt_sig = (TH1F*)inf->Get("hdpt_sig");
-  // create hdphi
-  TH1F* hdphi_raw_fitweigh = new TH1F("hdphi_raw_fitweigh", ";#Delta#phi^{jD} / #pi;dN^{jD}/d#phi", vb.n(), vb.v().data());
-  TH1F* hdphi_raw_unweight = new TH1F("hdphi_raw_unweight", ";#Delta#phi^{jD} / #pi;dN^{jD}/d#phi", vb.n(), vb.v().data());
-  TH1F* hdphi_raw_effcorr = new TH1F("hdphi_raw_effcorr", ";#Delta#phi^{jD} / #pi;dN^{jD}/d#phi", vb.n(), vb.v().data());
+  type.push_back("effcorr");
+  // get njet
+  TH1F* hnjet = xjjroot::gethist<TH1F>(inf, "hnjet");
+  float njet = hnjet->GetBinContent(1);
   // get hmassmc
   TFile* inftpl = TFile::Open("masstpl_PbPb.root");
-  TH1F* hmassmc_signal = (TH1F*)inftpl->Get("hHistoRMassSignal_pt_0_dr_0");
-  TH1F* hmassmc_swapped = (TH1F*)inftpl->Get("hHistoRMassSwapped_pt_0_dr_0");
+  TH1F* hmassmc_signal = xjjroot::gethist<TH1F>(inftpl, "hHistoRMassSignal_pt_0_dr_0");
+  TH1F* hmassmc_swapped = xjjroot::gethist<TH1F>(inftpl, "hHistoRMassSwapped_pt_0_dr_0");
+
+  xjjc::prt_divider();
 
   xjjroot::dfitter df("YCF"), dfw("YCFW");
-  std::string fitoutput = "plots/" + outsubdir + "_" + pa.tag() + "/idx/cmass";
-  xjjroot::mkdir(fitoutput);
-  dfw.fit(hmass_incl_raw_fitweigh, hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_incl_raw_fitweigh", fitoutput.c_str()), 
-          std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
-  df.fit(hmass_incl_raw_unweight, hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_incl_raw_unweight", fitoutput.c_str()), 
-         std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
-  for(int k=0; k<vb.n(); k++)
+  for(auto& v : Djet::var) // dphi, dr
     {
-      dfw.fit(hmass_raw_fitweigh[k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_raw_fitweigh_%d", fitoutput.c_str(), k), 
-              std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb.tag(k, "#Delta#phi/#pi").c_str()}));
-      hdphi_raw_fitweigh->SetBinContent(k+1, dfw.GetY()/vb.width(k)/M_PI);
-      hdphi_raw_fitweigh->SetBinError(k+1, dfw.GetYE()/vb.width(k)/M_PI);
+      std::string fitoutput = "plots/" + outsubdir + "_" + pa.tag() + "/idx_" + v + "/cmass";
+      xjjroot::mkdir(fitoutput);
 
-      df.fit(hmass_raw_unweight[k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_raw_unweight_%d", fitoutput.c_str(), k), 
-             std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb.tag(k, "#Delta#phi/#pi").c_str()}));
-      hdphi_raw_unweight->SetBinContent(k+1, df.GetY()/vb.width(k)/M_PI);
-      hdphi_raw_unweight->SetBinError(k+1, df.GetYE()/vb.width(k)/M_PI);
-      hdphi_raw_effcorr->SetBinContent(k+1, df.GetY()/vb.width(k)/M_PI*heff_raw->GetBinContent(k+1));
-      hdphi_raw_effcorr->SetBinError(k+1, df.GetYE()/vb.width(k)/M_PI*heff_raw->GetBinContent(k+1));
+      dfw.fit(hmass_incl[v+"_fitweigh"], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_incl_fitweigh", fitoutput.c_str()), 
+              std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
+      df.fit(hmass_incl[v+"_unweight"], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_incl_unweight", fitoutput.c_str()), 
+             std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
+      for(int k=0; k<vb[v].n(); k++)
+        {
+          float bin_width = vb[v].width(k) * M_PI; // dphi
+          if(v=="dr") bin_width = vb[v].area(k);
+
+          dfw.fit(hmass[v+"_fitweigh"][k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_fitweigh_%d", fitoutput.c_str(), k), 
+                  std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb[v].tag(k, Djet::vartex[v]).c_str()}));
+          hd[v+"_fitweigh"]->SetBinContent(k+1, dfw.GetY()/bin_width);
+          hd[v+"_fitweigh"]->SetBinError(k+1, dfw.GetYE()/bin_width);
+
+          df.fit(hmass[v+"_unweight"][k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_unweight_%d", fitoutput.c_str(), k), 
+                 std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb[v].tag(k, Djet::vartex[v]).c_str()}));
+          hd[v+"_unweight"]->SetBinContent(k+1, df.GetY()/bin_width);
+          hd[v+"_unweight"]->SetBinError(k+1, df.GetYE()/bin_width);
+          hd[v+"_effcorr"]->SetBinContent(k+1, df.GetY()/bin_width*heff[v]->GetBinContent(k+1));
+          hd[v+"_effcorr"]->SetBinError(k+1, df.GetYE()/bin_width*heff[v]->GetBinContent(k+1));
+        }
+      for(auto& t : type)
+        hd[v+"_"+t]->SetTitle(Form("%f", njet));
     }
-
-  hdphi_raw_fitweigh->SetTitle(Form("%f", njet_raw));
-  hdphi_raw_unweight->SetTitle(Form("%f", njet_raw));
-  hdphi_raw_effcorr->SetTitle(Form("%f", njet_raw));
 
   std::string outputname = "rootfiles/" + outsubdir + "_" + pa.tag() + "/fithist.root";
   xjjroot::mkdir(outputname);
   TFile* outf = new TFile(outputname.c_str(), "recreate");
-  xjjroot::writehist(hdphi_raw_fitweigh);
-  xjjroot::writehist(hdphi_raw_unweight);
-  xjjroot::writehist(hdphi_raw_effcorr);
-  xjjroot::writehist(heff_raw);
-  xjjroot::writehist(hdpt_raw);
-  xjjroot::writehist(hdpt_bkg);
-  xjjroot::writehist(hdpt_sig);
+  for(auto& h : hd) xjjroot::writehist(h.second, 10);
+  for(auto& h : heff) xjjroot::writehist(h.second, 10);
   pa.write();
   outf->Close();
 
