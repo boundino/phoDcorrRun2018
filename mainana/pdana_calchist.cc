@@ -12,7 +12,7 @@
 
 namespace pdana_calchist_
 {
-  void seth(TH1F* h, std::string ytitle="#frac{1}{N^{#gamma}} #frac{dN^{#gammaD}}{d#phi}", bool forcemaxdigits=true);
+  void seth(TH1F* h, std::string ytitle="#frac{1}{N^{#gamma}} #frac{dN^{#gammaD}}{d#phi}", bool forcemaxdigits=true, bool setminmax=true);
   std::string outputdir;
   void makecanvas(TCanvas* c, phoD::param& pa, TLegend* leg, std::string name, std::string comment="");
 }
@@ -46,6 +46,9 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
     }
   hdphi["eff_raw"] = (TH1F*)inf->Get("heff_raw");
   hdphi["eff_bkg"] = (TH1F*)inf->Get("heff_bkg");
+  hdphi["dpt_raw"] = (TH1F*)inf->Get("hdpt_raw");
+  hdphi["dpt_bkg"] = (TH1F*)inf->Get("hdpt_bkg");
+  hdphi["dpt_sig"] = (TH1F*)inf->Get("hdpt_sig");
 
   std::string output = "rootfiles/" + pdana_calchist_::outputdir + "/calchist.root";
   xjjroot::mkdir(output);
@@ -59,14 +62,20 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
       // seth
       if(xjjc::str_contains(hh.first, "eff_"))
         pdana_calchist_::seth(hh.second, "< 1 / #alpha #times #varepsilon >", false);
+      else if(xjjc::str_contains(hh.first, "dpt_"))
+        pdana_calchist_::seth(hh.second, "", false, false);
       else
         pdana_calchist_::seth(hh.second);
       // setthgrstyle
       if(xjjc::str_contains(hh.first, "bkg"))
         xjjroot::setthgrstyle(hh.second, kBlack, 24, 1, kBlack, 1, 2);
+      else if(xjjc::str_contains(hh.first, "sig"))
+        xjjroot::setthgrstyle(hh.second, kAzure, 20, 1, kAzure, 1, 2);
       else
         xjjroot::setthgrstyle(hh.second, kBlack, 20, 1, kBlack, 1, 2);
     }
+  hdphi["dpt_raw"]->SetMinimum(std::max(hdphi["dpt_sig"]->GetMinimum(), (double)1.)*0.1);
+  hdphi["dpt_raw"]->SetMaximum(hdphi["dpt_raw"]->GetMaximum()*5);
 
   std::map<std::string, TLegend*> leg;
   leg["scale"] = new TLegend(0.22, 0.65-0.04*5, 0.50, 0.65);
@@ -84,6 +93,10 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
   leg["eff"]->AddEntry(hdphi["eff_bkg"], "Bkg", "pl");
   leg["eff_raw"] = new TLegend(0.22, 0.65-0.04, 0.50, 0.65);
   leg["eff_raw"]->AddEntry(hdphi["eff_raw"], "Raw", "pl");
+  leg["dpt"] = new TLegend(0.72, 0.75-0.04*3, 0.90, 0.75);
+  leg["dpt"]->AddEntry(hdphi["dpt_sig"], "Signal", "pl");
+  leg["dpt"]->AddEntry(hdphi["dpt_raw"], "Raw", "pl");
+  leg["dpt"]->AddEntry(hdphi["dpt_bkg"], "Bkg", "pl");
   for(auto& ll : leg) xjjroot::setleg(ll.second, 0.035);
 
   TGaxis::SetExponentOffset(-0.1, 0, "y");
@@ -98,6 +111,13 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
   c = new TCanvas("c", "", 600, 600);
   hdphi["eff_raw"]->Draw("pe");
   pdana_calchist_::makecanvas(c, pa, leg["eff_raw"], "cheff_raw", "");
+
+  c = new TCanvas("c", "", 600, 600);
+  c->SetLogy();
+  hdphi["dpt_raw"]->Draw("pe");
+  hdphi["dpt_bkg"]->Draw("pe same");
+  hdphi["dpt_sig"]->Draw("pe same");
+  pdana_calchist_::makecanvas(c, pa, leg["dpt"], "chdpt", "");
 
   std::map<std::string, std::string> tags;
   tags["fitweigh"] = "D eff weight fit";
@@ -126,11 +146,14 @@ int pdana_calchist(std::string inputname, std::string outsubdir)
   return 0;
 }
 
-void pdana_calchist_::seth(TH1F* h, std::string ytitle, bool forcemaxdigits)
+void pdana_calchist_::seth(TH1F* h, std::string ytitle, bool forcemaxdigits, bool setminmax)
 {
   xjjroot::sethempty(h, 0, 0.1);
+  if(setminmax)
+    {
   h->SetMinimum(0);
   h->SetMaximum(h->GetMaximum()*1.4);
+    }
   h->GetXaxis()->SetNdivisions(-505);
   if(forcemaxdigits) h->GetYaxis()->SetMaxDigits(1);
   h->GetYaxis()->SetTitle(ytitle.c_str());

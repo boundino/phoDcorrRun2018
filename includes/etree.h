@@ -21,8 +21,9 @@ namespace phoD
     float Ncoll() { return ishi_?Ncoll_:(float)1.; }
     float pthat() { return pthat_; }
     float pthatweight() { return pthatweight_; }
-    bool presel(bool ignorehlt);
-    bool hltsel();
+    bool evtsel();
+    bool hltsel_photon();
+    bool hltsel_jet();
 
   private:
     TTree* nt_;
@@ -36,6 +37,9 @@ namespace phoD
     float pthatweight_;
     int HLT_HIGEDPhoton40_v1_;
     int HLT_HIPhoton40_HoverELoose_v1_;
+    int HLT_HIAK4CaloJet80_v1_;
+    int HLT_HIPuAK4CaloJet80Eta5p1_v1_;
+    int HLT_HIPuAK4CaloJet100Eta5p1_v1_;
     int pclusterCompatibilityFilter_;
     int pprimaryVertexFilter_;
     int phfCoincFilter2Th4_;
@@ -58,6 +62,12 @@ void phoD::etree::setbranchaddress()
         nt_hlt_->SetBranchAddress("HLT_HIGEDPhoton40_v1", &HLT_HIGEDPhoton40_v1_);
       if(nt_hlt_->FindBranch("HLT_HIPhoton40_HoverELoose_v1"))
         nt_hlt_->SetBranchAddress("HLT_HIPhoton40_HoverELoose_v1", &HLT_HIPhoton40_HoverELoose_v1_);
+      if(nt_hlt_->FindBranch("HLT_HIAK4CaloJet80_v1"))
+        nt_hlt_->SetBranchAddress("HLT_HIAK4CaloJet80_v1", &HLT_HIAK4CaloJet80_v1_);
+      if(nt_hlt_->FindBranch("HLT_HIPuAK4CaloJet80Eta5p1_v1"))
+        nt_hlt_->SetBranchAddress("HLT_HIPuAK4CaloJet80Eta5p1_v1", &HLT_HIPuAK4CaloJet80Eta5p1_v1_);
+      if(nt_hlt_->FindBranch("HLT_HIPuAK4CaloJet100Eta5p1_v1"))
+        nt_hlt_->SetBranchAddress("HLT_HIPuAK4CaloJet100Eta5p1_v1", &HLT_HIPuAK4CaloJet100Eta5p1_v1_);
     }
   if(nt_skim_)
     {
@@ -81,29 +91,38 @@ void phoD::etree::GetEntry(int i)
   if(nt_skim_) nt_skim_->GetEntry(i);
 }
 
-bool phoD::etree::presel(bool ignorehlt)
+bool phoD::etree::evtsel()
 {
   if(ishi_ && 
      vz_ > -15 && vz_ < 15 &&
-     hiBin_ >= 0 && hiBin_ <= 180 &&
-     pclusterCompatibilityFilter_ && pprimaryVertexFilter_ && phfCoincFilter2Th4_ &&
-     (HLT_HIGEDPhoton40_v1_ || ignorehlt)
+     hiBin_ >= 0 && hiBin_ < 180 &&
+     pclusterCompatibilityFilter_ && pprimaryVertexFilter_ && phfCoincFilter2Th4_
      ) return true; //
   if(!ishi_ && 
      vz_ > -15 && vz_ < 15 &&
-     pBeamScrapingFilter_ && pPAprimaryVertexFilter_ &&
-     (HLT_HIPhoton40_HoverELoose_v1_ || ignorehlt)
+     pBeamScrapingFilter_ && pPAprimaryVertexFilter_
      ) return true; //
   return false;
 }
 
-bool phoD::etree::hltsel()
+bool phoD::etree::hltsel_photon()
 {
   if(ishi_ && 
      HLT_HIGEDPhoton40_v1_
      ) return true; //
   if(!ishi_ && 
      HLT_HIPhoton40_HoverELoose_v1_
+     ) return true; //
+  return false;
+}
+
+bool phoD::etree::hltsel_jet()
+{
+  if(ishi_ && 
+     HLT_HIPuAK4CaloJet80Eta5p1_v1_
+     ) return true; //
+  if(!ishi_ && 
+     HLT_HIAK4CaloJet80_v1_
      ) return true; //
   return false;
 }

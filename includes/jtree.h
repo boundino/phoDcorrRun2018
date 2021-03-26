@@ -12,6 +12,7 @@
 #include "xjjcuti.h"
 
 #define MAX_XB_JET       300
+// #define MAX_XB_GEN       ?
 
 namespace phoD
 {
@@ -24,21 +25,24 @@ namespace phoD
 
     // read
     template<typename T> T val(std::string br, int j);
+    float* &operator[](std::string br) { return bvf_[br]; }
     bool status(std::string br) { return bvs_[br]; }
     int GetEntries() { return nt_->GetEntries(); }
     void GetEntry(int i) { nt_->GetEntry(i); }
 
     // tools
     int nref() { return nref_; }
+    int ngen() { return ngen_; }
     bool isMC() { return isMC_; }
     bool presel(int j);
     bool tightsel(int j);
 
     // fill new file tree
-    void Clearnref() { if(newtree_) { nref_ = 0; } }
+    void Clearnrefngen() { if(newtree_) { nref_ = 0; ngen_ = 0; } }
     void Fillall(jtree* nt, int j);
-    void Fillone(std::string br, float val) { if(newtree_) { bvf_[br][nref_] = val; } }
+    void Fillone(std::string br, float val, int i=-1) { int i_ = i<0?nref_:i; if(newtree_) { bvf_[br][i_] = val; } }
     void nrefpp() { if(newtree_) nref_++; }
+    void ngenpp() { if(newtree_) ngen_++; }
     void Fill() { if(newtree_ ){ dr_->cd(); nt_->Fill(); } }
 
   private:
@@ -50,6 +54,7 @@ namespace phoD
     void branch();
     template<typename T> bool checkbranchstatus(std::string b, TTree* nt_template=0);
     int nref_;
+    int ngen_;
     std::vector<std::string> tbvf_ = {
       "rawpt",
       "jtpt",
@@ -70,9 +75,10 @@ namespace phoD
       "refpt",
       "refeta",
       "refphi",
-      // "genpt",
-      // "geneta",
-      // "genphi",
+      "genpt",
+      "geneta",
+      "geny",
+      "genphi",
     };
     std::vector<std::string> tbvi_ = {
       "chargedN",
@@ -82,7 +88,7 @@ namespace phoD
       "muN",
       "refparton_flavor",
       "subid",
-      // "gensubid",
+      "gensubid",
     };
     std::vector<std::string> tbvo_ = {
     };
@@ -166,14 +172,19 @@ phoD::jtree::jtree(TFile* outf, std::string name, bool ishi, bool isMC, TTree* n
 void phoD::jtree::branch()
 {
   nt_->Branch("nref", &nref_, "nref/I");
-  for(auto& b : tbvf_) { if(bvs_[b]) { nt_->Branch(b.c_str(), bvf_[b], Form("%s[nref]/F", b.c_str())); } }
-  for(auto& b : tbvi_) { if(bvs_[b]) { nt_->Branch(b.c_str(), bvi_[b], Form("%s[nref]/I", b.c_str())); } }
-  for(auto& b : tbvo_) { if(bvs_[b]) { nt_->Branch(b.c_str(), bvo_[b], Form("%s[nref]/O", b.c_str())); } }
+  if(isMC_) nt_->Branch("ngen", &ngen_, "ngen/I");
+  for(auto& b : tbvf_) { if(bvs_[b]) { 
+      nt_->Branch(b.c_str(), bvf_[b], Form("%s[%s]/F", b.c_str(), xjjc::str_contains(b, "gen")?"ngen":"nref")); } }
+  for(auto& b : tbvi_) { if(bvs_[b]) { 
+      nt_->Branch(b.c_str(), bvi_[b], Form("%s[%s]/I", b.c_str(), xjjc::str_contains(b, "gen")?"ngen":"nref")); } }
+  for(auto& b : tbvo_) { if(bvs_[b]) { 
+      nt_->Branch(b.c_str(), bvo_[b], Form("%s[%s]/O", b.c_str(), xjjc::str_contains(b, "gen")?"ngen":"nref")); } }
 }
 
 void phoD::jtree::setbranchaddress()
 {
   nt_->SetBranchStatus("nref", 1); nt_->SetBranchAddress("nref", &nref_);
+  if(isMC_) nt_->SetBranchStatus("ngen", 1); nt_->SetBranchAddress("ngen", &ngen_);
   for(auto& b : tbvf_) { if(bvs_[b]) { nt_->SetBranchStatus(b.c_str(), 1); nt_->SetBranchAddress(b.c_str(), bvf_[b]); } }
   for(auto& b : tbvi_) { if(bvs_[b]) { nt_->SetBranchStatus(b.c_str(), 1); nt_->SetBranchAddress(b.c_str(), bvi_[b]); } }
   for(auto& b : tbvo_) { if(bvs_[b]) { nt_->SetBranchStatus(b.c_str(), 1); nt_->SetBranchAddress(b.c_str(), bvo_[b]); } }
@@ -191,9 +202,9 @@ template<typename T> T phoD::jtree::val(std::string br, int j)
 void phoD::jtree::Fillall(jtree* nt, int j)
 {
   if(!newtree_) return;
-  for(auto& b : tbvf_) { if(nt->status(b) && bvs_[b]) { bvf_[b][nref_] = nt->val<float>(b, j); } }
-  for(auto& b : tbvi_) { if(nt->status(b) && bvs_[b]) { bvi_[b][nref_] = nt->val<int>(b, j); } }
-  for(auto& b : tbvo_) { if(nt->status(b) && bvs_[b]) { bvo_[b][nref_] = nt->val<bool>(b, j); } }
+  for(auto& b : tbvf_) { if(nt->status(b) && bvs_[b]) { bvf_[b][xjjc::str_contains(b, "gen")?ngen_:nref_] = nt->val<float>(b, j); } }
+  for(auto& b : tbvi_) { if(nt->status(b) && bvs_[b]) { bvi_[b][xjjc::str_contains(b, "gen")?ngen_:nref_] = nt->val<int>(b, j); } }
+  for(auto& b : tbvo_) { if(nt->status(b) && bvs_[b]) { bvo_[b][xjjc::str_contains(b, "gen")?ngen_:nref_] = nt->val<bool>(b, j); } }
 }
 
 bool phoD::jtree::presel(int j)
