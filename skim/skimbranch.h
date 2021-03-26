@@ -182,5 +182,10 @@ phoD::skimbranch::skimbranch(bool ishi) : fishi(ishi)
     "Gtk2eta",
     "Gtk2phi",
   };
+
+  fbr["akPu4PFJetAnalyzer/t"] = {
+    "*"
+  };
+
 }
 
