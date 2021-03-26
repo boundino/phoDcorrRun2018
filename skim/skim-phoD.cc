@@ -20,8 +20,6 @@ int skim(std::string inputname, std::string outputname,
   phoD::skimbranch* sb = new phoD::skimbranch(ishi);
   std::map<std::string, phoD::skimtree*> s;
   s["hlt"] = new phoD::skimtree("hltanalysis/HltTree", inf, outf, sb->branches("hltanalysis/HltTree"));
-  // if(ishi) s["obj"] = new phoD::skimtree("hltobject/HLT_HIGEDPhoton40_v", inf, outf, sb->branches("hltobject/HLT_HIGEDPhoton40_v"));
-  // else s["obj"] = new phoD::skimtree("hltobject/HLT_HIPhoton40_HoverELoose_v", inf, outf, sb->branches("hltobject/HLT_HIPhoton40_HoverELoose_v"));
   // s["ggGED"] = new phoD::skimtree("ggHiNtuplizerGED/EventTree", inf, outf, sb->branches("ggHiNtuplizerGED/EventTree"));
   s["skim"] = new phoD::skimtree("skimanalysis/HltTree", inf, outf, sb->branches("skimanalysis/HltTree"));
   s["hi"] = new phoD::skimtree("hiEvtAnalyzer/HiTree", inf, outf, sb->branches("hiEvtAnalyzer/HiTree"));
@@ -152,8 +150,6 @@ int skim(std::string inputname, std::string outputname,
           dt_new->Fillall(dt, j);
           dt_new->Dsizepp();
         }
-
-      if(removeevent && dt_new->Dsize()==0) continue;
 
       // ---------------------------- Fill ----------------------------
       for(auto& ss : s) { if(ss.first != "forest") { ss.second->Fill(); } }

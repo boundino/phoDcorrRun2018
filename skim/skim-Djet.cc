@@ -109,6 +109,7 @@ int skim(std::string inputname, std::string outputname,
       int njet = 0;
       for(auto& jj : jt_new) njet += jj.second->nref(); 
       if(removeevent && njet==0) continue;
+
       // fill gen jet
       for(auto& jj : jt)
         {
@@ -162,8 +163,6 @@ int skim(std::string inputname, std::string outputname,
           dt_new->Fillall(dt, j);
           dt_new->Dsizepp();
         }
-
-      if(removeevent && dt_new->Dsize()==0) continue;
 
       // ---------------------------- Fill ----------------------------
       for(auto& ss : s) { if(ss.first != "forest") { ss.second->Fill(); } }
