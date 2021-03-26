@@ -7,17 +7,17 @@ then
 fi
 
 #
-MAXFILENO=10000
-ishi=1
+MAXFILENO=100000
+ishi=0
 evtfilt=0
 hltfilt=0
-mvafilt=1
+mvafilt=2
 # mvafilt: [1] mva [2] cutbase [3] gen-matched
-ptcut=70
+ptcut=35
 rmsizezero=0
 
 #
-dccfile="skim-Djet.cc"
+dccfile="skim-phoD.cc"
 #
 movetosubmit=${1:-0}
 runjobs=${2:-0}
@@ -25,16 +25,14 @@ runjobs=${2:-0}
 SELTAG=("nosel" "mva" "cut" "gmt")
 FILTTAG=('' '_rmevt')
 
-CONDITION="jtpt${ptcut}${FILTTAG[rmsizezero]}"
-PRIMARY="djt${SELTAG[mvafilt]}_20210322"
+CONDITION='phoEt${ptcut}${FILTTAG[rmsizezero]}'
+PRIMARY="phod${SELTAG[mvafilt]}_20201002"
 
 INPUTS=(
-    # "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIHardProbes/crab_Dpho_20200921_HIHardProbes_04Apr2019_HIGEDPhoton40_trk1Dpt2/200921_210311/000*/"
-    # "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIHardProbes/crab_Djet_20210315_HIHardProbes_04Apr2019_PuAK4CaloJet80100Eta5p1_trk1Dpt2/210315_213900/000*/"
-    "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIMinimumBias0/crab_Djet_20210315_HIMinimumBias0_04Apr2019_trk1Dpt2_part_326381-326791/210323_053938/000*/"
-    # "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIMinimumBias0/crab_Djet_20210315_HIMinimumBias0_04Apr2019_trk1Dpt2_part_326815-326897/210323_055750/000*/"
-    # "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIMinimumBias0/crab_Djet_20210315_HIMinimumBias0_04Apr2019_trk1Dpt2_part_326941-327174/210323_055833/000*/"
+    "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HighEGJet/crab_Dpho_20201002_HighEGJet_Run2017G_17Nov2017_HIPhoton_HoverELoose_trk1Dpt2_vfl2/201002_173802/000*/"
 )
+
+###
 
 WORKDIR="/work/$USER/phodmva/"
 if [[ ! -d "$WORKDIR" ]]
@@ -45,6 +43,7 @@ fi
 for INPUTDIR in "${INPUTS[@]}"
 do
     echo -e "\e[32;1m$INPUTDIR\e[0m"
+    # PD=${INPUTDIR##'/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/'} ; PD=${PD%%/*} ; DAT=${INPUTDIR##*crab_Dpho_} ; DAT=${DAT%%_*} ;
     REQUESTNAME=${INPUTDIR##*crab_} ; REQUESTNAME=${REQUESTNAME%%/*} ;
     OUTPUTSUBDIR="${PRIMARY}_${REQUESTNAME}_${CONDITION}"
     OUTPUTPRIDIR="/mnt/T2_US_MIT/hadoop/cms/store/user/jwang/DntupleRun2018condor/"
@@ -87,4 +86,3 @@ do
     fi
 
 done
-

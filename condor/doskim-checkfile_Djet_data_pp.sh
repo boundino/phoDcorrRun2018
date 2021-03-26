@@ -7,13 +7,13 @@ then
 fi
 
 #
-MAXFILENO=10000
-ishi=1
+MAXFILENO=2
+ishi=0
 evtfilt=0
 hltfilt=0
-mvafilt=1
+mvafilt=2
 # mvafilt: [1] mva [2] cutbase [3] gen-matched
-ptcut=70
+ptcut=70 # jet pt cut
 rmsizezero=0
 
 #
@@ -29,11 +29,7 @@ CONDITION="jtpt${ptcut}${FILTTAG[rmsizezero]}"
 PRIMARY="djt${SELTAG[mvafilt]}_20210322"
 
 INPUTS=(
-    # "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIHardProbes/crab_Dpho_20200921_HIHardProbes_04Apr2019_HIGEDPhoton40_trk1Dpt2/200921_210311/000*/"
-    # "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIHardProbes/crab_Djet_20210315_HIHardProbes_04Apr2019_PuAK4CaloJet80100Eta5p1_trk1Dpt2/210315_213900/000*/"
-    "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIMinimumBias0/crab_Djet_20210315_HIMinimumBias0_04Apr2019_trk1Dpt2_part_326381-326791/210323_053938/000*/"
-    # "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIMinimumBias0/crab_Djet_20210315_HIMinimumBias0_04Apr2019_trk1Dpt2_part_326815-326897/210323_055750/000*/"
-    # "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIMinimumBias0/crab_Djet_20210315_HIMinimumBias0_04Apr2019_trk1Dpt2_part_326941-327174/210323_055833/000*/"
+    "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HighEGJet/crab_Djet_20210315_HighEGJet_Run2017G_17Nov2017_HIAK4CaloJet80_trk1Dpt2_v2/210315_204552/000*/"
 )
 
 WORKDIR="/work/$USER/phodmva/"

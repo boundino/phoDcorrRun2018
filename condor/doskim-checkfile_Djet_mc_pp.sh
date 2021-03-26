@@ -7,11 +7,11 @@ then
 fi
 
 #
-MAXFILENO=10000
-ishi=1
+MAXFILENO=2
+ishi=0
 evtfilt=0
 hltfilt=0
-mvafilt=1
+mvafilt=3
 # mvafilt: [1] mva [2] cutbase [3] gen-matched
 ptcut=70
 rmsizezero=0
@@ -26,14 +26,10 @@ SELTAG=("nosel" "mva" "cut" "gmt")
 FILTTAG=('' '_rmevt')
 
 CONDITION="jtpt${ptcut}${FILTTAG[rmsizezero]}"
-PRIMARY="djt${SELTAG[mvafilt]}_20210322"
+PRIMARY="djt${SELTAG[mvafilt]}_20210326"
 
 INPUTS=(
-    # "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIHardProbes/crab_Dpho_20200921_HIHardProbes_04Apr2019_HIGEDPhoton40_trk1Dpt2/200921_210311/000*/"
-    # "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIHardProbes/crab_Djet_20210315_HIHardProbes_04Apr2019_PuAK4CaloJet80100Eta5p1_trk1Dpt2/210315_213900/000*/"
-    "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIMinimumBias0/crab_Djet_20210315_HIMinimumBias0_04Apr2019_trk1Dpt2_part_326381-326791/210323_053938/000*/"
-    # "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIMinimumBias0/crab_Djet_20210315_HIMinimumBias0_04Apr2019_trk1Dpt2_part_326815-326897/210323_055750/000*/"
-    # "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIMinimumBias0/crab_Djet_20210315_HIMinimumBias0_04Apr2019_trk1Dpt2_part_326941-327174/210323_055833/000*/"
+    "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/QCD_pThat-15_Dijet_TuneCP5_5p02TeV_pythia8/crab_Dpho_20210325_QCD_pThat-15_Dijet_mc2017_realistic_forppRef5TeV_trk1Dpt2_v2/210326_031754/000*/"
 )
 
 WORKDIR="/work/$USER/phodmva/"
@@ -45,6 +41,7 @@ fi
 for INPUTDIR in "${INPUTS[@]}"
 do
     echo -e "\e[32;1m$INPUTDIR\e[0m"
+    # PD=${INPUTDIR##'/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/'} ; PD=${PD%%/*} ; DAT=${INPUTDIR##*crab_Dpho_} ; DAT=${DAT%%_*} ;
     REQUESTNAME=${INPUTDIR##*crab_} ; REQUESTNAME=${REQUESTNAME%%/*} ;
     OUTPUTSUBDIR="${PRIMARY}_${REQUESTNAME}_${CONDITION}"
     OUTPUTPRIDIR="/mnt/T2_US_MIT/hadoop/cms/store/user/jwang/DntupleRun2018condor/"
