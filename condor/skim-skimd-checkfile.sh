@@ -27,7 +27,7 @@ set -x
 ./skim.exe $INFILE $OUTFILE $ISHI $EVTFILT $HLTFILT $MVAFILT $PTCUT $RMEVENT
 set +x
 
-if [[ $? -eq 0 ]]; then
+if [[ $(wc -c $OUTFILE | awk '{print $1}') -gt 700 ]]; then
     # gfal-copy file://${PWD}/${OUTFILE}  srm://se01.cmsaf.mit.edu:8443/srm/v2/server?SFN=${DESTINATION}/${OUTFILE}
     LD_LIBRARY_PATH='' PYTHONPATH='' gfal-copy file://$PWD/${OUTFILE} gsiftp://se01.cmsaf.mit.edu:2811/${SRM_PATH}/${OUTFILE}
     # mv $OUTFILE $DESTINATION/
