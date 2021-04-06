@@ -13,6 +13,29 @@
 #include "xjjcuti.h"
 #include "xjjrootuti.h"
 
+namespace Djet
+{
+  std::vector<std::string> var = {"dphi", "dr"};
+  std::map<std::string, std::string> vartex = {
+    {"dphi", "#Delta#phi^{jD} / #pi"},
+    {"dr", "#Deltar^{jD}"}
+  };
+  std::map<std::string, std::string> varytex = {
+    {"dphi", "#frac{dN^{jD}}{d#Delta#phi}"},
+    {"dr", "#frac{dN^{jD}}{d#Deltar}"}
+  };
+  std::map<std::string, std::vector<float>> bins_pp = {
+    {"dphi", {0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}},
+    {"dr", {0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0}},
+  };
+  std::map<std::string, std::vector<float>> bins_aa = {
+    // {"dphi", {0, 0.2, 0.4, 0.6, 0.8, 1.0}},
+    // {"dr", {0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0}},
+    {"dphi", {0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}},
+    {"dr", {0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0}},
+  };
+}
+
 namespace phoD
 {
   std::vector<std::string> var = {"dphi"};
@@ -22,10 +45,12 @@ namespace phoD
   std::map<std::string, std::string> varytex = {
     {"dphi", "#frac{dN^{jD}}{d#Delta#phi}"},
   };
-
-  // std::vector<float> bins_dphi_aa = {0, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
-  std::vector<float> bins_dphi_aa = {0, 0.3, 0.5, 0.7, 0.9, 1.0};
-  std::vector<float> bins_dphi_pp = {0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+  std::map<std::string, std::vector<float>> bins_pp = {
+    {"dphi", {0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}},
+  };
+  std::map<std::string, std::vector<float>> bins_aa = {
+    {"dphi", {0, 0.3, 0.5, 0.7, 0.9, 1.0}},
+  };
 
   // photon selection
   const float hovere_max_pp_ = 0.009732;
@@ -47,10 +72,14 @@ namespace phoD
   // photon purity
   const float purity_pp_ = 0.844;
   const float purity_aa_ = 0.767;
+}
 
+namespace phoD
+{
   class param
   {
   public:
+    param() { ; }
     param(int isheavyion, float Dptmin, float Dptmax, float Dymax, float centmin, float centmax, float phoptmin, float phoetamax, int ismc, std::string opt="");
     param(TFile* inf, std::string opt="");
     void write();
@@ -75,7 +104,6 @@ namespace phoD
       "centmax", 
       "phoptmin", 
       "phoetamax", 
-      // photon_gen_iso?
     };
   };
 }
@@ -177,36 +205,22 @@ void phoD::param::drawtex(float xleft, float ytop, float tsize, std::string excl
 
 namespace Djet
 {
-  std::vector<std::string> var = {"dphi", "dr"};
-  std::map<std::string, std::string> vartex = {
-    {"dphi", "#Delta#phi^{jD} / #pi"},
-    {"dr", "#Deltar^{jD}"}
-  };
-  std::map<std::string, std::string> varytex = {
-    {"dphi", "#frac{dN^{jD}}{d#Delta#phi}"},
-    {"dr", "#frac{dN^{jD}}{d#Deltar}"}
-  };
-  std::map<std::string, std::vector<float>> bins_pp = {
-    {"dphi", {0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}},
-    {"dr", {0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0}},
-  };
-  std::map<std::string, std::vector<float>> bins_aa = {
-    {"dphi", {0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}},
-    {"dr", {0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0}},
-  };
-
   // jet selection
   // const float iso_max_aa_gen_ = 5;
 
   class param
   {
   public:
+    param() { ; }
     param(int isheavyion, float Dptmin, float Dptmax, float Dymax, float centmin, float centmax, float jtptmin, float jtetamax, int ismc, std::string opt="");
     param(TFile* inf, std::string opt="");
     void write();
     // float v(std::string var) { return val_[var]; }
     float& operator[](std::string var) { return val_[var]; }
     bool ishi() { return (bool)ishi_; }
+    bool ismc() { return (bool)ismc_; }
+    void setishi(int ishi__) { ishi_ = ishi__; parsetag(); }
+    void setismc(int ismc__) { ismc_ = ismc__; parsetag(); }
     std::string tag(std::string var = "") { return tag_[var]; }
     void print();
     void drawtex(float xleft, float ytop, float tsize, std::string exclude="");
@@ -276,21 +290,24 @@ void Djet::param::write()
 void Djet::param::parsetag()
 {
   tag_[""] = "";
-  tag_[""] += (ishi_?"PbPb":"pp");
-  tag_[""] += (ismc_?"_MC":"_data");
-  tag_[""] += ("_jtpt" + xjjc::number_remove_zero(val_["jtptmin"]));
+  std::string tishi = (ishi_==0?"pp":(ishi_==1?"PbPb":""));
+  tag_[""] += tishi;
+  std::string tismc = (ismc_==0?"data":(ismc_==1?"MC":""));
+  tag_[""] += ((tag_[""]==""?"":"_")+tismc);
+  tag_[""] += ((tag_[""]==""?"":"_") + ("jtpt" + xjjc::number_remove_zero(val_["jtptmin"])));
   tag_[""] += ("_jteta" + xjjc::number_remove_zero(val_["jtetamax"]));
   tag_[""] += ("_pt" + xjjc::number_remove_zero(val_["Dptmin"]) + "-" + xjjc::number_remove_zero(val_["Dptmax"]));
   tag_[""] += ("_y" + xjjc::number_remove_zero(val_["Dymax"]));
-  if(ishi_) tag_[""] += ("_cent" + xjjc::number_remove_zero(val_["centmin"]) + xjjc::number_remove_zero(val_["centmax"]));
+  if(ishi_==1) 
+    tag_[""] += ("_cent" + xjjc::number_remove_zero(val_["centmin"]) + xjjc::number_remove_zero(val_["centmax"]));
 
   tag_["pt"] = xjjc::number_remove_zero(val_["Dptmin"]) + " < p_{T}^{D} < " + xjjc::number_remove_zero(val_["Dptmax"]) + " GeV/c";
   tag_["y"] = "|y^{D}| < " + xjjc::number_remove_zero(val_["Dymax"]);
 
   if(ishi_) tag_["cent"] = "Cent. " + xjjc::number_remove_zero(val_["centmin"]) + " - " + xjjc::number_remove_zero(val_["centmax"]) + "%";
   else tag_["cent"] = "";
-  tag_["ishi"] = ishi_?"PbPb":"pp";
-  tag_["ismc"] = ismc_?"MC":"data";
+  tag_["ishi"] = tishi;
+  tag_["ismc"] = tismc;
 
   tag_["jtpt"] = "p_{T}^{jet} > " + xjjc::number_remove_zero(val_["jtptmin"]) + " GeV/c";
   tag_["jteta"] = "|#eta^{jet}| < " + xjjc::number_remove_zero(val_["jtetamax"]);
