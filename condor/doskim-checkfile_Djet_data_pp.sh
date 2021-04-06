@@ -52,24 +52,6 @@ do
     echo "$OUTPUTDIR"
     ##
 
-    if [ "$movetosubmit" -eq 1 ]
-    then
-        if [[ $(hostname) == "submit-hi2.mit.edu" || $(hostname) == "submit.mit.edu" || $(hostname) == "submit-hi1.mit.edu" ]]
-        then
-            cd ../skim
-            g++ $dccfile $(root-config --cflags --libs) -I"../includes/" -lTMVA -lXMLIO -Werror -Wall -O2 -o skim.exe || exit 1
-            cd ../condor
-
-            mv -v ../skim/skim.exe $WORKDIR/
-            cp -v $0 $WORKDIR/
-            cp -v skim-skimd-checkfile.sh $WORKDIR/
-            cp -v skim-condor-checkfile.sh $WORKDIR/
-            cp -v ../skim/mva.tgz $WORKDIR/
-        else
-            echo -e "\e[31;1merror:\e[0m compile macros on \e[32;1msubmit-hiX.mit.edu\e[0m or \e[32;1msubmit.mit.edu\e[0m."
-        fi
-    fi
-
     if [ "$runjobs" -eq 1 ]
     then 
         if [[ $(hostname) == "submit.mit.edu" ]]
@@ -84,3 +66,20 @@ do
 
 done
 
+if [ "$movetosubmit" -eq 1 ]
+then
+    if [[ $(hostname) == "submit-hi2.mit.edu" || $(hostname) == "submit.mit.edu" || $(hostname) == "submit-hi1.mit.edu" ]]
+    then
+        cd ../skim
+        g++ $dccfile $(root-config --cflags --libs) -I"../includes/" -lTMVA -lXMLIO -Werror -Wall -O2 -o skim.exe || exit 1
+        cd ../condor
+
+        mv -v ../skim/skim.exe $WORKDIR/
+        cp -v $0 $WORKDIR/
+        cp -v skim-skimd-checkfile.sh $WORKDIR/
+        cp -v skim-condor-checkfile.sh $WORKDIR/
+        cp -v ../skim/mva.tgz $WORKDIR/
+    else
+        echo -e "\e[31;1merror:\e[0m compile macros on \e[32;1msubmit-hiX.mit.edu\e[0m or \e[32;1msubmit.mit.edu\e[0m."
+    fi
+fi
