@@ -34,6 +34,8 @@ INPUTS=(
     "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/DiJet_pThat-15_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_Djet_20210328_DiJet_pThat-15_HydjetDrumMB_trk1Dpt2_20368_31425/210405_151638/000*/"
     "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/DiJet_pThat-15_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_Djet_20210328_DiJet_pThat-15_HydjetDrumMB_trk1Dpt2_31427_40074/210405_152338/000*/"
     "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/DiJet_pThat-15_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_Djet_20210328_DiJet_pThat-15_HydjetDrumMB_trk1Dpt2_40076_50633/210405_154058/000*/"
+    "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/DiJet_pThat-15_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_Djet_20210328_DiJet_pThat-15_HydjetDrumMB_trk1Dpt2_50635_61963/210407_202106/000*/"
+    "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/DiJet_pThat-15_TuneCP5_HydjetDrumMB_5p02TeV_Pythia8/crab_Djet_20210328_DiJet_pThat-15_HydjetDrumMB_trk1Dpt2_61965_64999/210407_202300/000*/"
 )
 
 WORKDIR="/work/$USER/phodmva/"

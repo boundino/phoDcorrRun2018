@@ -26,10 +26,11 @@ SELTAG=("nosel" "mva" "cut" "gmt")
 FILTTAG=('' '_rmevt')
 
 CONDITION="jtpt${ptcut}${FILTTAG[rmsizezero]}"
-PRIMARY="djt${SELTAG[mvafilt]}_20210326"
+PRIMARY="djt${SELTAG[mvafilt]}_20210612"
 
 INPUTS=(
-    "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/QCD_pThat-15_Dijet_TuneCP5_5p02TeV_pythia8/crab_Dpho_20210325_QCD_pThat-15_Dijet_mc2017_realistic_forppRef5TeV_trk1Dpt2_v2/210326_031754/000*/"
+    # "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/QCD_pThat-15_Dijet_TuneCP5_5p02TeV_pythia8/crab_Dpho_20210325_QCD_pThat-15_Dijet_mc2017_realistic_forppRef5TeV_trk1Dpt2_v2/210326_031754/000*/"
+    "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/Pythia8_DzeroToKPi_prompt_Dpt0p0_Pthat0_TuneCP5_5020GeV/crab_Dfinder_20210629_Pythia8_DzeroToKPi_prompt_Dpt0p0_Pthat0_trk1Dpt2_v3/210629_225921/000*/"
 )
 
 WORKDIR="/work/$USER/phodmva/"

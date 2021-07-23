@@ -26,24 +26,30 @@ int skim(std::string inputname, std::string outputname,
   s["ntGen"] = new phoD::skimtree("Dfinder/ntGen", inf, outf, sb->branches("Dfinder/ntGen"));
   phoD::dtree* dt = new phoD::dtree((TTree*)inf->Get("Dfinder/ntDkpi"), ishi);
   phoD::dtree* dt_new = new phoD::dtree(outf, "Dfinder/ntDkpi", ishi);
-  std::map<std::string, phoD::jtree*> jt, jt_new;
+  std::map<std::string, phoD::jtree*> jt, jt_new; bool thereisjet = false;
   if(ishi)
     {
       jt["4Calo"] = new phoD::jtree((TTree*)inf->Get("akPu4CaloJetAnalyzer/t"), ishi);
-      jt_new["4Calo"] = new phoD::jtree(outf, "akPu4CaloJetAnalyzer/t", ishi, jt["4Calo"]->isMC(), jt["4Calo"]->nt());
+      if(jt["4Calo"]->valid()) { thereisjet = true;
+        jt_new["4Calo"] = new phoD::jtree(outf, "akPu4CaloJetAnalyzer/t", ishi, jt["4Calo"]->isMC(), jt["4Calo"]->nt()); }
       jt["4PF"] = new phoD::jtree((TTree*)inf->Get("akPu4PFJetAnalyzer/t"), ishi);
-      jt_new["4PF"] = new phoD::jtree(outf, "akPu4PFJetAnalyzer/t", ishi, jt["4PF"]->isMC(), jt["4PF"]->nt());
+      if(jt["4PF"]->valid()) { thereisjet = true;
+        jt_new["4PF"] = new phoD::jtree(outf, "akPu4PFJetAnalyzer/t", ishi, jt["4PF"]->isMC(), jt["4PF"]->nt()); }
       jt["3PF"] = new phoD::jtree((TTree*)inf->Get("akPu3PFJetAnalyzer/t"), ishi);
-      jt_new["3PF"] = new phoD::jtree(outf, "akPu3PFJetAnalyzer/t", ishi, jt["3PF"]->isMC(), jt["3PF"]->nt());
+      if(jt["3PF"]->valid()) { thereisjet = true;
+        jt_new["3PF"] = new phoD::jtree(outf, "akPu3PFJetAnalyzer/t", ishi, jt["3PF"]->isMC(), jt["3PF"]->nt()); }
     }
   else
     {
       jt["4Calo"] = new phoD::jtree((TTree*)inf->Get("ak4CaloJetAnalyzer/t"), ishi);
-      jt_new["4Calo"] = new phoD::jtree(outf, "ak4CaloJetAnalyzer/t", ishi, jt["4Calo"]->isMC(), jt["4Calo"]->nt());
+      if(jt["4Calo"]->valid()) { thereisjet = true;
+        jt_new["4Calo"] = new phoD::jtree(outf, "ak4CaloJetAnalyzer/t", ishi, jt["4Calo"]->isMC(), jt["4Calo"]->nt()); }
       jt["4PF"] = new phoD::jtree((TTree*)inf->Get("ak4PFJetAnalyzer/t"), ishi);
-      jt_new["4PF"] = new phoD::jtree(outf, "ak4PFJetAnalyzer/t", ishi, jt["4PF"]->isMC(), jt["4PF"]->nt());
+      if(jt["4PF"]->valid()) { thereisjet = true;
+        jt_new["4PF"] = new phoD::jtree(outf, "ak4PFJetAnalyzer/t", ishi, jt["4PF"]->isMC(), jt["4PF"]->nt()); }
       jt["3PF"] = new phoD::jtree((TTree*)inf->Get("ak3PFJetAnalyzer/t"), ishi);
-      jt_new["3PF"] = new phoD::jtree(outf, "ak3PFJetAnalyzer/t", ishi, jt["3PF"]->isMC(), jt["3PF"]->nt());
+      if(jt["3PF"]->valid()) { thereisjet = true;
+        jt_new["3PF"] = new phoD::jtree(outf, "ak3PFJetAnalyzer/t", ishi, jt["3PF"]->isMC(), jt["3PF"]->nt()); }
     }
   // hiBin
   int hiBin = -1;
@@ -75,7 +81,8 @@ int skim(std::string inputname, std::string outputname,
       xjjc::progressslide(i, nentries, 100);
       for(auto& ss : s) { if(ss.first != "forest") { ss.second->GetEntry(i); } }
       dt->GetEntry(i);
-      for(auto& jj : jt) jj.second->GetEntry(i);
+      if(thereisjet)
+        for(auto& jj : jt) jj.second->GetEntry(i);
 
       // event selection [and]
       if(evtfilt)
@@ -93,34 +100,37 @@ int skim(std::string inputname, std::string outputname,
         }
 
       // jet
-      for(auto& jj : jt_new) jj.second->Clearnrefngen();
-      // fill jet
-      for(auto& jj : jt)
+      if(thereisjet)
         {
-          std::string t = jj.first;
-          for(int j=0; j<jt[t]->nref(); j++)
-            { 
-              bool fill = jt[t]->val<float>("jtpt", j) > jetptcut;
-              if(!fill) continue;
-              jt_new[t]->Fillall_nref(jt[t], j);
-              jt_new[t]->nrefpp();
+          for(auto& jj : jt_new) jj.second->Clearnrefngen();
+          // fill jet
+          for(auto& jj : jt)
+            {
+              std::string t = jj.first;
+              for(int j=0; j<jt[t]->nref(); j++)
+                { 
+                  bool fill = jt[t]->val<float>("jtpt", j) > jetptcut;
+                  if(!fill) continue;
+                  jt_new[t]->Fillall_nref(jt[t], j);
+                  jt_new[t]->nrefpp();
+                }
             }
-        }
-      int njet = 0;
-      for(auto& jj : jt_new) njet += jj.second->nref(); 
-      if(removeevent && njet==0) continue;
+          int njet = 0;
+          for(auto& jj : jt_new) njet += jj.second->nref(); 
+          if(removeevent && njet==0) continue;
 
-      // fill gen jet
-      for(auto& jj : jt)
-        {
-          std::string t = jj.first;
-          if(!jt[t]->isMC()) break;
-          for(int j=0; j<jt[t]->ngen(); j++)
-            { 
-              bool fill = jt[t]->val<float>("genpt", j) > jetptcut;
-              if(!fill) continue;
-              jt_new[t]->Fillall_ngen(jt[t], j);
-              jt_new[t]->ngenpp();
+          // fill gen jet
+          for(auto& jj : jt)
+            {
+              std::string t = jj.first;
+              if(!jt[t]->isMC()) break;
+              for(int j=0; j<jt[t]->ngen(); j++)
+                { 
+                  bool fill = jt[t]->val<float>("genpt", j) > jetptcut;
+                  if(!fill) continue;
+                  jt_new[t]->Fillall_ngen(jt[t], j);
+                  jt_new[t]->ngenpp();
+                }
             }
         }
 
@@ -166,7 +176,8 @@ int skim(std::string inputname, std::string outputname,
 
       // ---------------------------- Fill ----------------------------
       for(auto& ss : s) { if(ss.first != "forest") { ss.second->Fill(); } }
-      for(auto& jj : jt_new) { jt_new[jj.first]->Fill(); }
+      if(thereisjet)
+        for(auto& jj : jt_new) { jt_new[jj.first]->Fill(); }
       dt_new->Fill();
 
     }

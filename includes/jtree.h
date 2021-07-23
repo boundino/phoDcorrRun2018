@@ -29,6 +29,7 @@ namespace phoD
     bool status(std::string br) { return bvs_[br]; }
     int GetEntries() { return nt_->GetEntries(); }
     void GetEntry(int i) { nt_->GetEntry(i); }
+    bool valid() { return valid_; }
 
     // tools
     int nref() { return nref_; }
@@ -49,8 +50,7 @@ namespace phoD
   private:
     TTree* nt_;
     TDirectory* dr_;
-    bool newtree_;
-    bool ishi_, isMC_;
+    bool newtree_, ishi_, isMC_, valid_;
     void setbranchaddress();
     void branch();
     template<typename T> bool checkbranchstatus(std::string b, TTree* nt_template=0);
@@ -131,16 +131,21 @@ phoD::jtree::jtree(TTree* nt, bool ishi) : nt_(nt), ishi_(ishi)
   std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<"\e[0m"<<std::endl;
 
   newtree_ = false;
-  isMC_ = nt_->FindBranch("ngen");
+  valid_ = nt != 0;
 
-  nt_->SetBranchStatus("*", 0);
+  if(valid_)
+    {
+      isMC_ = nt_->FindBranch("ngen");
 
-  // check + set [bvs]
-  for(auto& b : tbvf_) { if(checkbranchstatus<float>(b, nt_)) bvf_[b] = new float[MAX_XB_JET]; }
-  for(auto& b : tbvi_) { if(checkbranchstatus<int>(b, nt_)) bvi_[b] = new int[MAX_XB_JET]; }
-  for(auto& b : tbvo_) { if(checkbranchstatus<bool>(b, nt_)) bvo_[b] = new bool[MAX_XB_JET]; }
+      nt_->SetBranchStatus("*", 0);
 
-  setbranchaddress();
+      // check + set [bvs]
+      for(auto& b : tbvf_) { if(checkbranchstatus<float>(b, nt_)) bvf_[b] = new float[MAX_XB_JET]; }
+      for(auto& b : tbvi_) { if(checkbranchstatus<int>(b, nt_)) bvi_[b] = new int[MAX_XB_JET]; }
+      for(auto& b : tbvo_) { if(checkbranchstatus<bool>(b, nt_)) bvo_[b] = new bool[MAX_XB_JET]; }
+
+      setbranchaddress();
+    }
 }
 
 // create new trees
@@ -149,6 +154,7 @@ phoD::jtree::jtree(TFile* outf, std::string name, bool ishi, bool isMC, TTree* n
   std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<"\e[0m"<<std::endl;
 
   newtree_ = true;
+  valid_ = true;
  
   // check + set [bvs]
   for(auto& b : tbvf_) { if(checkbranchstatus<float>(b, nt_template)) bvf_[b] = new float[MAX_XB_JET]; }

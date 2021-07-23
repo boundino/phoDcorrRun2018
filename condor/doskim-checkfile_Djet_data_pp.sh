@@ -9,9 +9,9 @@ fi
 #
 MAXFILENO=2
 ishi=0
-evtfilt=0
+evtfilt=1
 hltfilt=0
-mvafilt=2
+mvafilt=0
 # mvafilt: [1] mva [2] cutbase [3] gen-matched
 ptcut=70 # jet pt cut
 rmsizezero=0
@@ -29,7 +29,8 @@ CONDITION="jtpt${ptcut}${FILTTAG[rmsizezero]}"
 PRIMARY="djt${SELTAG[mvafilt]}_20210322"
 
 INPUTS=(
-    "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HighEGJet/crab_Djet_20210315_HighEGJet_Run2017G_17Nov2017_HIAK4CaloJet80_trk1Dpt2_v2/210315_204552/000*/"
+    # "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HighEGJet/crab_Djet_20210315_HighEGJet_Run2017G_17Nov2017_HIAK4CaloJet80_trk1Dpt2_v2/210315_204552/000*/"
+    "/mnt/T2_US_MIT/hadoop/cms/store/user/wangj/HIZeroBias1/crab_Dfinder_20210629_HIZeroBias1_Run2017G-17Nov2017_trk1Dpt2/210629_205431/000*/"
 )
 
 WORKDIR="/work/$USER/phodmva/"
