@@ -1,12 +1,12 @@
 #!/bin/bash
 
-tag="finebin"
+tag="widebin"
 
-input_pp=rootfiles/ana_${tag}_trig_pp_data_phopt40_phoeta1.442_pt5-100_y1.2/calchist.root
-input_PbPb=rootfiles/ana_${tag}_trig_PbPb_data_phopt40_phoeta1.442_pt5-100_y1.2_cent090/calchist.root
-input_emix=rootfiles/ana_${tag}_emix_PbPb_data_phopt40_phoeta1.442_pt5-100_y1.2_cent090/calchist.root
-input_MC_pp=mcrootfiles/mc_pythia_pp_MC_phopt40_phoeta1.442_pt5-100_y1.2/drawhist.root
-input_MC_PbPb=mcrootfiles/mc_embed_PbPb_MC_phopt40_phoeta1.442_pt5-100_y1.2_cent090/drawhist.root
+input_pp=rootfiles/ana_finebin_trig_pp_data_phopt40_phoeta1.442_pt4-10_y1.2/calchist.root
+input_PbPb=rootfiles/ana_${tag}_trig_PbPb_data_phopt40_phoeta1.442_pt4-10_y1.2_cent090/calchist.root
+input_emix=rootfiles/ana_${tag}_emix_PbPb_data_phopt40_phoeta1.442_pt4-10_y1.2_cent090/calchist.root
+input_MC_pp=mcrootfiles/mc_pythia_pp_MC_phopt40_phoeta1.442_pt4-10_y1.2/drawhist.root
+input_MC_PbPb=mcrootfiles/mc_embed_PbPb_MC_phopt40_phoeta1.442_pt4-10_y1.2_cent090/drawhist.root
 #
 tag="comp_${tag}"
 
