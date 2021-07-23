@@ -278,6 +278,21 @@ TF1* xjjroot::dfitter::fit(const TH1* hmass, const TH1* hmassMCSignal, const TH1
   h->Fit("fun_f", Form("%s q", fweightedhist?"WL":"L"), "", min_hist_dzero, max_hist_dzero);
   r = h->Fit("fun_f", Form("%s S",fitoption.Data()),"", min_hist_dzero, max_hist_dzero);
 
+  if(h->GetEntries() < 10)
+    {
+      fun_f->SetParameter(0, 0);
+      fun_f->SetParameter(3, 0);
+      fun_f->SetParameter(4, 0);
+      fun_f->SetParameter(5, 0);
+      fun_f->SetParameter(6, 0);
+
+      fun_f->SetParError(0, 0);
+      fun_f->SetParError(3, 0);
+      fun_f->SetParError(4, 0);
+      fun_f->SetParError(5, 0);
+      fun_f->SetParError(6, 0);
+    }
+
   fparamfun_f = true;
   setfunparameters();
   calvar();

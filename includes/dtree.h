@@ -3,6 +3,7 @@
 
 #include <TTree.h>
 #include <TDirectory.h>
+#include <TFile.h>
 
 #include <vector>
 #include <map>
@@ -194,16 +195,16 @@ void phoD::dtree::Fillall(dtree* nt, int j)
 bool phoD::dtree::presel(int j)
 {
   bool trkcut = fabs(bvf_["Dtrk1Eta"][j]) < 2.4 && fabs(bvf_["Dtrk2Eta"][j]) < 2.4 &&
-    bvo_["Dtrk1highPurity"][j] && bvo_["Dtrk2highPurity"][j] &&
-    (bvf_["Dtrk1PixelHit"][j]+bvf_["Dtrk1StripHit"][j]) >= 11 && (bvf_["Dtrk2PixelHit"][j]+bvf_["Dtrk2StripHit"][j]) >= 11 &&
-    (bvf_["Dtrk1Chi2ndf"][j]/(bvf_["Dtrk1nStripLayer"][j]+bvf_["Dtrk1nPixelLayer"][j])) < 0.18 && (bvf_["Dtrk2Chi2ndf"][j]/(bvf_["Dtrk2nStripLayer"][j]+bvf_["Dtrk2nPixelLayer"][j])) < 0.18;
+                                                                               bvo_["Dtrk1highPurity"][j] && bvo_["Dtrk2highPurity"][j];
   if(ishi_ && trkcut &&
      bvf_["Dtrk1Pt"][j] > 1.0 && bvf_["Dtrk2Pt"][j] > 1.0 &&
-     fabs(bvf_["Dtrk1PtErr"][j]/bvf_["Dtrk1Pt"][j]) < 0.1 && fabs(bvf_["Dtrk2PtErr"][j]/bvf_["Dtrk2Pt"][j]) < 0.1
+     fabs(bvf_["Dtrk1PtErr"][j]/bvf_["Dtrk1Pt"][j]) < 0.1 && fabs(bvf_["Dtrk2PtErr"][j]/bvf_["Dtrk2Pt"][j]) < 0.1 &&
+     (bvf_["Dtrk1PixelHit"][j]+bvf_["Dtrk1StripHit"][j]) >= 11 && (bvf_["Dtrk2PixelHit"][j]+bvf_["Dtrk2StripHit"][j]) >= 11 &&
+     (bvf_["Dtrk1Chi2ndf"][j]/(bvf_["Dtrk1nStripLayer"][j]+bvf_["Dtrk1nPixelLayer"][j])) < 0.18 && (bvf_["Dtrk2Chi2ndf"][j]/(bvf_["Dtrk2nStripLayer"][j]+bvf_["Dtrk2nPixelLayer"][j])) < 0.18
      ) return true;
   if(!ishi_ && trkcut &&
      bvf_["Dtrk1Pt"][j] > 1.0 && bvf_["Dtrk2Pt"][j] > 1.0 &&
-     fabs(bvf_["Dtrk1PtErr"][j]/bvf_["Dtrk1Pt"][j]) < 0.3 && fabs(bvf_["Dtrk2PtErr"][j]/bvf_["Dtrk2Pt"][j]) < 0.3
+     fabs(bvf_["Dtrk1PtErr"][j]/bvf_["Dtrk1Pt"][j]) < 0.1 && fabs(bvf_["Dtrk2PtErr"][j]/bvf_["Dtrk2Pt"][j]) < 0.1
      ) return true;
   return false;
 }
