@@ -33,12 +33,12 @@ int mcana_savehist(std::string inputname, std::string outsubdir, int isembed, ph
   int nentries = f->GetEntries();
   for(int i=0; i<nentries; i++)
     {
-      if(i%10000==0 || i==nentries-1) xjjc::progressbar(i, nentries);
+      xjjc::progressslide(i, nentries, 10000);
       f->GetEntry(i);
 
       // event selection + hlt
       if((pa.ishi() && isembed) && (etr->hiBin() < pa["centmin"]*2 || etr->hiBin() > pa["centmax"]*2)) continue;
-      if(!etr->presel(false)) continue;
+      if(!etr->hltsel_photon() || !etr->evtsel()) continue;
       float weight = etr->pthatweight();
       if(pa.ishi() && isembed) weight *= etr->Ncoll();
       // photon selection
@@ -95,7 +95,7 @@ int mcana_savehist(std::string inputname, std::string outsubdir, int isembed, ph
 
   for(int i=0; i<nentries; i++)
     {
-      if(i%10000==0 || i==nentries-1) xjjc::progressbar(i, nentries);
+      xjjc::progressslide(i, nentries, 10000);
       f->GetEntry(i);
 
       // event selection + hlt

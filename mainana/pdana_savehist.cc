@@ -58,7 +58,7 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
   int passevtraw = 0, passevtbkg = 0, passevthlt = 0, passevtphoki = 0, passevtqual = 0;
   for(int i=0; i<nentries; i++)
     {
-      if(i%10000==0 || i==nentries-1) xjjc::progressbar(i, nentries);
+      xjjc::progressslide(i, nentries, 10000);
       f->GetEntry(i);
 
       // event selection + hlt

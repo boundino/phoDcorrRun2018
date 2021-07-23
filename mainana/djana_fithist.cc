@@ -3,7 +3,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "param.h"
+#include "para.h"
 #include "bins.h"
 
 #include "xjjcuti.h"

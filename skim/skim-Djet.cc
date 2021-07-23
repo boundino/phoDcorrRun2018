@@ -72,7 +72,7 @@ int skim(std::string inputname, std::string outputname,
   int nentries = s["hi"]->nentries();
   for(int i=0; i<nentries; i++)
     {
-      if(i%100==0 || i==nentries-1) xjjc::progressbar(i, nentries);
+      xjjc::progressslide(i, nentries, 100);
       for(auto& ss : s) { if(ss.first != "forest") { ss.second->GetEntry(i); } }
       dt->GetEntry(i);
       for(auto& jj : jt) jj.second->GetEntry(i);

@@ -52,7 +52,7 @@ int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa
   int passevtraw = 0, passevthlt = 0, passevtjetki = 0, njet = 0;
   for(int i=0; i<nentries; i++)
     {
-      if(i%10000==0 || i==nentries-1) xjjc::progressbar(i, nentries);
+      xjjc::progressslide(i, nentries, 100000);
       f->GetEntry(i);
 
       // event selection + hlt
@@ -94,9 +94,9 @@ int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa
           // dphi calculation
           std::map<std::string, float> d;
           d["dphi"] = xjjana::cal_dphi_01((*dtr)["Dphi"][j], 
-                                        (*jtr)["jtphi"][jlead]); // 0 ~ 1
+                                          (*jtr)["jtphi"][jlead]); // 0 ~ 1
           d["dr"] = xjjana::cal_dr((*dtr)["Dphi"][j], (*dtr)["Deta"][j], 
-                                 (*jtr)["jtphi"][jlead], (*jtr)["jteta"][jlead]); //
+                                   (*jtr)["jtphi"][jlead], (*jtr)["jteta"][jlead]); //
 
           for(auto& v : Djet::var) // dphi, dr
             {
@@ -122,11 +122,19 @@ int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa
 
   for(auto& v : Djet::var)
     {
-  for(int i=0; i<vb[v].n(); i++)
-    {
-      heff[v]->SetBinContent(i+1, heff[v]->GetBinContent(i+1)/heffnorm[v]->GetBinContent(i+1));
-      heff[v]->SetBinError(i+1, heff[v]->GetBinError(i+1)/heffnorm[v]->GetBinContent(i+1));
-    }
+      for(int i=0; i<vb[v].n(); i++)
+        {
+          if(heffnorm[v]->GetBinContent(i+1)==0) 
+            {
+              heff[v]->SetBinContent(i+1, 0);
+              heff[v]->SetBinError(i+1, 0);
+            }
+          else
+            {
+              heff[v]->SetBinContent(i+1, heff[v]->GetBinContent(i+1)/heffnorm[v]->GetBinContent(i+1));
+              heff[v]->SetBinError(i+1, heff[v]->GetBinError(i+1)/heffnorm[v]->GetBinContent(i+1));
+            }
+        }
     }
 
   std::string outputname = "rootfiles/" + outsubdir + "_" + pa.tag() + "/savehist.root";

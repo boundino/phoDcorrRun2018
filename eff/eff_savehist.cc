@@ -30,7 +30,7 @@ int eff_savehist(std::string inputname, std::string outputname, bool ishi)
   int nentries = f->GetEntries();
   for(int i=0; i<nentries; i++)
     {
-      if(i%10000==0 || i==nentries-1) xjjc::progressbar(i, nentries);
+      xjjc::progressslide(i, nentries, 10000);
       f->GetEntry(i);
 
       // event selection + hlt

@@ -19,7 +19,7 @@ int printxs(std::string inputname)
   int nentries = f->GetEntries();
   for(int i=0; i<nentries; i++)
     {
-      if(i%100000==0 || i==nentries-1) xjjc::progressbar(i, nentries);
+      xjjc::progressslide(i, nentries, 100000);
       etr->GetEntry(i);
 
       for(int p=0; p<pthats.size(); p++)

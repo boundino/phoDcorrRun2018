@@ -4,7 +4,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "param.h"
+#include "para.h"
 
 #include "xjjcuti.h"
 #include "xjjrootuti.h"
@@ -12,7 +12,7 @@
 
 namespace djana_
 {
-  void seth(TH1F* h, std::string ytitle, bool forcemaxdigits=true, bool setminmax=true);
+  void seth(TH1F* h, std::string ytitle="", bool forcemaxdigits=true, bool setminmax=true);
   std::string outputdir;
   void makecanvas(TCanvas* c, Djet::param& pa, TLegend* leg, std::string name, std::string comment="");
 }
@@ -36,12 +36,14 @@ int djana_calchist(std::string inputname, std::string outsubdir)
           hd[v+"_"+t] = xjjroot::gethist<TH1F>(inf, Form("h%s_%s", v.c_str(), t.c_str()));
           float njet = atof(hd[v+"_"+t]->GetTitle());
           hd[v+"_"+t]->Scale(1./njet);
+          hd[v+"_"+t]->GetYaxis()->SetTitle(Form("#frac{1}{N^{jet}} %s", hd[v+"_"+t]->GetYaxis()->GetTitle()));
 
           hd[v+"_"+t+"_sbr"] = (TH1F*)hd[v+"_"+t]->Clone(Form("h%s_sbr_%s", v.c_str(), t.c_str()));
           hd[v+"_"+t+"_sbr"]->Scale(1./pdg::BR_DZERO_KPI);
         }
       heff[v] = xjjroot::gethist<TH1F>(inf, Form("heff_%s", v.c_str()));
-      djana_::seth(heff[v], "< 1 / #alpha #times #varepsilon >", false);
+      heff[v]->GetYaxis()->SetTitle("< 1 / #alpha #times #varepsilon >");
+      djana_::seth(heff[v], "", false);
       xjjroot::setthgrstyle(heff[v], kBlack, 20, 1, kBlack, 1, 2);
     }
 
@@ -54,7 +56,7 @@ int djana_calchist(std::string inputname, std::string outsubdir)
 
   for(auto& hh : hd)
     {
-      djana_::seth(hh.second, Form("#frac{1}{N^{jet}} %s", hh.second->GetYaxis()->GetTitle()));
+      djana_::seth(hh.second);
       xjjroot::setthgrstyle(hh.second, kBlack, 20, 1, kBlack, 1, 2);
     }
 
@@ -102,7 +104,7 @@ void djana_::seth(TH1F* h, std::string ytitle, bool forcemaxdigits, bool setminm
     }
   h->GetXaxis()->SetNdivisions(-505);
   if(forcemaxdigits) h->GetYaxis()->SetMaxDigits(1);
-  h->GetYaxis()->SetTitle(ytitle.c_str());
+  if(ytitle != "") h->GetYaxis()->SetTitle(ytitle.c_str());
 }
 
 int main(int argc, char* argv[])

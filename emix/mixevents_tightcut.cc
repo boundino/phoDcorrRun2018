@@ -56,7 +56,7 @@ int mixevents(std::string inputname_trig, std::string inputname_mb,
   int nentries = etr_mb->GetEntries();
   for(int i=0; i<nentries; i++)
     {
-      if(i%10000==0 || i==nentries-1) xjjc::progressbar(i, nentries);
+      xjjc::progressslide(i, nentries, 10000);
       etr_mb->GetEntry(i);
 
       if(!etr_mb->presel(true)) continue;
@@ -81,7 +81,7 @@ int mixevents(std::string inputname_trig, std::string inputname_mb,
   nentries = entries<0?etr_trig->GetEntries():std::min(entries, etr_trig->GetEntries());
   for(int i=0; i<nentries; i++)
     {
-      if(i%1000==0 || i==nentries-1) xjjc::progressbar(i, nentries);
+      xjjc::progressslide(i, nentries, 1000);
       for(auto& ss : s) { if(ss.first != "ntDkpi") { ss.second->GetEntry(i); } } // GetEntry -> trig
 
       if(!etr_trig->presel(true)) continue;
