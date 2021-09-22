@@ -11,8 +11,13 @@
 
 namespace mytmva
 {
-  std::vector<float> ptbins({2., 9999.});
+  std::vector<float> ptbins({2., -1});
   int nptbins = ptbins.size()-1;
+  std::vector<float> absybins({0., 1.});
+  int nabsybins = absybins.size()-1;
+  int idx(int i, int j);
+  int whichbin(float pt, float absy);
+
   struct tmvavar
   {
     std::string varname;
@@ -28,16 +33,16 @@ namespace mytmva
   const std::vector<mytmva::tmvavar> varlist = {
     /*0: */ mytmva::tmvavar("Dmass"         , "Dmass"                                                , ""     , "m_{#mu#mu#pi#pi}"                , 3.6  , 4.0) ,
     /*1: */ mytmva::tmvavar("Dchi2cl"       , "Dchi2cl"                                              , "FMax" , "vertex #chi^{2} prob"            , 0    , 1)   ,
-    /*2: */ mytmva::tmvavar("Ddtheta"       , "Ddtheta"                                              , "FMin" , "#theta"                          , 0    , 3.2) ,
-    /*3: */ mytmva::tmvavar("DdthetaBScorr" , "DdthetaBScorr"                                        , "FMin" , "#theta (BS)"                     , 0    , 3.2) ,
-    /*4: */ mytmva::tmvavar("dls2D"         , "dls2D := TMath::Abs(DsvpvDistance_2D/DsvpvDisErr_2D)" , "FMax" , "l_{xy}/#sigma(l_{xy})"           , 0    , 10)  ,
-    /*5: */ mytmva::tmvavar("Dtrk1Pt"       , "Dtrk1Pt"                                              , "FMax" , "trk_{1} p_{T} (GeV/c)"           , 0    , 10)  ,
-    /*6: */ mytmva::tmvavar("Dtrk2Pt"       , "Dtrk2Pt"                                              , "FMax" , "trk_{2} p_{T} (GeV/c)"           , 0    , 10)  ,
-    /*7: */ mytmva::tmvavar("Dtrk1Eta"      , "Dtrk1Eta"                                             , ""     , "trk_{1} #eta"                    , -2   , 2)   ,
-    /*8: */ mytmva::tmvavar("Dtrk2Eta"      , "Dtrk2Eta"                                             , ""     , "trk_{2} #eta"                    , -2   , 2)   ,
-    /*9: */ mytmva::tmvavar("Dtrk1DxySig"   , "Dtrk1DxySig := TMath::Abs(Dtrk1Dxy1/Dtrk1DxyError1)"  , ""     , "trk_{1} |D_{xy}/#sigma(D_{xy})|" , 0    , 4)   ,
-    /*10:*/ mytmva::tmvavar("Dtrk2DxySig"   , "Dtrk2DxySig := TMath::Abs(Dtrk2Dxy1/Dtrk2DxyError1)"  , ""     , "trk_{2} |D_{xy}/#sigma(D_{xy})|" , 0    , 4)   ,
-    /*11:*/ mytmva::tmvavar("Dy"            , "Dy"                                                   , ""     , "y"                               , -2.4 , 2.4) ,
+    /*2: */ mytmva::tmvavar("dls2D"         , "dls2D := TMath::Abs(DsvpvDistance_2D/DsvpvDisErr_2D)" , "FMax" , "l_{xy}/#sigma(l_{xy})"           , 0    , 10)  ,
+    /*3: */ mytmva::tmvavar("Ddtheta"       , "Ddtheta"                                              , "FMin" , "#theta"                          , 0    , 3.2) ,
+    /*4: */ mytmva::tmvavar("Dtrk1Pt"       , "Dtrk1Pt"                                              , "FMax" , "trk_{1} p_{T} (GeV/c)"           , 0    , 10)  ,
+    /*5: */ mytmva::tmvavar("Dtrk2Pt"       , "Dtrk2Pt"                                              , "FMax" , "trk_{2} p_{T} (GeV/c)"           , 0    , 10)  ,
+    /*6: */ mytmva::tmvavar("Dtrk1Eta"      , "Dtrk1Eta"                                             , ""     , "trk_{1} #eta"                    , -2   , 2)   ,
+    /*7: */ mytmva::tmvavar("Dtrk2Eta"      , "Dtrk2Eta"                                             , ""     , "trk_{2} #eta"                    , -2   , 2)   ,
+    /*8: */ mytmva::tmvavar("Dtrk1DxySig"   , "Dtrk1DxySig := TMath::Abs(Dtrk1Dxy1/Dtrk1DxyError1)"  , ""     , "trk_{1} |D_{xy}/#sigma(D_{xy})|" , 0    , 4)   ,
+    /*9: */ mytmva::tmvavar("Dtrk2DxySig"   , "Dtrk2DxySig := TMath::Abs(Dtrk2Dxy1/Dtrk2DxyError1)"  , ""     , "trk_{2} |D_{xy}/#sigma(D_{xy})|" , 0    , 4)   ,
+    /*10:*/ mytmva::tmvavar("Dy"            , "Dy"                                                   , ""     , "y"                               , -2.4 , 2.4) ,
+    /*11:*/ mytmva::tmvavar("DdthetaBScorr" , "DdthetaBScorr"                                        , "FMin" , "#theta (BS)"                     , 0    , 3.2) , 
   };
   const mytmva::tmvavar* findvar(std::string varlabel);
 
@@ -82,30 +87,45 @@ namespace mytmva
   };
 
   std::vector<std::string> argmethods; std::vector<int> argstages;
-  std::string mkname(std::string outputname, float ptmin, float ptmax, std::string mymethod, std::string stage,
+  std::string mkname(std::string outputname, float ptmin, float ptmax, float absymin, float absymax, std::string mymethod, std::string stage,
                      std::vector<std::string> &methods = argmethods, std::vector<int> &stages = argstages);
 }
 
 const mytmva::tmvavar* mytmva::findvar(std::string varlabel)
 {
   for(auto& vv : varlist)
-    {
-      if(vv.varname == varlabel) return &vv;
-    }
+    if(vv.varname == varlabel) return &vv;
   return 0;
 }
 
-std::string mytmva::mkname(std::string outputname, float ptmin, float ptmax, std::string mymethod, std::string stage, 
+std::string mytmva::mkname(std::string outputname, float ptmin, float ptmax, float absymin, float absymax, std::string mymethod, std::string stage, 
                            std::vector<std::string> &methods, std::vector<int> &stages)
 {
   mymethod = xjjc::str_replaceall(mymethod, " ", "");
   stage = xjjc::str_replaceall(stage, " ", "");
   methods = xjjc::str_divide(mymethod, ",");
   for(auto& ss : xjjc::str_divide(stage, ",")) { stages.push_back(atoi(ss.c_str())); }
-  std::string outfname(Form("%s_%s_%s_%s_%s.root", outputname.c_str(),xjjc::str_replaceallspecial(mymethod).c_str(),
+  std::string outfname(Form("%s_%s_pt-%s-%s_absy-%s-%s_%s.root", outputname.c_str(), xjjc::str_replaceallspecial(mymethod).c_str(),
                             xjjc::number_to_string(ptmin).c_str(), (ptmax<0?"inf":xjjc::number_to_string(ptmax).c_str()),
+                            xjjc::number_to_string(absymin).c_str(), xjjc::number_to_string(absymax).c_str(),
                             xjjc::str_replaceall(stage, ",", "-").c_str()));
   return outfname;
+}
+
+int mytmva::idx(int i, int j)
+{
+  return (j*nptbins+i);
+}
+
+int mytmva::whichbin(float pt, float absy)
+{
+  std::vector<float> bins(ptbins);
+  if(ptbins[nptbins] < 0) { bins[nptbins] = 1.e+10; }
+  int i = xjjc::findibin(bins, pt);
+  if(i < 0) return i;
+  int j = xjjc::findibin(absybins, absy);
+  if(j < 0) return j;
+  return idx(i, j);
 }
 
 

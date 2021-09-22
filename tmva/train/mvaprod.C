@@ -8,13 +8,14 @@ void mvaprob_main(std::string inputname, std::string treename, bool ishi, std::s
 {
   std::string outputfilename = xjjc::str_replaceall(xjjc::str_divide(inputname, "/").back(), ".root", "");
   outputfilename = outputfiledir + "/" + outputfilename;
-  std::vector<std::string> weightdirs(mytmva::nptbins);
-  for(int i=0; i<mytmva::nptbins; i++)
-    {
-      std::string outfname = xjjc::str_replaceallspecial(mytmva::mkname(outputname, mytmva::ptbins[i], mytmva::ptbins[i+1], mymethod, stage));
-      std::string weightdir = Form("dataset/weights/%s", outfname.c_str());
-      weightdirs[i] = weightdir;
-    }
+  std::vector<std::string> weightdirs(mytmva::nptbins * mytmva::nabsybins);
+  for(int j=0; j<mytmva::nabsybins; j++)
+    for(int i=0; i<mytmva::nptbins; i++)
+      {
+        std::string outfname = xjjc::str_replaceallspecial(mytmva::mkname(outputname, mytmva::ptbins[i], mytmva::ptbins[i+1], mytmva::absybins[j], mytmva::absybins[j+1], mymethod, stage));
+        std::string weightdir = Form("dataset/weights/%s", outfname.c_str());
+        weightdirs[j*mytmva::nptbins + i] = weightdir;
+      }
   mytmva::mvaprob(inputname, "Bfinder/ntmix", ishi, outputfilename, weightdirs);
 }
 

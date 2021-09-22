@@ -15,13 +15,13 @@
 
 namespace mytmva
 {
-  void guiefficiencies(std::string outputname, float ptmin, float ptmax, std::string mymethod, std::string stage = "0,1,2,3");
+  void guiefficiencies(std::string outputname, float ptmin, float ptmax, float absymin, float absymax, std::string mymethod, std::string stage = "0,1,2,3");
   void efficiencies(std::string outfname);
 }
 
-void mytmva::guiefficiencies(std::string outputname, float ptmin, float ptmax, std::string mymethod, std::string stage/* = "0,1,2,3"*/)
+void mytmva::guiefficiencies(std::string outputname, float ptmin, float ptmax, float absymin, float absymax, std::string mymethod, std::string stage/* = "0,1,2,3"*/)
 {
-  std::string outfname = mytmva::mkname(outputname, ptmin, ptmax, mymethod, stage);
+  std::string outfname = mytmva::mkname(outputname, ptmin, ptmax, absymin, absymax, mymethod, stage);
   mytmva::efficiencies(outfname);
 }
 
@@ -62,10 +62,9 @@ int main(int argc, char* argv[])
 {
   if(argc==4)
     { 
-      for(int i=0; i<mytmva::nptbins; i++)
-        {
-          mytmva::guiefficiencies(argv[1], mytmva::ptbins[i], mytmva::ptbins[i+1], argv[2], argv[3]); 
-        }
+      for(int j=0; j<mytmva::nabsybins; j++)
+        for(int i=0; i<mytmva::nptbins; i++)
+          mytmva::guiefficiencies(argv[1], mytmva::ptbins[i], mytmva::ptbins[i+1], mytmva::absybins[j], mytmva::absybins[j+1], argv[2], argv[3]); 
       return 0; 
     }
   return 1;

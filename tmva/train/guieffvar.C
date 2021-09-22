@@ -21,18 +21,18 @@
 
 namespace mytmva
 {
-  void guieffvar(std::string outputname, float ptmin, float ptmax, std::string mymethod, std::string stage);
+  void guieffvar(std::string outputname, float ptmin, float ptmax, float absymin, float absymax, std::string mymethod, std::string stage);
   void effvar(std::vector<std::string> outfname, std::string method);
 }
 
-void mytmva::guieffvar(std::string outputname, float ptmin, float ptmax, std::string mymethod, std::string stage)
+void mytmva::guieffvar(std::string outputname, float ptmin, float ptmax, float absymin, float absymax, std::string mymethod, std::string stage)
 {
   TMVA::TMVAGlob::SetTMVAStyle();
 
   std::vector<std::string> outfname, methods;
   while(xjjc::str_contains(stage, ","))
     {
-      outfname.push_back(mytmva::mkname(outputname, ptmin, ptmax, mymethod, stage, methods));
+      outfname.push_back(mytmva::mkname(outputname, ptmin, ptmax, absymin, absymax, mymethod, stage, methods));
       stage.erase(stage.rfind(','));
     }
   std::string outputstr(xjjc::str_replaceallspecial(outfname[0]));
@@ -136,10 +136,9 @@ int main(int argc, char* argv[])
 {
   if(argc==4)
     {
-      for(int i=0; i<mytmva::nptbins; i++)
-        {
-          mytmva::guieffvar(argv[1], mytmva::ptbins[i], mytmva::ptbins[i+1], argv[2], argv[3]);
-        }
+      for(int j=0; j<mytmva::nabsybins; j++)
+        for(int i=0; i<mytmva::nptbins; i++)
+          mytmva::guieffvar(argv[1], mytmva::ptbins[i], mytmva::ptbins[i+1], mytmva::absybins[j], mytmva::absybins[j+1], argv[2], argv[3]);
       return 0; 
     }
   return 1;

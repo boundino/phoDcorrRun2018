@@ -23,11 +23,12 @@
 #include "dtree.h"
 
 int TMVAClassification(std::string inputSname, std::string inputBname, std::string mycuts, std::string mycutb, std::string myweights,
-                       std::string outputname, float ptmin, float ptmax, std::string mymethod, std::string stage)
+                       std::string outputname, float ptmin, float ptmax, float absymin, float absymax, 
+                       std::string mymethod, std::string stage)
 {
   std::vector<std::string> methods;
   std::vector<int> stages;
-  std::string outfname = mytmva::mkname(outputname, ptmin, ptmax, mymethod, stage, methods, stages);
+  std::string outfname = mytmva::mkname(outputname, ptmin, ptmax, absymin, absymax, mymethod, stage, methods, stages);
   std::string outputstr = xjjc::str_replaceallspecial(outfname);
   if(ptmax < 0) { ptmax = 1.e+10; }
 
@@ -232,7 +233,7 @@ int TMVAClassification(std::string inputSname, std::string inputBname, std::stri
   std::cout << "==> " << __FUNCTION__ << ": VarSet = " << VarSet << std::endl;
 
   // Spectator
-  dataloader->AddSpectator("Dmass");
+  // dataloader->AddSpectator("Dmass");
 
   // You can add so-called "Spectator variables", which are not used in the MVA training,
   // but will appear in the final "TestTree" produced by TMVA. This TestTree will contain the
@@ -302,8 +303,8 @@ int TMVAClassification(std::string inputSname, std::string inputBname, std::stri
   //// TCut mycuts = ""; // for example: TCut mycuts = "abs(var1)<0.5 && abs(var2-0.5)<1";
   //// TCut mycutb = ""; // for example: TCut mycutb = "abs(var1)<0.5";
 
-  TString cuts = Form("(%s) && Dpt>%f && Dpt<%f", mycuts.c_str(), ptmin, ptmax);
-  TString cutb = Form("(%s) && Dpt>%f && Dpt<%f", mycutb.c_str(), ptmin, ptmax);
+  TString cuts = Form("(%s) && Dpt>%f && Dpt<%f && TMath::Abs(Dy)>=%f && TMath::Abs(Dy)<%f", mycuts.c_str(), ptmin, ptmax, absymin, absymax);
+  TString cutb = Form("(%s) && Dpt>%f && Dpt<%f && TMath::Abs(Dy)>=%f && TMath::Abs(Dy)<%f", mycutb.c_str(), ptmin, ptmax, absymin, absymax);
 
   TCut mycutS = (TCut)cuts;
   TCut mycutB = (TCut)cutb;
@@ -352,14 +353,14 @@ int TMVAClassification(std::string inputSname, std::string inputBname, std::stri
                          //// "!H:!V:FitMethod=MC:EffSel:SampleSize=200000:VarProp=FSmart:VarTransform=PCA" );
                          CutsPCAExp.Data());
 
-  TString CutsGAExp = "H:!V:FitMethod=GA:EffSel:Steps=40:Cycles=3:PopSize=1000:SC_steps=10:SC_rate=5:SC_factor=0.95";
+  TString CutsGAExp = "H:!V:FitMethod=GA:EffSel:Steps=40:Cycles=3:PopSize=200:SC_steps=10:SC_rate=5:SC_factor=0.95";
   CutsGAExp+=VarSet;
   if (Use["CutsGA"])
     factory->BookMethod( dataloader, TMVA::Types::kCuts, "CutsGA",
                          //// "H:!V:FitMethod=GA:CutRangeMin[0]=-10:CutRangeMax[0]=10:VarProp[1]=FMax:EffSel:Steps=30:Cycles=3:PopSize=400:SC_steps=10:SC_rate=5:SC_factor=0.95" );
                          CutsGAExp.Data());
 
-  TString CutsSAExp = "!H:!V:FitMethod=SA:EffSel:MaxCalls=600000:KernelTemp=IncAdaptive:InitialTemp=1e+6:MinTemp=1e-6:Eps=1e-10:UseDefaultScale";
+  TString CutsSAExp = "!H:!V:FitMethod=SA:EffSel:MaxCalls=15000:KernelTemp=IncAdaptive:InitialTemp=1e+6:MinTemp=1e-6:Eps=1e-10:UseDefaultScale";
   CutsSAExp+=VarSet;
   if (Use["CutsSA"])
     factory->BookMethod( dataloader, TMVA::Types::kCuts, "CutsSA",
@@ -640,8 +641,9 @@ int main(int argc, char* argv[])
 {
   if(argc==9)
     { 
-      for(int i=0; i<mytmva::nptbins; i++)
-        TMVAClassification(argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], mytmva::ptbins[i], mytmva::ptbins[i+1], argv[7], argv[8]); 
+      for(int j=0; j<mytmva::nabsybins; j++)
+        for(int i=0; i<mytmva::nptbins; i++)
+          TMVAClassification(argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], mytmva::ptbins[i], mytmva::ptbins[i+1], mytmva::absybins[j], mytmva::absybins[j+1], argv[7], argv[8]); 
       return 0;
     }
 

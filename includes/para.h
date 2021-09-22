@@ -293,7 +293,7 @@ void Djet::param::parsetag()
   std::string tishi = (ishi_==0?"pp":(ishi_==1?"PbPb":""));
   tag_[""] += tishi;
   std::string tismc = (ismc_==0?"data":(ismc_==1?"MC":""));
-  tag_[""] += ((tag_[""]==""?"":"_")+tismc);
+  tag_[""] += (((tag_[""]=="" || tismc=="")?"":"_")+tismc);
   tag_[""] += ((tag_[""]==""?"":"_") + ("jtpt" + xjjc::number_remove_zero(val_["jtptmin"])));
   tag_[""] += ("_jteta" + xjjc::number_remove_zero(val_["jtetamax"]));
   tag_[""] += ("_pt" + xjjc::number_remove_zero(val_["Dptmin"]) + "-" + xjjc::number_remove_zero(val_["Dptmax"]));

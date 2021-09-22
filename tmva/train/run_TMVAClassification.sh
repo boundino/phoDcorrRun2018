@@ -1,17 +1,17 @@
 #!/bin/bash
 
 ##
-trainlabel=_20210721
+trainlabel="_210730"
 # -- is heavy ion or not
 ishi=0 ; evtweights="1" # pthatweight*Ncoll for PbPb
 # -- signal sample
-inputs=/raid5/data/wangj/DntupleRun2017/djtgmt_20210629_Dfinder_20210629_Pythia8_DzeroToKPi_prompt_Dpt0p0_Pthat0_trk1Dpt2_v3_jtpt70.root ; signaltype="" ;
+inputs=/raid5/data/wangj/DntupleRun2017/djtgmt_20210629_Dfinder_20210629_Pythia8_DzeroToKPi_prompt_Dpt0p0_Pthat0_trk1Dpt2_v3_jtpt70.root ;
 # -- background sample
-inputb=/raid5/data/wangj/DntupleRun2017/djtnosel_20210629_Dfinder_20210629_HIZeroBias1_Run2017G-17Nov2017_trk1Dpt2_jtpt70_0000.root ; bkgstrategy=sdb ;
+inputb=/raid5/data/wangj/DntupleRun2017/djtnosel_20210629_Dfinder_20210629_HIZeroBias1_Run2017G-17Nov2017_trk1Dpt2_jtpt70_0000.root ; 
 
 ##
 coll=("pp" "PbPb")
-output=rootfiles/TMVA_${coll[ishi]}${signaltype}${trainlabel}_${bkgstrategy}
+output=rootfiles/TMVA_${coll[ishi]}${trainlabel}
 
 # -- event filter
 cut="pBeamScrapingFilter && pPAprimaryVertexFilter"
@@ -20,23 +20,24 @@ cut=$cut" && Dtrk1Pt > 1 && Dtrk2Pt > 1 && TMath::Abs(Dtrk1Eta) < 2.4 && TMath::
 # -- track qualirty
 cut=$cut" && Dtrk1highPurity && Dtrk2highPurity && TMath::Abs(Dtrk1PtErr/Dtrk1Pt) < 0.1 && TMath::Abs(Dtrk2PtErr/Dtrk2Pt) < 0.1"
 # -- X prefilter
-cut=$cut" && TMath::Abs(Dy) < 2 && Dchi2cl > 0.05"
+cut=$cut" && Dchi2cl > 0.05"
 # -- tricky selection
-# cut=$cut" && BsvpvDisErr>1.e-5 && BsvpvDisErr_2D>1.e-5"
+cut=$cut" && TMath::Abs(DsvpvDistance_2D/DsvpvDisErr_2D)<60"
 
 ##
-# algo="BDT,BDTG,CutsGA,CutsSA,LD"
-algo="BDT"
+algo="BDT,BDTG,BDTF,CutsSA,LD"
+# algo="BDT"
 
-# stages="0,10,1,2,9,8,4,5,6,7,15,16" ; sequence=1 ; # see definition below #
-stages="1,2,3,4,5,6,7,8,9,10,11" ; sequence=0 ; # see definition below #
+# stages="1,2,3,4,5,6,7,8,9,10,11" ; sequence=1 ; # see definition below #
+stages="1,2,3,4,11" ; sequence=0 ; # see definition below #
 
 ## ===== do not change the lines below =====
 varstrategy=("Single set" "Sequence")
 
 cuts="${cut} && Dgen==23333 && DgencollisionId==0"
-[[ $bkgstrategy == "sdb" ]] && cutb="${cut} && TMath::Abs(Dmass-1.8649) > 0.07 && TMath::Abs(Dmass-1.8649) < 0.12" # sideband
-[[ $bkgstrategy == "ssn" ]] && cutb="${cut} && TMath::Abs(Dmass-1.8649) < 0.045" # samesign
+cutb="${cut} && TMath::Abs(Dmass-1.8649) > 0.07 && TMath::Abs(Dmass-1.8649) < 0.12" # sideband
+# [[ $bkgstrategy == "sdb" ]] && cutb="${cut} && TMath::Abs(Dmass-1.8649) > 0.07 && TMath::Abs(Dmass-1.8649) < 0.12" # sideband
+# [[ $bkgstrategy == "ssn" ]] && cutb="${cut} && TMath::Abs(Dmass-1.8649) < 0.045" # samesign
 
 ## ===== do not do not do not change the lines below =====
 function catspace() { echo -e $(cat "$@" | sed  's/$/\\n/' | sed 's/ /\\a /g') ; }
@@ -64,8 +65,8 @@ echo -e "
 >>>>>> Variables training strategy
   >>>> \e[32m[${varstrategy[sequence]}]\e[0m
 
->>>>>> Background strategy
-  >>>> \e[32m[$bkgstrategy]\e[0m
+>>>>>> Event weights
+  >>>> \e[32m[\"$evtweights\"]\e[0m
 
 >>>>>> Algorithms
   >>>> \e[32m[$algo]\e[0m
