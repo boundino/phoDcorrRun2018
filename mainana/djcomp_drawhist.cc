@@ -9,12 +9,12 @@
 #include "xjjcuti.h"
 #include "xjjrootuti.h"
 #include "xjjanauti.h"
+#include "xjjmypdf.h"
 
 namespace comp_
 {
   void seth(TH1F* h, float yh=1.4, float yl=0);
-  std::string outputdir;
-  void makecanvas(TCanvas* c, Djet::param& pa, TLegend* leg, std::string name, std::string syst="PbPb", std::string comment="");
+  void makecanvas(xjjroot::mypdf* f, Djet::param& pa, TLegend* leg, std::string syst="PbPb", std::string comment="");
   float setyminmax_linear(std::vector<TH1F*> h);
   float setyminmax_log(std::vector<TH1F*> h);
 }
@@ -42,10 +42,10 @@ int comp_drawhist(std::string outsubdir, std::string inputname_pp="", std::strin
   if(!status["PbPb"] && !status["pp"]) return 3;
   status["sub"] = status["PbPb"] && status["emix"];
   Djet::param pa;
-  if(status["pp"]) pa = Djet::param(inf["pp"]);
-  else pa = Djet::param(inf["PbPb"]);
-  pa.setishi(2); pa.setismc(2);
-  comp_::outputdir = outsubdir + "_" + pa.tag();
+  if(status["PbPb"]) pa = Djet::param(inf["PbPb"]);
+  else pa = Djet::param(inf["pp"]);
+  pa.setismc(2);
+  std::string outputdir = outsubdir + "_" + pa.tag();
 
   std::map<std::string, std::map<std::string, TH1F*>> hd;
   std::map<std::string, std::map<std::string, TGraphErrors*>> gr;
@@ -79,7 +79,7 @@ int comp_drawhist(std::string outsubdir, std::string inputname_pp="", std::strin
 
   xjjc::prt_divider();
 
-  std::string output = "rootfiles/" + comp_::outputdir + "/drawhist.root";
+  std::string output = "rootfiles/" + outputdir + "/drawhist.root";
   xjjroot::mkdir(output);
   TFile* outf = new TFile(output.c_str(), "recreate");
   for(auto& v : Djet::var)
@@ -142,102 +142,108 @@ int comp_drawhist(std::string outsubdir, std::string inputname_pp="", std::strin
 
   TGaxis::SetExponentOffset(-0.1, 0, "y");
   xjjroot::setgstyle(1);
-  TCanvas* c;
 
   for(auto& v : Djet::var)
     {
+      xjjroot::mypdf* fpdf = new xjjroot::mypdf("plots/" + outputdir + "/ccomp_" + v + ".pdf", "c", 600, 600);
       if(leg.find("ppMC") != leg.end())
         {
           comp_::setyminmax_linear({hd[v]["MC_pp"], hd[v]["pp"]});
-          c = new TCanvas("c", "", 600, 600);
+          fpdf->prepare();
+          fpdf->getc()->SetLogy(0);
           hd[v]["pp"]->Draw("AXIS");
           gr[v]["MC_pp"]->Draw("lX0 same");
           gr[v]["pp"]->Draw("pe same");
-          comp_::makecanvas(c, pa, leg["ppMC"], "ch"+v+"_ppMC_linear", "pp");
+          comp_::makecanvas(fpdf, pa, leg["ppMC"], "pp");
 
           comp_::setyminmax_log({hd[v]["MC_pp"], hd[v]["pp"]});
-          c = new TCanvas("c", "", 600, 600);
-          c->SetLogy();
+          fpdf->prepare();
+          fpdf->getc()->SetLogy();
           hd[v]["pp"]->Draw("AXIS");
           gr[v]["MC_pp"]->Draw("lX0 same");
           gr[v]["pp"]->Draw("pe same");
-          comp_::makecanvas(c, pa, leg["ppMC"], "ch"+v+"_ppMC_log", "pp");
+          comp_::makecanvas(fpdf, pa, leg["ppMC"], "pp");
 
         }
       if(leg.find("PbPbMC") != leg.end())
         {
           comp_::setyminmax_linear({hd[v]["MC_PbPb"], hd[v]["PbPb"]});
-          c = new TCanvas("c", "", 600, 600);
+          fpdf->prepare();
+          fpdf->getc()->SetLogy(0);
           hd[v]["PbPb"]->Draw("AXIS");
           gr[v]["MC_PbPb"]->Draw("lX0 same");
           gr[v]["PbPb"]->Draw("pe same");
-          comp_::makecanvas(c, pa, leg["PbPbMC"], "ch"+v+"_PbPbMC_linear", "PbPb");
+          comp_::makecanvas(fpdf, pa, leg["PbPbMC"], "PbPb");
 
           comp_::setyminmax_log({hd[v]["MC_PbPb"], hd[v]["PbPb"]});
-          c = new TCanvas("c", "", 600, 600);
-          c->SetLogy();
+          fpdf->prepare();
+          fpdf->getc()->SetLogy();
           hd[v]["PbPb"]->Draw("AXIS");
           gr[v]["MC_PbPb"]->Draw("lX0 same");
           gr[v]["PbPb"]->Draw("pe same");
-          comp_::makecanvas(c, pa, leg["PbPbMC"], "ch"+v+"_PbPbMC_log", "PbPb");
+          comp_::makecanvas(fpdf, pa, leg["PbPbMC"], "PbPb");
         }
       if(leg.find("emix") != leg.end())
         {
           comp_::setyminmax_linear({hd[v]["PbPb"], hd[v]["emix"]});
-          c = new TCanvas("c", "", 600, 600);
+          fpdf->prepare();
+          fpdf->getc()->SetLogy(0);
           hd[v]["PbPb"]->Draw("AXIS");
           gr[v]["PbPb"]->Draw("pe same");
           gr[v]["emix"]->Draw("pe same");
-          comp_::makecanvas(c, pa, leg["emix"], "ch"+v+"_emix_linear", "PbPb");
+          comp_::makecanvas(fpdf, pa, leg["emix"], "PbPb");
 
           comp_::setyminmax_log({hd[v]["PbPb"], hd[v]["emix"]});
-          c = new TCanvas("c", "", 600, 600);
-          c->SetLogy();
+          fpdf->prepare();
+          fpdf->getc()->SetLogy();
           hd[v]["PbPb"]->Draw("AXIS");
           gr[v]["PbPb"]->Draw("pe same");
           gr[v]["emix"]->Draw("pe same");
-          comp_::makecanvas(c, pa, leg["emix"], "ch"+v+"_emix_log", "PbPb");
+          comp_::makecanvas(fpdf, pa, leg["emix"], "PbPb");
         }
       if(leg.find("ppPbPb") != leg.end())
         {
           float ymin = comp_::setyminmax_linear({hd[v]["pp"], hd[v]["sub"]});
-          c = new TCanvas("c", "", 600, 600);
+          fpdf->prepare();
+          fpdf->getc()->SetLogy(0);
           hd[v]["pp"]->Draw("AXIS");
           if(ymin < 0) 
             xjjroot::drawline(hd[v]["pp"]->GetXaxis()->GetXmin(), 0, hd[v]["pp"]->GetXaxis()->GetXmax(), 0, kBlack, 2, 2);
           gr[v]["sub"]->Draw("pe same");
           gr[v]["pp"]->Draw("pe same");
-          comp_::makecanvas(c, pa, leg["ppPbPb"], "ch"+v+"_ppPbPb_linear", "");
+          comp_::makecanvas(fpdf, pa, leg["ppPbPb"], "");
 
           comp_::setyminmax_log({hd[v]["pp"], hd[v]["sub"]});
-          c = new TCanvas("c", "", 600, 600);
-          c->SetLogy();
+          fpdf->prepare();
+          fpdf->getc()->SetLogy();
           hd[v]["pp"]->Draw("AXIS");
           gr[v]["sub"]->Draw("pe same");
           gr[v]["pp"]->Draw("pe same");
-          comp_::makecanvas(c, pa, leg["ppPbPb"], "ch"+v+"_ppPbPb_log", "");
+          comp_::makecanvas(fpdf, pa, leg["ppPbPb"], "");
         }
       if(leg.find("ppMCPbPb") != leg.end())
         {
           float ymin = comp_::setyminmax_linear({hd[v]["pp"], hd[v]["sub"], hd[v]["MC_pp"]});
-          c = new TCanvas("c", "", 600, 600);
+          fpdf->prepare();
+          fpdf->getc()->SetLogy(0);
           hd[v]["pp"]->Draw("AXIS");
           gr[v]["MC_pp"]->Draw("lX0 same");
           if(ymin < 0) 
             xjjroot::drawline(hd[v]["pp"]->GetXaxis()->GetXmin(), 0, hd[v]["pp"]->GetXaxis()->GetXmax(), 0, kBlack, 2, 2);
           gr[v]["sub"]->Draw("pe same");
           gr[v]["pp"]->Draw("pe same");
-          comp_::makecanvas(c, pa, leg["ppMCPbPb"], "ch"+v+"_ppMCPbPb_linear", "");
+          comp_::makecanvas(fpdf, pa, leg["ppMCPbPb"], "");
 
           comp_::setyminmax_log({hd[v]["pp"], hd[v]["sub"], hd[v]["MC_pp"]});
-          c = new TCanvas("c", "", 600, 600);
-          c->SetLogy();
+          fpdf->prepare();
+          fpdf->getc()->SetLogy();
           hd[v]["pp"]->Draw("AXIS");
           gr[v]["MC_pp"]->Draw("lX0 same");
           gr[v]["sub"]->Draw("pe same");
           gr[v]["pp"]->Draw("pe same");
-          comp_::makecanvas(c, pa, leg["ppMCPbPb"], "ch"+v+"_ppMCPbPb_log", "");
+          comp_::makecanvas(fpdf, pa, leg["ppMCPbPb"], "");
         }
+      fpdf->close();
     }
 
   return 0;
@@ -261,19 +267,15 @@ int main(int argc, char* argv[])
   return 1;
 }
 
-void comp_::makecanvas(TCanvas* c, Djet::param& pa, TLegend* leg, std::string name, std::string syst, std::string comment)
+void comp_::makecanvas(xjjroot::mypdf* f, Djet::param& pa, TLegend* leg, std::string syst, std::string comment)
 {
-  c->cd();
-  pa.drawtex(0.63, 0.85, 0.035, "cent"); // 0.23
+  pa.drawtex(0.63, 0.85, 0.035, "", 0, -0.2); // 0.23
   leg->Draw();
   xjjroot::drawCMSleft();
   xjjroot::drawCMSright(Form("%s #sqrt{s_{NN}} = 5.02 TeV", syst.c_str()));
   xjjroot::drawtex(0.92, 0.80, comment.c_str(), 0.035, 33, 62);
-  xjjroot::drawcomment(comp_::outputdir, "lb");
-  std::string output = "plots/" + comp_::outputdir + "/" + name + ".pdf";
-  xjjroot::mkdir(output);
-  c->SaveAs(output.c_str());
-  delete c;
+  // xjjroot::drawcomment(comp_::outputdir, "lb");
+  f->write();
 }
 
 float comp_::setyminmax_linear(std::vector<TH1F*> h)

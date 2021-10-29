@@ -14,7 +14,7 @@
 #include "eff.h"
 #include "pdg.h"
 
-int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa)
+int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa, bool isleadingjet = false)
 {
   TFile* inf = TFile::Open(inputname.c_str());
   phoD::forest* f = new phoD::forest(inf, pa.ishi());
@@ -50,6 +50,7 @@ int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa
 
   int nentries = f->GetEntries();
   int passevtraw = 0, passevthlt = 0, passevtjetki = 0, njet = 0;
+  int effbug = 0;
   for(int i=0; i<nentries; i++)
     {
       xjjc::progressslide(i, nentries, 100000);
@@ -63,7 +64,7 @@ int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa
       passevthlt++;
 
       // jet selection
-      int jlead = -1, passki = 0;
+      int passki = 0;
       for(int j=0; j<jtr->nref(); j++) 
         {
           // pt, eta
@@ -71,48 +72,47 @@ int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa
           passki++;
           // other jet selections ?
           // if(!jtr->presel(j)) continue;
-          jlead = j;
-          break;
-        }
-      if(passki) passevtjetki++;
-      if(jlead < 0) continue;
 
-      njet++;
+          njet++;
 
-      // D mesons
-      for(int j=0; j<dtr->Dsize(); j++)
-        {
-          // D selection
-          if(!dtr->presel(j) || !dtr->tightsel(j)) continue;
-          if((*dtr)["Dpt"][j] < pa["Dptmin"] || (*dtr)["Dpt"][j] > pa["Dptmax"]) continue;
-          if(fabs((*dtr)["Dy"][j]) > pa["Dymax"]) continue;
-
-          // D efficiency weight
-          float effweight = ebin.geteff((*dtr)["Dpt"][j], fabs((*dtr)["Dy"][j]), etr->hiBin());
-          if(effweight<1.e-6) { std::cout<<effweight<<": "<<(*dtr)["Dpt"][j]<<", "<<fabs((*dtr)["Dy"][j])<<", "<<etr->hiBin()<<std::endl; continue; }
-
-          // dphi calculation
-          std::map<std::string, float> d;
-          d["dphi"] = xjjana::cal_dphi_01((*dtr)["Dphi"][j], 
-                                          (*jtr)["jtphi"][jlead]); // 0 ~ 1
-          d["dr"] = xjjana::cal_dr((*dtr)["Dphi"][j], (*dtr)["Deta"][j], 
-                                   (*jtr)["jtphi"][jlead], (*jtr)["jteta"][jlead]); //
-
-          for(auto& v : Djet::var) // dphi, dr
+          // D mesons
+          for(int k=0; k<dtr->Dsize(); k++)
             {
-              int ibin = vb[v].ibin(d[v]);
-              if(ibin < 0) continue;
-              hmass[v+"_unweight"][ibin]->Fill((*dtr)["Dmass"][j]);
-              hmass[v+"_fitweigh"][ibin]->Fill((*dtr)["Dmass"][j], 1./effweight);
-              hmass_incl[v+"_unweight"]->Fill((*dtr)["Dmass"][j]);
-              hmass_incl[v+"_fitweigh"]->Fill((*dtr)["Dmass"][j], 1./effweight);
-              if(pdg::dzero_sigreg((*dtr)["Dmass"][j]))
+              // D selection
+              if(!dtr->presel(k) || !dtr->tightsel(k)) continue;
+              if((*dtr)["Dpt"][k] < pa["Dptmin"] || (*dtr)["Dpt"][k] > pa["Dptmax"]) continue;
+              if(fabs((*dtr)["Dy"][k]) > pa["Dymax"]) continue;
+
+              // D efficiency weight
+              float effweight = ebin.geteff((*dtr)["Dpt"][k], fabs((*dtr)["Dy"][k]), etr->hiBin());
+              if(effweight<1.e-6) { effbug++; continue; }
+
+              // dphi calculation
+              std::map<std::string, float> d;
+              d["dphi"] = xjjana::cal_dphi_01((*dtr)["Dphi"][k], 
+                                              (*jtr)["jtphi"][j]); // 0 ~ 1
+              d["dr"] = xjjana::cal_dr((*dtr)["Dphi"][k], (*dtr)["Deta"][k], 
+                                       (*jtr)["jtphi"][j], (*jtr)["jteta"][j]); //
+
+              for(auto& v : Djet::var) // dphi, dr
                 {
-                  heff[v]->Fill(d[v], 1./effweight);
-                  heffnorm[v]->Fill(d[v]);
+                  int ibin = vb[v].ibin(d[v]);
+                  if(ibin < 0) continue;
+                  hmass[v+"_unweight"][ibin]->Fill((*dtr)["Dmass"][k]);
+                  hmass[v+"_fitweigh"][ibin]->Fill((*dtr)["Dmass"][k], 1./effweight);
+                  hmass_incl[v+"_unweight"]->Fill((*dtr)["Dmass"][k]);
+                  hmass_incl[v+"_fitweigh"]->Fill((*dtr)["Dmass"][k], 1./effweight);
+                  if(pdg::dzero_sigreg((*dtr)["Dmass"][k]))
+                    {
+                      heff[v]->Fill(d[v], 1./effweight);
+                      heffnorm[v]->Fill(d[v]);
+                    }
                 }
             }
+          if(isleadingjet) break;
         }
+      if(passki) passevtjetki++;
+      if(effbug) break;
     }
   xjjc::progressbar_summary(nentries);
 

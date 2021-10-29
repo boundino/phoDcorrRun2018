@@ -8,6 +8,7 @@
 
 #include "xjjcuti.h"
 #include "xjjrootuti.h"
+#include "xjjmypdf.h"
 
 namespace comp_drawhist_
 {
@@ -88,6 +89,7 @@ int comp_drawhist(std::string inputname_pp, std::string inputname_PbPb, std::str
 
   TGaxis::SetExponentOffset(-0.1, 0, "y");
   xjjroot::setgstyle(1);
+  std::string output = "plots/" + outputdir + "/.pdf";
   TCanvas* c;
 
   c = new TCanvas("c", "", 600, 600);

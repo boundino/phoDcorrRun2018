@@ -8,6 +8,7 @@
 
 #include "xjjcuti.h"
 #include "xjjrootuti.h"
+#include "xjjmypdf.h"
 #include "dfitter.h"
 
 int djana_fithist(std::string inputname, std::string outsubdir)
@@ -52,33 +53,45 @@ int djana_fithist(std::string inputname, std::string outsubdir)
 
   xjjc::prt_divider();
 
+  xjjroot::setgstyle();
   xjjroot::dfitter df("YCF"), dfw("YCFW");
   for(auto& v : Djet::var) // dphi, dr
     {
-      std::string fitoutput = "plots/" + outsubdir + "_" + pa.tag() + "/idx_" + v + "/cmass";
-      xjjroot::mkdir(fitoutput);
+      // std::string fitoutput = "plots/" + outsubdir + "_" + pa.tag() + "/idx_" + v + "/cmass";
+      xjjroot::mypdf* fpdf = new xjjroot::mypdf("plots/" + outsubdir + "_" + pa.tag() + "/idx_" + v + "_cmass_unweight.pdf", "c", 600, 600);
+      xjjroot::mypdf* fpdfw = new xjjroot::mypdf("plots/" + outsubdir + "_" + pa.tag() + "/idx_" + v + "_cmass_fitweight.pdf", "cw", 600, 600);
 
-      dfw.fit(hmass_incl[v+"_fitweigh"], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_incl_fitweigh", fitoutput.c_str()), 
+      fpdfw->prepare();
+      dfw.fit(fpdfw->getc(), hmass_incl[v+"_fitweigh"], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), 
               std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
-      df.fit(hmass_incl[v+"_unweight"], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_incl_unweight", fitoutput.c_str()), 
+      fpdfw->write();
+      fpdf->prepare();
+      df.fit(fpdf->getc(), hmass_incl[v+"_unweight"], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(),
              std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
+      fpdf->write();
       for(int k=0; k<vb[v].n(); k++)
         {
           float bin_width = vb[v].width(k) * M_PI; // dphi
           if(v=="dr") bin_width = vb[v].area(k);
 
-          dfw.fit(hmass[v+"_fitweigh"][k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_fitweigh_%d", fitoutput.c_str(), k), 
+          fpdfw->prepare();
+          dfw.fit(fpdfw->getc(), hmass[v+"_fitweigh"][k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(),
                   std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb[v].tag(k, Djet::vartex[v]).c_str()}));
+          fpdfw->write();
           hd[v+"_fitweigh"]->SetBinContent(k+1, dfw.GetY()/bin_width);
           hd[v+"_fitweigh"]->SetBinError(k+1, dfw.GetYE()/bin_width);
 
-          df.fit(hmass[v+"_unweight"][k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_unweight_%d", fitoutput.c_str(), k), 
+          fpdf->prepare();
+          df.fit(fpdf->getc(), hmass[v+"_unweight"][k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(),
                  std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb[v].tag(k, Djet::vartex[v]).c_str()}));
+          fpdf->write();
           hd[v+"_unweight"]->SetBinContent(k+1, df.GetY()/bin_width);
           hd[v+"_unweight"]->SetBinError(k+1, df.GetYE()/bin_width);
           hd[v+"_effcorr"]->SetBinContent(k+1, df.GetY()/bin_width*heff[v]->GetBinContent(k+1));
           hd[v+"_effcorr"]->SetBinError(k+1, df.GetYE()/bin_width*heff[v]->GetBinContent(k+1));
         }
+      fpdf->close();
+      fpdfw->close();
       for(auto& t : type)
         hd[v+"_"+t]->SetTitle(Form("%f", njet));
     }
