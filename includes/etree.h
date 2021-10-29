@@ -16,11 +16,15 @@ namespace phoD
     TTree* nt() { return nt_; }
     int GetEntries() { return nt_->GetEntries(); }
     void GetEntry(int i);
+    int run() { return run_; }
+    long evt() { return evt_; }
+    long lumi() { return lumi_; }
     float vz() { return vz_; }
     int hiBin() { return ishi_?hiBin_:-1; }
     float Ncoll() { return ishi_?Ncoll_:(float)1.; }
     float pthat() { return pthat_; }
     float pthatweight() { return pthatweight_; }
+    float weight() { return weight_; }
     bool evtsel();
     bool hltsel_photon();
     bool hltsel_jet();
@@ -30,11 +34,15 @@ namespace phoD
     TTree* nt_hlt_;
     TTree* nt_skim_;
     void setbranchaddress();
+    UInt_t run_;
+    ULong64_t evt_;
+    UInt_t lumi_;
     float vz_;
     int hiBin_;
     float Ncoll_;
     float pthat_;
     float pthatweight_;
+    float weight_;
     int HLT_HIGEDPhoton40_v1_;
     int HLT_HIPhoton40_HoverELoose_v1_;
     int HLT_HIAK4CaloJet80_v1_;
@@ -51,11 +59,15 @@ namespace phoD
 
 void phoD::etree::setbranchaddress()
 {
+  if(nt_->FindBranch("run")) nt_->SetBranchAddress("run", &run_);
+  if(nt_->FindBranch("evt")) nt_->SetBranchAddress("evt", &evt_);
+  if(nt_->FindBranch("lumi")) nt_->SetBranchAddress("lumi", &lumi_);
   if(nt_->FindBranch("vz")) nt_->SetBranchAddress("vz", &vz_);
   if(nt_->FindBranch("hiBin")) nt_->SetBranchAddress("hiBin", &hiBin_);
   if(nt_->FindBranch("Ncoll")) nt_->SetBranchAddress("Ncoll", &Ncoll_);
   if(nt_->FindBranch("pthat")) nt_->SetBranchAddress("pthat", &pthat_);
   if(nt_->FindBranch("pthatweight")) nt_->SetBranchAddress("pthatweight", &pthatweight_);
+  if(nt_->FindBranch("weight")) nt_->SetBranchAddress("weight", &weight_);
   if(nt_hlt_)
     {
       if(nt_hlt_->FindBranch("HLT_HIGEDPhoton40_v1"))
@@ -119,6 +131,7 @@ bool phoD::etree::hltsel_photon()
 bool phoD::etree::hltsel_jet()
 {
   if(ishi_ && 
+     // (HLT_HIPuAK4CaloJet80Eta5p1_v1_ || HLT_HIPuAK4CaloJet100Eta5p1_v1_)
      HLT_HIPuAK4CaloJet80Eta5p1_v1_
      ) return true; //
   if(!ishi_ && 

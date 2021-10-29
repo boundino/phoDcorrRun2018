@@ -53,6 +53,7 @@ namespace xjjroot
     ~dfitter() {};
 
     TF1* fit(const TH1* hmass, const TH1* hmassMCSignal, const TH1* hmassMCSwapped, TString collisionsyst="", TString outputname="cmass", const std::vector<TString>& vtex=std::vector<TString>());
+    TF1* fit(TCanvas* c, const TH1* hmass, const TH1* hmassMCSignal, const TH1* hmassMCSwapped, TString collisionsyst="", const std::vector<TString>& vtex=std::vector<TString>());
     Bool_t isFitted() const {return fparamfuns;}
 
     Double_t GetS() const {return S;}
@@ -184,12 +185,20 @@ void xjjroot::dfitter::resolveoption()
 
 TF1* xjjroot::dfitter::fit(const TH1* hmass, const TH1* hmassMCSignal, const TH1* hmassMCSwapped, TString collisionsyst/*=""*/, TString outputname/*="cmass"*/, const std::vector<TString> &vtex/*=std::vector<TString>()*/)
 {
+  TCanvas* c = new TCanvas("c", "", 600, 600);
+  fit(c, hmass, hmassMCSignal, hmassMCSwapped, collisionsyst, vtex);
+  if(fsaveplot) c->SaveAs(Form("%s.pdf",outputname.Data()));
+  delete c;
+}
+
+TF1* xjjroot::dfitter::fit(TCanvas* c, const TH1* hmass, const TH1* hmassMCSignal, const TH1* hmassMCSwapped, TString collisionsyst/*=""*/, const std::vector<TString> &vtex/*=std::vector<TString>()*/)
+{
   reset();
   init();
 
-  TH1* h = (TH1*)hmass->Clone("h");
-  TH1* hMCSignal = (TH1*)hmassMCSignal->Clone("hMCSignal");
-  TH1* hMCSwapped = (TH1*)hmassMCSwapped->Clone("hMCSwapped");
+  TH1* h = (TH1*)hmass->Clone(Form("h-%s", xjjc::currenttime().c_str()));
+  TH1* hMCSignal = (TH1*)hmassMCSignal->Clone(Form("hMCSignal-%s", xjjc::currenttime().c_str()));
+  TH1* hMCSwapped = (TH1*)hmassMCSwapped->Clone(Form("hMCSwapped-%s", xjjc::currenttime().c_str()));
   sethist(h);
   sethist(hMCSignal);
   sethist(hMCSwapped);
@@ -197,8 +206,7 @@ TF1* xjjroot::dfitter::fit(const TH1* hmass, const TH1* hmassMCSignal, const TH1
   TString fitll = fweightedhist?"WL":"L";
   TString fitoption = ffitverbose?(fitll+" m"):(fitll+"m q");
   setgstyle();
-  TCanvas* c = new TCanvas("c", "" , 600, 600);
-  
+
   fun_f->SetParLimits(0,  0, 1.e+4);
   fun_f->SetParLimits(4,  -1000, 1000);
   fun_f->SetParLimits(10, 0.001, 0.05);
@@ -297,7 +305,9 @@ TF1* xjjroot::dfitter::fit(const TH1* hmass, const TH1* hmassMCSignal, const TH1
   setfunparameters();
   calvar();
   
-  h->Draw("e");
+  // c->cd();
+  
+  h->Draw("pe");
   fun_background->Draw("same");   
   fun_mass->Draw("same");
   fun_swap->Draw("same");
@@ -343,12 +353,9 @@ TF1* xjjroot::dfitter::fit(const TH1* hmass, const TH1* hmassMCSignal, const TH1
       drawtex(texxpos, texypos=(texypos-texdypos), Form("N#scale[0.6]{#lower[0.7]{sig}}/(N#scale[0.6]{#lower[0.7]{sig}}+N#scale[0.6]{#lower[0.7]{swap}}) = %.2f",fun_f->GetParameter(7)));
     }
   
-  if(fsaveplot) c->SaveAs(Form("%s.pdf",outputname.Data()));
-
-  delete c;
-  delete h;
-  delete hMCSignal;
-  delete hMCSwapped;
+  // delete h;
+  // delete hMCSignal;
+  // delete hMCSwapped;
 
   return clonefun(fun_mass, "Fun_mass");
 }
