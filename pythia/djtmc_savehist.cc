@@ -35,48 +35,45 @@ int mcana_savehist(std::string inputname, std::string outsubdir, int isembed, Dj
   int nentries = f->GetEntries();
   for(int i=0; i<nentries; i++)
     {
-      xjjc::progressslide(i, nentries, 10000);
+      xjjc::progressslide(i, nentries, 100000);
       f->GetEntry(i);
 
       // event selection + hlt
       if((pa.ishi() && isembed) && (etr->hiBin() < pa["centmin"]*2 || etr->hiBin() > pa["centmax"]*2)) continue;
-      float weight = 1.;
+      float weight = etr->weight();
       if(pa.ishi() && isembed) weight *= etr->Ncoll();
 
       // jet selection
-      int jlead = -1;
       for(int j=0; j<jtr->ngen(); j++) 
         {
           if((*jtr)["genpt"][j] <= pa["jtptmin"] || fabs((*jtr)["geneta"][j]) >= pa["jtetamax"]) continue;
           if(!isembed && jtr->val<int>("gensubid", j) != 0) continue;
-          jlead = j;
-          break;
-        }
-      if(jlead < 0) continue;
+      
+          ngenjet += weight;
 
-      ngenjet += weight;
+          // D mesons
+          for(int k=0; k<gtr->Gsize(); k++)
+            {
+              if(abs(gtr->val<int>("GpdgId", k)) != 421) continue;
+              if(!isembed && gtr->val<int>("GcollisionId", k) != 0) continue;
 
-      // D mesons
-      for(int j=0; j<gtr->Gsize(); j++)
-        {
-          if(abs(gtr->val<int>("GpdgId", j)) != 421) continue;
-          if(!isembed && gtr->val<int>("GcollisionId", j) != 0) continue;
+              if(gtr->val<float>("Gpt", k) < pa["Dptmin"] || gtr->val<float>("Gpt", k) > pa["Dptmax"]) continue;
+              if(fabs(gtr->val<float>("Gy", k)) > pa["Dymax"]) continue;
 
-          if(gtr->val<float>("Gpt", j) < pa["Dptmin"] || gtr->val<float>("Gpt", j) > pa["Dptmax"]) continue;
-          if(fabs(gtr->val<float>("Gy", j)) > pa["Dymax"]) continue;
+              // dphi calculation
+              std::map<std::string, float> d;
+              d["dphi"] = xjjana::cal_dphi_01((*gtr)["Gphi"][k],
+                                              (*jtr)["genphi"][j]); // 0 ~ 1
+              d["dr"] = xjjana::cal_dr((*gtr)["Gphi"][k], (*gtr)["Geta"][k],
+                                       (*jtr)["genphi"][j], (*jtr)["geneta"][j]); //
 
-          // dphi calculation
-          std::map<std::string, float> d;
-          d["dphi"] = xjjana::cal_dphi_01((*gtr)["Gphi"][j],
-                                          (*jtr)["genphi"][jlead]); // 0 ~ 1
-          d["dr"] = xjjana::cal_dr((*gtr)["Gphi"][j], (*gtr)["Geta"][j],
-                                   (*jtr)["genphi"][jlead], (*jtr)["geneta"][jlead]); //
-
-          for(auto& v : Djet::var) // dphi, dr
-            hd[v]->Fill(d[v], weight);
+              for(auto& v : Djet::var) // dphi, dr
+                hd[v]->Fill(d[v], weight);
+            }
         }
     }
   xjjc::progressbar_summary(nentries);
+
   for(auto& v : Djet::var)
     {
       std::cout<<"\e[2m -- ngenjet: "<<ngenjet<<"\e[0m"<<std::endl;
