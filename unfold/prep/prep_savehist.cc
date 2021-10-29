@@ -68,7 +68,8 @@ int prep_savehist(std::string inputname, std::string inputname_data, std::string
       f->GetEntry(i);
 
       if(pa.ishi() && (etr->hiBin() < pa["centmin"]*2 || etr->hiBin() > pa["centmax"]*2)) continue;
-      float weight = 1.;
+      float weight = etr->weight();
+      // float weight = 1.;
       if(pa.ishi()) weight *= etr->Ncoll();
 
       std::vector<float> Gphi, Geta;
@@ -86,61 +87,31 @@ int prep_savehist(std::string inputname, std::string inputname_data, std::string
         }
 
       // gen jet
-      int jlead = -1;
       for(int j=0; j<jtr->ngen(); j++)
         {
           if((*jtr)["genpt"][j] <= pa["jtptmin"] || fabs((*jtr)["geneta"][j]) >= pa["jtetamax"]) continue;
           if(jtr->val<int>("gensubid", j) != 0) continue;
-          jlead = j;
-          break;
-        }
-      if(jlead >= 0) 
-        {
           njet["HMCGen"] += weight;
           for(int k=0; k<Gphi.size(); k++)
             {
-              float value = val(var, Gphi[k], Geta[k], (*jtr)["genphi"][jlead], (*jtr)["geneta"][jlead]);
+              float value = val(var, Gphi[k], Geta[k], (*jtr)["genphi"][j], (*jtr)["geneta"][j]);
               h["HMCGen-original"]->Fill(value, weight); //
             }
         }
 
-      // reco jet ==> No subid selection !
-      jlead = -1;
-      for(int j=0; j<jtr->nref(); j++)
-        {
-          if((*jtr)["jtpt"][j] <= pa["jtptmin"] || fabs((*jtr)["jteta"][j]) >= pa["jtetamax"]) continue;
-          // if(jtr->val<int>("subid", j) != 0) continue;
-          jlead = j;
-          break;
-        }
-      if(jlead >= 0) 
-        {
-          njet["HMCReco"] += weight;
-          for(int k=0; k<Gphi.size(); k++)
-            {
-              float value = val(var, Gphi[k], Geta[k], (*jtr)["jtphi"][jlead], (*jtr)["jteta"][jlead]);
-              h["HMCReco-original"]->Fill(value, weight); //
-            }
-        }
-
       // match jet - [reco pt]
-      jlead = -1;
       for(int j=0; j<jtr->nref(); j++)
         {
           if((*jtr)["refpt"][j] < 0) continue;
           if((*jtr)["jtpt"][j] <= pa["jtptmin"] || fabs((*jtr)["jteta"][j]) >= pa["jtetamax"]) continue;
           if(jtr->val<int>("subid", j) != 0) continue;
-          jlead = j;
-          break;
-        }
-      if(jlead >= 0) 
-        {
           njet["HMCMatched"] += weight;
           njet["HMCMatchedRecoptGenphi"] += weight;
+
           for(int k=0; k<Gphi.size(); k++)
             {
-              float value_reco = val(var, Gphi[k], Geta[k], (*jtr)["jtphi"][jlead], (*jtr)["jteta"][jlead]);
-              float value_gen = val(var, Gphi[k], Geta[k], (*jtr)["refphi"][jlead], (*jtr)["refeta"][jlead]);
+              float value_reco = val(var, Gphi[k], Geta[k], (*jtr)["jtphi"][j], (*jtr)["jteta"][j]);
+              float value_gen = val(var, Gphi[k], Geta[k], (*jtr)["refphi"][j], (*jtr)["refeta"][j]);
               int binx = vb.ibin(value_reco), biny = vb.ibin(value_gen);
               if(binx >= 0 && biny >= 0)
                 HResponse->Fill(binx, biny, weight);
@@ -151,43 +122,56 @@ int prep_savehist(std::string inputname, std::string inputname_data, std::string
         }
 
       // match jet - [gen pt]
-      jlead = -1;
       for(int j=0; j<jtr->nref(); j++)
         {
+          if((*jtr)["refpt"][j] < 0) continue;
           if((*jtr)["refpt"][j] <= pa["jtptmin"] || fabs((*jtr)["refeta"][j]) >= pa["jtetamax"]) continue;
           if(jtr->val<int>("subid", j) != 0) continue;
-          jlead = j;
-          break;
-        }
-      if(jlead >= 0) 
-        {
           njet["HMCMatchedGenptRecophi"] += weight;
           njet["HMCMatchedGenptGenphi"] += weight;
+
           for(int k=0; k<Gphi.size(); k++)
             {
-              float value_reco = val(var, Gphi[k], Geta[k], (*jtr)["jtphi"][jlead], (*jtr)["jteta"][jlead]);
-              float value_gen = val(var, Gphi[k], Geta[k], (*jtr)["refphi"][jlead], (*jtr)["refeta"][jlead]);
+              float value_reco = val(var, Gphi[k], Geta[k], (*jtr)["jtphi"][j], (*jtr)["jteta"][j]);
+              float value_gen = val(var, Gphi[k], Geta[k], (*jtr)["refphi"][j], (*jtr)["refeta"][j]);
 
               h["HMCMatchedGenptRecophi-original"]->Fill(value_reco, weight); //
               h["HMCMatchedGenptGenphi-original"]->Fill(value_gen, weight); //
             }
         }
+
+      // reco jet ==> No subid selection !
+      // jlead = -1;
+      for(int j=0; j<jtr->nref(); j++)
+        {
+          if((*jtr)["jtpt"][j] <= pa["jtptmin"] || fabs((*jtr)["jteta"][j]) >= pa["jtetamax"]) continue;
+          // if(jtr->val<int>("subid", j) != 0) continue;
+          njet["HMCReco"] += weight;
+          for(int k=0; k<Gphi.size(); k++)
+            {
+              float value = val(var, Gphi[k], Geta[k], (*jtr)["jtphi"][j], (*jtr)["jteta"][j]);
+              h["HMCReco-original"]->Fill(value, weight); //
+            }
+        }
+
     }
   xjjc::progressbar_summary(nentries);
 
   // normalization
   for(auto& t : names)
     {
-      h[t] = (TH1D*)xjjana::changebin(h[t+"-original"], 0, vb.n(), t);
-      if(t == "HDataReco") continue;
-      for(int k=0; k<vb.n(); k++)
+      if(t != "HDataReco")
         {
-          float bin_width = vb.width(k) * M_PI; // dphi
-          if(var=="dr") bin_width = vb.area(k); // dr
-          float nj = njet[t]==0?1:njet[t];
-          h[t+"-original"]->SetBinContent(k+1, h[t+"-original"]->GetBinContent(k+1)/nj/bin_width);
-          h[t+"-original"]->SetBinError(k+1, h[t+"-original"]->GetBinError(k+1)/nj/bin_width);
+          for(int k=0; k<vb.n(); k++)
+            {
+              float bin_width = vb.width(k) * M_PI; // dphi
+              if(var=="dr") bin_width = vb.area(k); // dr
+              float nj = njet[t]==0?1:njet[t];
+              h[t+"-original"]->SetBinContent(k+1, h[t+"-original"]->GetBinContent(k+1)/nj/bin_width);
+              h[t+"-original"]->SetBinError(k+1, h[t+"-original"]->GetBinError(k+1)/nj/bin_width);
+            }
         }
+      h[t] = (TH1D*)xjjana::changebin(h[t+"-original"], 0, vb.n(), t);
     }
   for(int k=0; k<vb.n(); k++)
     {
@@ -256,13 +240,13 @@ int prep_addinfo(std::string inputname, std::string outputdir)
 
 int main(int argc, char* argv[])
 {
-  if(argc == 12)
+  if(argc == 13)
     {
       Djet::param pa(atoi(argv[4]), atof(argv[5]), atof(argv[6]), atof(argv[7]), atof(argv[8]), atof(argv[9]), atof(argv[10]), atof(argv[11]), 1/*ismc*/);
-      prep_savehist(argv[1], Form("%s:hdphi_%s", argv[2], atoi(argv[4])?"sub":"pp"), argv[3],
-                    "dphi", pa);
-      prep_savehist(argv[1], Form("%s:hdr_%s", argv[2], atoi(argv[4])?"sub":"pp"), argv[3],
-                    "dr", pa);
+      prep_savehist(argv[1], Form("%s:h%s_%s", argv[2], argv[12], atoi(argv[4])?"sub":"pp"), argv[3],
+                    argv[12], pa);
+      // prep_savehist(argv[1], Form("%s:hdr_%s", argv[2], atoi(argv[4])?"sub":"pp"), argv[3],
+      //               "dr", pa);
       return 0;
     }
 
