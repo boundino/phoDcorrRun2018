@@ -34,7 +34,7 @@ int mcana_drawhist(std::string inputname, std::string outsubdir)
       float njet = atof(hd[v]->GetTitle());
       for(int k=0; k<vb.n(); k++)
         {
-          float bin_width = vb.width(k) * M_PI; // dphi
+          float bin_width = vb.width(k); // dphi
           if(v=="dr") bin_width = vb.area(k);
           hd[v]->SetBinContent(k+1, hd[v]->GetBinContent(k+1)/njet/bin_width);
           hd[v]->SetBinError(k+1, hd[v]->GetBinError(k+1)/njet/bin_width);
@@ -86,7 +86,7 @@ void mcana_::seth(TH1F* h, bool forcemaxdigits)
 {
   h->SetMinimum(0);
   h->SetMaximum(h->GetMaximum()*1.6);
-  h->GetXaxis()->SetNdivisions(-505);
+  h->GetXaxis()->SetNdivisions(505);
   if(forcemaxdigits) h->GetYaxis()->SetMaxDigits(1);
   xjjroot::sethempty(h, 0, 0.1);
 }

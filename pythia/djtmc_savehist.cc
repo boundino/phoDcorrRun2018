@@ -62,7 +62,7 @@ int mcana_savehist(std::string inputname, std::string outsubdir, int isembed, Dj
 
               // dphi calculation
               std::map<std::string, float> d;
-              d["dphi"] = xjjana::cal_dphi_01((*gtr)["Gphi"][k],
+              d["dphi"] = xjjana::cal_dphi_0pi((*gtr)["Gphi"][k],
                                               (*jtr)["genphi"][j]); // 0 ~ 1
               d["dr"] = xjjana::cal_dr((*gtr)["Gphi"][k], (*gtr)["Geta"][k],
                                        (*jtr)["genphi"][j], (*jtr)["geneta"][j]); //
