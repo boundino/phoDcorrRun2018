@@ -89,7 +89,7 @@ int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa
 
               // dphi calculation
               std::map<std::string, float> d;
-              d["dphi"] = xjjana::cal_dphi_01((*dtr)["Dphi"][k], 
+              d["dphi"] = xjjana::cal_dphi_0pi((*dtr)["Dphi"][k], 
                                               (*jtr)["jtphi"][j]); // 0 ~ 1
               d["dr"] = xjjana::cal_dr((*dtr)["Dphi"][k], (*dtr)["Deta"][k], 
                                        (*jtr)["jtphi"][j], (*jtr)["jteta"][j]); //

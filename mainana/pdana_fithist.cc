@@ -66,27 +66,27 @@ int pdana_fithist(std::string inputname, std::string outsubdir)
     {
       dfw.fit(hmass_raw_fitweigh[k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_raw_fitweigh_%d", fitoutput.c_str(), k), 
               std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb.tag(k, "#Delta#phi/#pi").c_str()}));
-      hdphi_raw_fitweigh->SetBinContent(k+1, dfw.GetY()/vb.width(k)/M_PI);
-      hdphi_raw_fitweigh->SetBinError(k+1, dfw.GetYE()/vb.width(k)/M_PI);
+      hdphi_raw_fitweigh->SetBinContent(k+1, dfw.GetY()/vb.width(k));
+      hdphi_raw_fitweigh->SetBinError(k+1, dfw.GetYE()/vb.width(k));
 
       dfw.fit(hmass_bkg_fitweigh[k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_bkg_fitweigh_%d", fitoutput.c_str(), k), 
               std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb.tag(k, "#Delta#phi/#pi").c_str()}));
-      hdphi_bkg_fitweigh->SetBinContent(k+1, dfw.GetY()/vb.width(k)/M_PI);
-      hdphi_bkg_fitweigh->SetBinError(k+1, dfw.GetYE()/vb.width(k)/M_PI);
+      hdphi_bkg_fitweigh->SetBinContent(k+1, dfw.GetY()/vb.width(k));
+      hdphi_bkg_fitweigh->SetBinError(k+1, dfw.GetYE()/vb.width(k));
 
       df.fit(hmass_raw_unweight[k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_raw_unweight_%d", fitoutput.c_str(), k), 
              std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb.tag(k, "#Delta#phi/#pi").c_str()}));
-      hdphi_raw_unweight->SetBinContent(k+1, df.GetY()/vb.width(k)/M_PI);
-      hdphi_raw_unweight->SetBinError(k+1, df.GetYE()/vb.width(k)/M_PI);
-      hdphi_raw_effcorr->SetBinContent(k+1, df.GetY()/vb.width(k)/M_PI*heff_raw->GetBinContent(k+1));
-      hdphi_raw_effcorr->SetBinError(k+1, df.GetYE()/vb.width(k)/M_PI*heff_raw->GetBinContent(k+1));
+      hdphi_raw_unweight->SetBinContent(k+1, df.GetY()/vb.width(k));
+      hdphi_raw_unweight->SetBinError(k+1, df.GetYE()/vb.width(k));
+      hdphi_raw_effcorr->SetBinContent(k+1, df.GetY()/vb.width(k)*heff_raw->GetBinContent(k+1));
+      hdphi_raw_effcorr->SetBinError(k+1, df.GetYE()/vb.width(k)*heff_raw->GetBinContent(k+1));
 
       df.fit(hmass_bkg_unweight[k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), Form("%s_bkg_unweight_%d", fitoutput.c_str(), k), 
              std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb.tag(k, "#Delta#phi/#pi").c_str()}));
-      hdphi_bkg_unweight->SetBinContent(k+1, df.GetY()/vb.width(k)/M_PI);
-      hdphi_bkg_unweight->SetBinError(k+1, df.GetYE()/vb.width(k)/M_PI);
-      hdphi_bkg_effcorr->SetBinContent(k+1, df.GetY()/vb.width(k)/M_PI*heff_bkg->GetBinContent(k+1));
-      hdphi_bkg_effcorr->SetBinError(k+1, df.GetYE()/vb.width(k)/M_PI*heff_bkg->GetBinContent(k+1));
+      hdphi_bkg_unweight->SetBinContent(k+1, df.GetY()/vb.width(k));
+      hdphi_bkg_unweight->SetBinError(k+1, df.GetYE()/vb.width(k));
+      hdphi_bkg_effcorr->SetBinContent(k+1, df.GetY()/vb.width(k)*heff_bkg->GetBinContent(k+1));
+      hdphi_bkg_effcorr->SetBinError(k+1, df.GetYE()/vb.width(k)*heff_bkg->GetBinContent(k+1));
     }
 
   hdphi_raw_fitweigh->SetTitle(Form("%f", nphoton_raw));

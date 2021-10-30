@@ -71,7 +71,7 @@ int djana_fithist(std::string inputname, std::string outsubdir)
       fpdf->write();
       for(int k=0; k<vb[v].n(); k++)
         {
-          float bin_width = vb[v].width(k) * M_PI; // dphi
+          float bin_width = vb[v].width(k); // dphi
           if(v=="dr") bin_width = vb[v].area(k);
 
           fpdfw->prepare();

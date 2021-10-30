@@ -117,7 +117,7 @@ int pdana_savehist(std::string inputname, std::string outsubdir, phoD::param& pa
           float effweight = ebin.geteff((*dtr)["Dpt"][j], fabs((*dtr)["Dy"][j]), etr->hiBin());
 
           // dphi calculation
-          float dphi = phoD::cal_dphi_01((*dtr)["Dphi"][j], 
+          float dphi = phoD::cal_dphi_0pi((*dtr)["Dphi"][j], 
                                          (*ptr)["phoPhi"][jlead]); // 0 ~ 1
           int ibin = vb.ibin(dphi);
           if(see_raw)

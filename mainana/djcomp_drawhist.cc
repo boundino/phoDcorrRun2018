@@ -257,7 +257,7 @@ void comp_::seth(TH1F* h, float yl, float yh)
       h->SetMinimum(h->GetMinimum()*yl);
       h->SetMaximum(h->GetMaximum()*yh);
     }
-  h->GetXaxis()->SetNdivisions(-505);
+  h->GetXaxis()->SetNdivisions(505);
 }
 
 int main(int argc, char* argv[])

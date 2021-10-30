@@ -103,7 +103,7 @@ void djana_::seth(TH1F* h, std::string ytitle, bool forcemaxdigits, bool setminm
       h->SetMinimum(0);
       h->SetMaximum(h->GetMaximum()*1.7);
     }
-  h->GetXaxis()->SetNdivisions(-505);
+  h->GetXaxis()->SetNdivisions(505);
   if(forcemaxdigits) h->GetYaxis()->SetMaxDigits(1);
   if(ytitle != "") h->GetYaxis()->SetTitle(ytitle.c_str());
 }
