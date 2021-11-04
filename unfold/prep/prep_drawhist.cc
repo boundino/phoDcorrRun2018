@@ -34,11 +34,17 @@ std::map<std::string, int> colors = {
   {"HMCMatchedGenptGenphi", xjjroot::mycolor_satmiddle["cyan"]},
   {"HMCMatchedGenptGenphi_norm", xjjroot::mycolor_satmiddle["cyan"]},
   {"hrefpt_match_reco", xjjroot::mycolor_satmiddle["red"]},
-  {"hrefpt_match_reco_jD", xjjroot::mycolor_satmiddle["red"]},
+  {"hrefpt_match_reco_dRfilter0p10", xjjroot::mycolor_satmiddle["green"]},
+  {"hrefpt_match_reco_dRfilter0p12", xjjroot::mycolor_satmiddle["greenblue"]},
+  {"hrefpt_match_reco_dRfilter0p14", xjjroot::mycolor_satmiddle["magenta"]},
+  {"hrefpt_match_reco_dRfilter0p16", xjjroot::mycolor_satmiddle["orange"]},
+  {"hrefpt_match_reco_dRfilter0p18", xjjroot::mycolor_satmiddle["violet"]},
+  {"hrefpt_match_reco_dRfilter0p20", xjjroot::mycolor_satmiddle["yellow"]},
   {"hrefpt_match_gen", xjjroot::mycolor_satmiddle["blue"]},
-  {"hrefpt_match_gen_jD", xjjroot::mycolor_satmiddle["blue"]},
   {"hratio_GenptRecophi_RecoptRecophi", kGray},
   {"hratio_GenptRecophi_RecoptRecophi_norm", kBlack},
+  {"hratio_GenptGenphi_GenptRecophi", kGray},
+  {"hratio_GenptGenphi_GenptRecophi_norm", kBlack},
 };
 void DrawThese(std::vector<std::pair<TH1D*, std::string>> tags, xjjroot::mypdf* f, std::string comment="");
 Djet::param* pa;
@@ -54,7 +60,7 @@ int draw(std::string inputname, std::string outputdir)
   std::vector<std::string> names = {
     "HMCReco", "HMCGen", "HDataReco", 
     "HMCMatched", "HMCMatchedRecoptGenphi", "HMCMatchedGenptRecophi", "HMCMatchedGenptGenphi",
-    "HDataReco_nojercorr", "hratio_GenptRecophi_RecoptRecophi"
+    "HDataReco_nojercorr", "hratio_GenptRecophi_RecoptRecophi", "hratio_GenptGenphi_GenptRecophi"
   };
   for(auto& t : names)
     {
@@ -67,12 +73,13 @@ int draw(std::string inputname, std::string outputdir)
       xjjroot::setthgrstyle(h[t+"_norm"], colors[t+"_norm"], 20, 0.8, colors[t+"_norm"], 1, 2);
     }
   // read jet pT hists
-  std::vector<std::string> names_refpt = {"hrefpt_match_reco", "hrefpt_match_gen"};
+  std::vector<std::string> names_refpt = {"hrefpt_match_reco", "hrefpt_match_gen",
+                                          "hrefpt_match_reco_dRfilter0p10", "hrefpt_match_reco_dRfilter0p12", "hrefpt_match_reco_dRfilter0p14", "hrefpt_match_reco_dRfilter0p16", "hrefpt_match_reco_dRfilter0p18", "hrefpt_match_reco_dRfilter0p20"};
   for(auto& t : names_refpt)
     {
       h[t] = (TH1D*)inf->Get(t.c_str());
       xjjroot::sethempty(h[t], 0, 0);
-      xjjroot::setthgrstyle(h[t], colors[t], 20, 0.8, colors[t], 1, 2);
+      xjjroot::setthgrstyle(h[t], colors[t], 20, 0.6, colors[t], 1, 2);
     }
 
   // draw
@@ -101,6 +108,9 @@ int draw(std::string inputname, std::string outputdir)
   DrawThese({{h["hratio_GenptRecophi_RecoptRecophi"], "N_{jet} normalized"},
         {h["hratio_GenptRecophi_RecoptRecophi_norm"], "N_{jD} normalized"}}, fpdf);
 
+  DrawThese({{h["hratio_GenptGenphi_GenptRecophi"], "N_{jet} normalized"},
+        {h["hratio_GenptGenphi_GenptRecophi_norm"], "N_{jD} normalized"}}, fpdf);
+
   DrawThese({{h["HMCMatched"], "MC Matched"},
         {h["HMCGen"], "MC Gen"},
           {h["HDataReco_nojercorr"], "Data (No JER corr)"}}, fpdf);
@@ -118,7 +128,14 @@ int draw(std::string inputname, std::string outputdir)
           {h["HDataReco_norm"], "Data (Correct JER)"}}, fpdf);
 
   DrawThese({{h["hrefpt_match_gen"], "Gen p_{T} > 80 GeV"},
-        {h["hrefpt_match_reco"], "Reco p_{T} > 80 GeV"}}, fpdf, "Number of jets vs. ref p_{T}");
+        {h["hrefpt_match_reco"], "Reco p_{T} > 80 GeV"},
+          {h["hrefpt_match_reco_dRfilter0p10"], "Reco p_{T} > 80 GeV (#DeltaR<0.10)"},
+          {h["hrefpt_match_reco_dRfilter0p12"], "Reco p_{T} > 80 GeV (#DeltaR<0.12)"},
+          {h["hrefpt_match_reco_dRfilter0p14"], "Reco p_{T} > 80 GeV (#DeltaR<0.14)"},
+          {h["hrefpt_match_reco_dRfilter0p16"], "Reco p_{T} > 80 GeV (#DeltaR<0.16)"},
+          {h["hrefpt_match_reco_dRfilter0p18"], "Reco p_{T} > 80 GeV (#DeltaR<0.18)"},
+          {h["hrefpt_match_reco_dRfilter0p20"], "Reco p_{T} > 80 GeV (#DeltaR<0.20)"},
+            }, fpdf, "Number of jets vs. ref p_{T}");
  
   fpdf->close();
 

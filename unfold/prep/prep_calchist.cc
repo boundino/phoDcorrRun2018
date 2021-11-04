@@ -31,19 +31,6 @@ int prep_calchist(std::string inputname, std::string outputdir, std::string var)
       hvar[keyname] = (TH1D*)inf->Get(keyname.c_str());
     }
   xjjana::bins<double> vb(xjjana::gethXaxis(hvar["HDataReco-original"]));
-  // ratio
-  if(hvar["HMCMatchedGenptRecophi-original"]) std::cout<<"\e[32m"<<"HMCMatchedGenptRecophi-original"<<"\e[0m"<<std::endl;
-  else std::cout<<"\e[31m"<<"HMCMatchedGenptRecophi-original"<<"\e[0m"<<std::endl;
-  hvar["hratio_GenptRecophi_RecoptRecophi-original"] = (TH1D*)hvar["HMCMatchedGenptRecophi-original"]->Clone("hratio_GenptRecophi_RecoptRecophi-original");
-  hvar["hratio_GenptRecophi_RecoptRecophi-original"]->Divide(hvar["HMCMatched-original"]);
-  hvar["hratio_GenptRecophi_RecoptRecophi-original"]->GetYaxis()->SetTitle("(Gen p_{T} Reco #phi,#eta) / (Reco p_{T} Reco #phi,#eta)");
-  // correct jer
-  if(hvar["HDataReco-original"]) std::cout<<"\e[32m"<<"HDataReco-original"<<"\e[0m"<<std::endl;
-  else std::cout<<"\e[31m"<<"HDataReco-original"<<"\e[0m"<<std::endl;
-  if(hvar["hratio_GenptRecophi_RecoptRecophi-original"]) std::cout<<"\e[32m"<<"hratio_GenptRecophi_RecoptRecophi-original"<<"\e[0m"<<std::endl;
-  else std::cout<<"\e[31m"<<"hratio_GenptRecophi_RecoptRecophi-original"<<"\e[0m"<<std::endl;
-  hvar["HDataReco_nojercorr-original"] = (TH1D*)hvar["HDataReco-original"]->Clone("HDataReco_nojercorr-original");
-  hvar["HDataReco-original"]->Multiply(hvar["hratio_GenptRecophi_RecoptRecophi-original"]);
   std::vector<std::string> names;
   for(auto& h : hvar)
     {
@@ -63,13 +50,31 @@ int prep_calchist(std::string inputname, std::string outputdir, std::string var)
           norm += bin_width*hvar[t+"-original"]->GetBinContent(k+1);
         }
       if(norm) hvar[t+"_norm-original"]->Scale(1./norm);
+      hvar[t+"-original"]->GetYaxis()->SetTitle(Form("#frac{1}{N_{jet}} %s", Djet::varytex[var].c_str()));
       hvar[t+"_norm-original"]->GetYaxis()->SetTitle(Form("#frac{1}{N_{jD}} %s", Djet::varytex[var].c_str()));
     }
-  if(hvar["HMCMatchedGenptRecophi_norm-original"]) std::cout<<"\e[32m"<<"HMCMatchedGenptRecophi_norm-original"<<"\e[0m"<<std::endl;
-  else std::cout<<"\e[31m"<<"HMCMatchedGenptRecophi_norm-original"<<"\e[0m"<<std::endl;
+  // ratio
+  hvar["hratio_GenptRecophi_RecoptRecophi-original"] = (TH1D*)hvar["HMCMatchedGenptRecophi-original"]->Clone("hratio_GenptRecophi_RecoptRecophi-original");
+  hvar["hratio_GenptRecophi_RecoptRecophi-original"]->Divide(hvar["HMCMatched-original"]);
+  hvar["hratio_GenptRecophi_RecoptRecophi-original"]->GetYaxis()->SetTitle("(Gen p_{T} Reco #phi,#eta) / (Reco p_{T} Reco #phi,#eta)");
   hvar["hratio_GenptRecophi_RecoptRecophi_norm-original"] = (TH1D*)hvar["HMCMatchedGenptRecophi_norm-original"]->Clone("hratio_GenptRecophi_RecoptRecophi_norm-original");
   hvar["hratio_GenptRecophi_RecoptRecophi_norm-original"]->Divide(hvar["HMCMatched_norm-original"]);
   hvar["hratio_GenptRecophi_RecoptRecophi_norm-original"]->GetYaxis()->SetTitle("(Gen p_{T} Reco #phi,#eta) / (Reco p_{T} Reco #phi,#eta)");
+  names.push_back("hratio_GenptRecophi_RecoptRecophi");
+  hvar["hratio_GenptGenphi_GenptRecophi-original"] = (TH1D*)hvar["HMCMatchedGenptGenphi-original"]->Clone("hratio_GenptGenphi_GenptRecophi-original");
+  hvar["hratio_GenptGenphi_GenptRecophi-original"]->Divide(hvar["HMCMatched-original"]);
+  hvar["hratio_GenptGenphi_GenptRecophi-original"]->GetYaxis()->SetTitle("(Gen p_{T} Gen #phi,#eta) / (Gen p_{T} Reco #phi,#eta)");
+  hvar["hratio_GenptGenphi_GenptRecophi_norm-original"] = (TH1D*)hvar["HMCMatchedGenptGenphi_norm-original"]->Clone("hratio_GenptGenphi_GenptRecophi_norm-original");
+  hvar["hratio_GenptGenphi_GenptRecophi_norm-original"]->Divide(hvar["HMCMatched_norm-original"]);
+  hvar["hratio_GenptGenphi_GenptRecophi_norm-original"]->GetYaxis()->SetTitle("(Gen p_{T} Gen #phi,#eta) / (Gen p_{T} Reco #phi,#eta)");
+  names.push_back("hratio_GenptGenphi_GenptRecophi");
+  // correct jer
+  hvar["HDataReco_nojercorr-original"] = (TH1D*)hvar["HDataReco-original"]->Clone("HDataReco_nojercorr-original");
+  hvar["HDataReco-original"]->Multiply(hvar["hratio_GenptRecophi_RecoptRecophi-original"]);
+  hvar["HDataReco_nojercorr_norm-original"] = (TH1D*)hvar["HDataReco_norm-original"]->Clone("HDataReco_nojercorr_norm-original");
+  hvar["HDataReco_norm-original"]->Multiply(hvar["hratio_GenptRecophi_RecoptRecophi_norm-original"]);
+  names.push_back("HDataReco_nojercorr");
+
   // remove -original
   for(auto& t : names)
     {
