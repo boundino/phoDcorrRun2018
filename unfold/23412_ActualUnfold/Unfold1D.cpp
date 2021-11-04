@@ -22,10 +22,12 @@ int main(int argc, char *argv[])
   CommandLine CL(argc, argv);
 
   string InputFileName    = CL.Get("Input",            "Input/DataJetPNominal.root");
-  string DataName         = CL.Get("InputName",        "HDataReco");
+  // string DataName         = CL.Get("InputName",        "HDataReco_norm");
+  string DataName         = CL.Get("InputName",        "HMCMatchedGenptRecophi_norm");
   string ResponseName     = CL.Get("ResponseName",     "HResponse");
-  string ResponseTruth    = CL.Get("ResponseTruth",    "HMCGen");
-  string ResponseMeasured = CL.Get("ResponseMeasured", "HMCReco");
+  string ResponseTruth    = CL.Get("ResponseTruth",    "HMCGen_norm");
+  // string ResponseMeasured = CL.Get("ResponseMeasured", "HMCReco");
+  string ResponseMeasured = CL.Get("ResponseMeasured", "HMCMatchedGenptRecophi_norm");
   string Output           = CL.Get("Output",           "Unfolded.root");
   bool MCPrior            = CL.GetBool("MCPrior",      false);
 
@@ -97,14 +99,12 @@ int main(int argc, char *argv[])
 
   vector<string> ToCopyHist
   {
-    "HMCMatched", "HMCMatchedRecoptGenphi",
-      "HMCMatchedGenptRecophi", "HMCMatchedGenptGenphi"
+    "HMCMatched", 
       };
   for(auto S : ToCopyHist)
     {
       InputFile.Get(S.c_str())->Clone()->Write();
     }
-
   vector<string> ToCopy
   {
     "MCEventCount", "MCAllEventCount", "MCBaselineEventCount",
@@ -130,6 +130,7 @@ RooUnfoldResponse *FillResponse(const TH2 *HResponse)
   double XMax = HResponse->GetXaxis()->GetBinUpEdge(NX);
   double YMax = HResponse->GetYaxis()->GetBinUpEdge(NY);
 
+  std::cout<<NX<<"  "<<NY<<std::endl;
   RooUnfoldResponse *Response = new RooUnfoldResponse(NX, XMin, XMax, NY, YMin, YMax);
 
   for(int i = 1; i <= HResponse->GetNbinsX(); i++)
@@ -138,8 +139,10 @@ RooUnfoldResponse *FillResponse(const TH2 *HResponse)
         {
           double x = HResponse->GetXaxis()->GetBinCenter(i);
           double y = HResponse->GetYaxis()->GetBinCenter(j);
-          for(int k = 0; k < HResponse->GetBinContent(i, j); k++)
-            Response->Fill(x, y);
+
+          Response->Fill(x, y, HResponse->GetBinContent(i, j));
+          // for(int k = 0; k < HResponse->GetBinContent(i, j); k++)
+          //   Response->Fill(x, y);
         }
     }
 
