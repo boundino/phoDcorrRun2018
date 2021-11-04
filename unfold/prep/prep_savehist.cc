@@ -50,7 +50,7 @@ int prep_savehist(std::string inputname, std::string inputname_data, std::string
   xjjana::bins<double> vb(xjjana::gethXaxis(HDataReco));
   for(auto& t : names)
     {
-      h[t+"-original"] = new TH1D(std::string(t+"-original").c_str(), Form(";%s;%s", Djet::vartex[var].c_str(), Djet:varytex[var].c_str()), vb.n(), vb.v().data());
+      h[t+"-original"] = new TH1D(std::string(t+"-original").c_str(), Form(";%s;#frac{1}{N_{jet}} %s", Djet::vartex[var].c_str(), Djet::varytex[var].c_str()), vb.n(), vb.v().data());
       // h[t+"-original"] = new TH1D(std::string(t+"-original").c_str(), Form(";%s bin index;", Djet::vartex[var].c_str()), vb.n(), vb.v().data());
       njet[t] = 0;
     }
@@ -59,12 +59,11 @@ int prep_savehist(std::string inputname, std::string inputname_data, std::string
       h["HDataReco-original"]->SetBinContent(k+1, HDataReco->GetBinContent(k+1));
       h["HDataReco-original"]->SetBinError(k+1, HDataReco->GetBinError(k+1));
     }
-  TH2D* HResponse = new TH2D("HResponse", ";Matched;Gen", vb.n(), 0, vb.n(), vb.n(), 0, vb.n());
-  std::vector<std::string> names_refpt = {"hrefpt_match_reco", "hrefpt_match_gen", "hrefpt_match_reco_jD", "hrefpt_match_gen_jD"};
+  TH2D* HResponse = new TH2D("HResponse", Form(";Matched %s bin index;Gen %s bin index", var.c_str(), var.c_str()), vb.n(), 0, vb.n(), vb.n(), 0, vb.n());
+  std::vector<std::string> names_refpt = {"hrefpt_match_reco", "hrefpt_match_gen", 
+                                          "hrefpt_match_reco_dRfilter0p10", "hrefpt_match_reco_dRfilter0p12", "hrefpt_match_reco_dRfilter0p14", "hrefpt_match_reco_dRfilter0p16", "hrefpt_match_reco_dRfilter0p18", "hrefpt_match_reco_dRfilter0p20"};
   for(auto& t : names_refpt)
-    {
-      hrefpt[t] = new TH1D(t.c_str(), ";Gen jet p_{T};", 200, 0, 200);
-    }
+    hrefpt[t] = new TH1D(t.c_str(), ";Gen jet p_{T};", 200, 0, 200);
 
   int nentries = f->GetEntries();
   for(int i=0; i<nentries; i++)
@@ -111,7 +110,22 @@ int prep_savehist(std::string inputname, std::string inputname_data, std::string
           if((*jtr)["jtpt"][j] <= pa["jtptmin"] || fabs((*jtr)["jteta"][j]) >= pa["jtetamax"]) continue;
           if(jtr->val<int>("subid", j) != 0) continue;
           hrefpt["hrefpt_match_reco"]->Fill((*jtr)["refpt"][j], weight);
-          if((*jtr)["refpt"][j] <  40) continue; // tricky condition!
+
+          float drgen = xjjana::cal_dr((*jtr)["refphi"][j], (*jtr)["refeta"][j], (*jtr)["jtphi"][j], (*jtr)["jteta"][j]);
+          if(drgen < 0.10)
+            hrefpt["hrefpt_match_reco_dRfilter0p10"]->Fill((*jtr)["refpt"][j], weight);
+          if(drgen < 0.12)
+            hrefpt["hrefpt_match_reco_dRfilter0p12"]->Fill((*jtr)["refpt"][j], weight);
+          if(drgen < 0.14)
+            hrefpt["hrefpt_match_reco_dRfilter0p14"]->Fill((*jtr)["refpt"][j], weight);
+          if(drgen < 0.16)
+            hrefpt["hrefpt_match_reco_dRfilter0p16"]->Fill((*jtr)["refpt"][j], weight);
+          if(drgen < 0.18)
+            hrefpt["hrefpt_match_reco_dRfilter0p18"]->Fill((*jtr)["refpt"][j], weight);
+          if(drgen < 0.20)
+            hrefpt["hrefpt_match_reco_dRfilter0p20"]->Fill((*jtr)["refpt"][j], weight);
+
+          if((*jtr)["refpt"][j] < 20 || drgen > 0.14) continue; // tricky condition!
 
           njet["HMCMatched"] += weight;
           njet["HMCMatchedRecoptGenphi"] += weight;
@@ -120,12 +134,7 @@ int prep_savehist(std::string inputname, std::string inputname_data, std::string
             {
               float value_reco = val(var, Gphi[k], Geta[k], (*jtr)["jtphi"][j], (*jtr)["jteta"][j]);
               float value_gen = val(var, Gphi[k], Geta[k], (*jtr)["refphi"][j], (*jtr)["refeta"][j]);
-              int binx = vb.ibin(value_reco), biny = vb.ibin(value_gen);
-              if(binx >= 0 && biny >= 0)
-                HResponse->Fill(binx, biny, weight);
  
-              hrefpt["hrefpt_match_reco_jD"]->Fill((*jtr)["refpt"][j], weight);
-
               h["HMCMatched-original"]->Fill(value_reco, weight); //
               h["HMCMatchedRecoptGenphi-original"]->Fill(value_gen, weight); //
             }
@@ -147,10 +156,13 @@ int prep_savehist(std::string inputname, std::string inputname_data, std::string
               float value_reco = val(var, Gphi[k], Geta[k], (*jtr)["jtphi"][j], (*jtr)["jteta"][j]);
               float value_gen = val(var, Gphi[k], Geta[k], (*jtr)["refphi"][j], (*jtr)["refeta"][j]);
 
-              hrefpt["hrefpt_match_gen_jD"]->Fill((*jtr)["refpt"][j], weight);
-
               h["HMCMatchedGenptRecophi-original"]->Fill(value_reco, weight); //
               h["HMCMatchedGenptGenphi-original"]->Fill(value_gen, weight); //
+
+              // <-- Response -->
+              int binx = vb.ibin(value_reco), biny = vb.ibin(value_gen);
+              if(binx >= 0 && biny >= 0)
+                HResponse->Fill(binx, biny, weight);
             }
         }
 
