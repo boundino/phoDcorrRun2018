@@ -31,6 +31,15 @@ int prep_calchist(std::string inputname, std::string outputdir, std::string var)
       hvar[keyname] = (TH1D*)inf->Get(keyname.c_str());
     }
   xjjana::bins<double> vb(xjjana::gethXaxis(hvar["HDataReco-original"]));
+  // remove bandwidth scale for data
+  for(int k=0; k<vb.n(); k++)
+    {
+      double bin_width = vb.width(k);
+      if(var=="dr") bin_width = vb.area(k);
+      hvar["HDataReco-original"]->SetBinContent(k+1, hvar["HDataReco-original"]->GetBinContent(k+1) * bin_width);
+      hvar["HDataReco-original"]->SetBinError(k+1, hvar["HDataReco-original"]->GetBinError(k+1) * bin_width);
+    }
+  //
   std::vector<std::string> names;
   for(auto& h : hvar)
     {
@@ -42,13 +51,14 @@ int prep_calchist(std::string inputname, std::string outputdir, std::string var)
   for(auto& t : names)
     {
       hvar[t+"_norm-original"] = (TH1D*)hvar[t+"-original"]->Clone(Form("%s_norm-original", t.c_str()));
-      double norm = 0;
-      for(int k=0; k<hvar[t+"-original"]->GetXaxis()->GetNbins(); k++)
-        {
-          double bin_width = vb.width(k);
-          if(var=="dr") bin_width = vb.area(k);
-          norm += bin_width*hvar[t+"-original"]->GetBinContent(k+1);
-        }
+      double norm = hvar[t+"-original"]->Integral();
+      // double norm = 0;
+      // for(int k=0; k<hvar[t+"-original"]->GetXaxis()->GetNbins(); k++)
+      //   {
+      //     double bin_width = vb.width(k);
+      //     if(var=="dr") bin_width = vb.area(k);
+      //     norm += bin_width*hvar[t+"-original"]->GetBinContent(k+1);
+      //   }
       if(norm) hvar[t+"_norm-original"]->Scale(1./norm);
       hvar[t+"-original"]->GetYaxis()->SetTitle(Form("#frac{1}{N_{jet}} %s", Djet::varytex[var].c_str()));
       hvar[t+"_norm-original"]->GetYaxis()->SetTitle(Form("#frac{1}{N_{jD}} %s", Djet::varytex[var].c_str()));

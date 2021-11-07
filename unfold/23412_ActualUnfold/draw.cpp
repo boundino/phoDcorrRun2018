@@ -3,6 +3,8 @@
 #include <TH1D.h>
 #include <TCanvas.h>
 #include <TLegend.h>
+#include <TKey.h>
+#include <TObjString.h>
 #include <string>
 #include <map>
 #include <vector>
@@ -23,33 +25,66 @@ std::map<std::string, int> colors = {
   {"HUnfoldedBayes4", xjjroot::mycolor_satmiddle["violet"]},
   {"HUnfoldedBayes10", xjjroot::mycolor_satmiddle["red"]},
   {"HUnfoldedBayes100", xjjroot::mycolor_satmiddle["greenblue"]},
+  {"HUnfoldedSVD1", xjjroot::mycolor_light["cyan"]},
+  {"HUnfoldedSVD2", xjjroot::mycolor_light["orange"]},
+  {"HUnfoldedSVD4", xjjroot::mycolor_light["violet"]},
   {"HUnfoldedInvert", xjjroot::mycolor_satmiddle["yellow"]},
 };
-void DrawThese(std::vector<std::pair<TH1D*, std::string>> tags, xjjroot::mypdf* fpdf);
+void DrawThese(std::vector<std::pair<TH1D*, std::string>> tags, xjjroot::mypdf* fpdf, float forceymin=0, float forceymax=-1);
 Djet::param* pa;
 int draw(std::string inputname, std::string original, std::string outputdir)
 {
   TFile* inforiginal = TFile::Open(original.c_str());
   pa = new Djet::param(inforiginal);
-  std::string tvar = "#Deltar";
-  if(xjjc::str_contains(inputname, "_dphi.root")) tvar = "#Delta#phi";
+  std::string var = "dr";
+  if(xjjc::str_contains(inputname, "_dphi.root")) var = "dphi";
 
   std::map<std::string, TH1D*> h;
   TFile* inf = TFile::Open(inputname.c_str());
   std::vector<std::string> names = {
     "HMCMeasured", "HMCTruth", "HInput", 
-    "HUnfoldedBayes1", "HUnfoldedBayes2", "HUnfoldedBayes4", "HUnfoldedBayes10", "HUnfoldedBayes100",
-    "HUnfoldedInvert"
+    "HUnfoldedBayes", "HUnfoldedInvert", "HUnfoldedSVD"
   };
-  for(auto& t : names)
-   {
-      std::cout<<t<<std::endl;
-      h[t] = (TH1D*)inf->Get(t.c_str());
-      h[t]->GetXaxis()->SetTitle(Form("%s bin index", tvar.c_str()));
-      h[t]->GetYaxis()->SetTitle(Form("#frac{1}{N_{jet}} #frac{dN}{d%s}", tvar.c_str()));
-      xjjroot::setthgrstyle(h[t], colors[t], 20, 0.9, colors[t], 1, 2);
-      xjjroot::sethempty(h[t], 0, 0);
+  TKey* key; TIter nextkey(inf->GetListOfKeys());
+  std::vector<float> Iter_Bayes, Iter_SVD; 
+  while((key = (TKey*)nextkey()))
+    {
+      std::string classname(key->GetClassName()), keyname(key->GetName());
+      if(classname != "TH1D") continue;
+      if(xjjc::str_contains(keyname, "HUnfoldedBayes")) 
+        Iter_Bayes.push_back(atof(xjjc::str_eraseall(keyname, "HUnfoldedBayes").c_str()));
+      if(xjjc::str_contains(keyname, "HUnfoldedSVD")) 
+        Iter_SVD.push_back(atof(xjjc::str_eraseall(keyname, "HUnfoldedSVD").c_str()));
+      h[keyname] = (TH1D*)inf->Get(keyname.c_str());
+      h[keyname]->GetXaxis()->SetTitle(Form("%s bin index", Djet::vartex[var].c_str()));
+      h[keyname]->GetYaxis()->SetTitle("a.u.");
+      h[keyname]->Scale(1./h[keyname]->Integral());
+      int cc = (colors.find(keyname) != colors.end())?colors[keyname]:kBlack;
+      xjjroot::setthgrstyle(h[keyname], cc, 20, 0.9, cc, 1, 2);
+      xjjroot::sethempty(h[keyname], 0, 0);
     }
+  int nbin = h["HInput"]->GetXaxis()->GetNbins();
+  std::vector<TGraph*> grBayes(nbin), grSVD(nbin);
+  for(int i=0; i<nbin; i++)
+    {
+      std::vector<float> vbinBayes, vbinSVD;
+      int cc = kBlack;
+      if((var=="dr" && i>4) || (var=="dphi" && (i>1 && i<8))) cc = kGray;
+      for(auto& j : Iter_Bayes)
+        vbinBayes.push_back(h[Form("HUnfoldedBayes%.0f", j)]->GetBinContent(i+1));
+      grBayes[i] = new TGraph(Iter_Bayes.size(), Iter_Bayes.data(), vbinBayes.data());
+      grBayes[i]->SetName(Form("grBayes%d", i));
+      xjjana::gScale(grBayes[i], 1./vbinBayes[0]);
+      xjjroot::setthgrstyle(grBayes[i], cc, 20, 0.7, cc, 1, 2);
+
+      for(auto& j : Iter_SVD)
+        vbinSVD.push_back(h[Form("HUnfoldedSVD%.0f", j)]->GetBinContent(i+1));
+      grSVD[i] = new TGraph(Iter_SVD.size(), Iter_SVD.data(), vbinSVD.data());
+      grSVD[i]->SetName(Form("grSVD%d", i));
+      xjjana::gScale(grSVD[i], 1./vbinSVD[0]);
+      xjjroot::setthgrstyle(grSVD[i], cc, 20, 0.7, cc, 1, 2);
+    }
+
   TH2D* HMCResponse = (TH2D*)inf->Get("HMCResponse");
   xjjroot::sethempty(HMCResponse, 0, 0);
   HMCResponse->GetXaxis()->SetNdivisions(-1*xjjana::gethXn(h[names.front()])-100);
@@ -60,10 +95,22 @@ int draw(std::string inputname, std::string original, std::string outputdir)
   HMCResponse_norm->GetXaxis()->SetNdivisions(-1*xjjana::gethXn(h[names.front()])-100);
   HMCResponse_norm->GetYaxis()->SetNdivisions(-1*xjjana::gethXn(h[names.front()])-100);
 
+  h["HClosure_before"] = (TH1D*)h["HInput"]->Clone("HClosure_before");
+  h["HClosure_before"]->Divide(h["HMCTruth"]);
+  xjjroot::setthgrstyle(h["HClosure_before"], kGray, 20, 0.9, kGray, 1, 2);
+  xjjroot::sethempty(h["HClosure_before"], 0, 0);
+  h["HClosure_before"]->GetYaxis()->SetTitle("Ratio");
+
   h["HClosure"] = (TH1D*)h["HUnfoldedBayes10"]->Clone("HClosure");
-  HClosure->Divide(h["HMCTruth"]);
-  xjjroot::setthgrstyle(h[t], kBlack, 20, 0.9, kBlack, 1, 2);
-  xjjroot::sethempty(h[t], 0, 0);
+  h["HClosure"]->Divide(h["HMCTruth"]);
+  xjjroot::setthgrstyle(h["HClosure"], kBlack, 20, 0.9, kBlack, 1, 2);
+  xjjroot::sethempty(h["HClosure"], 0, 0);
+  h["HClosure"]->GetYaxis()->SetTitle("Ratio");
+
+  TH2D* hempty_Bayes = new TH2D("hempty_Bayes", ";Iterations;", 10, 0.6, 300, 10, 0, 2);
+  xjjroot::sethempty(hempty_Bayes);
+  TH2D* hempty_SVD = new TH2D("hempty_SVD", ";Iterations;", 10, 0, 10, 10, 0, 2);
+  xjjroot::sethempty(hempty_SVD);
 
   xjjroot::setgstyle(1);
   gStyle->SetPaintTextFormat("1.2f");
@@ -93,6 +140,25 @@ int draw(std::string inputname, std::string original, std::string outputdir)
           {h["HInput"], "Data"}
     }, fpdf);
 
+  fpdf->prepare();
+  fpdf->getc()->SetLogy(0);
+  fpdf->getc()->SetLogx();
+  hempty_Bayes->Draw("AXIS");
+  for(auto& gr : grBayes) gr->Draw("pl same");
+  xjjroot::drawCMSleft();
+  xjjroot::drawCMSright(Form("%s #sqrt{s_{NN}} = 5.02 TeV", pa->tag("ishi").c_str()));
+  xjjroot::drawcomment("Bayes");
+  fpdf->write();
+
+  fpdf->prepare();
+  fpdf->getc()->SetLogx(0);
+  hempty_SVD->Draw("AXIS");
+  for(auto& gr : grSVD) gr->Draw("pl same");
+  xjjroot::drawCMSleft();
+  xjjroot::drawCMSright(Form("%s #sqrt{s_{NN}} = 5.02 TeV", pa->tag("ishi").c_str()));
+  xjjroot::drawcomment("SVD");
+  fpdf->write();
+
   DrawThese({{h["HInput"], "Data"},
         {h["HUnfoldedBayes10"], "Data Unfolded (B-10)"}
     }, fpdf);
@@ -104,15 +170,23 @@ int draw(std::string inputname, std::string original, std::string outputdir)
     }, fpdf);
 
   DrawThese({{h["HMCTruth"], "MC Gen"},
-      {h["HUnfoldedBayes1"], "Unfolded (B-1)"},
-        {h["HUnfoldedBayes2"], "Unfolded (B-2)"},
-          {h["HUnfoldedBayes4"], "Unfolded (B-4)"},
-            {h["HUnfoldedBayes10"], "Unfolded (B-10)"},
-              {h["HUnfoldedBayes100"], "Unfolded (B-100)"}
+        {h["HUnfoldedBayes1"], "Unfolded (B-1)"},
+          {h["HUnfoldedBayes2"], "Unfolded (B-2)"},
+            {h["HUnfoldedBayes4"], "Unfolded (B-4)"},
+              {h["HUnfoldedBayes10"], "Unfolded (B-10)"},
+                {h["HUnfoldedBayes100"], "Unfolded (B-100)"}
     }, fpdf);
 
-  DrawThese({{h["HClosure"], "Unfolded (B-10) / Truth"},
-    }, fpdf);
+  DrawThese({{h["HMCTruth"], "MC Gen"},
+        {h["HUnfoldedBayes10"], "Unfolded (B-10)"},
+          {h["HUnfoldedSVD1"], "Unfolded (SVD-1)"},
+            {h["HUnfoldedSVD4"], "Unfolded (SVD-4)"},
+              {h["HUnfoldedInvert"], "Unfolded (Invert)"},
+                }, fpdf);
+
+  DrawThese({{h["HClosure_before"], "Measured / Truth"},
+        {h["HClosure"], "Unfolded (B-10) / Truth"}
+    }, fpdf, 0.6, 1.6);
 
   fpdf->close();
   delete pa;
@@ -125,7 +199,7 @@ int main(int argc, char* argv[])
   return 1;
 }
 
-void DrawThese(std::vector<std::pair<TH1D*, std::string>> tags, xjjroot::mypdf* fpdf)
+void DrawThese(std::vector<std::pair<TH1D*, std::string>> tags, xjjroot::mypdf* fpdf, float forceymin, float forceymax)
 {
   // preparation
   double ymin = 1.e+10, yminplus = 1.e+10, ymax = -1.e+10;
@@ -148,12 +222,18 @@ void DrawThese(std::vector<std::pair<TH1D*, std::string>> tags, xjjroot::mypdf* 
   fpdf->getc()->SetLogy(0);
   for(auto& t : tags)
     {
-      t.first->SetMinimum(std::min(ymin*1.2, 0.));
-      t.first->SetMaximum(ymax*1.5);
+      if(forceymin==0)
+        t.first->SetMinimum(std::min(ymin*1.2, 0.));
+      else
+        t.first->SetMinimum(forceymin);
+      if(forceymax<0)
+        t.first->SetMaximum(ymax*1.5);
+      else
+        t.first->SetMaximum(forceymax);
     }
   tags.front().first->Draw("AXIS");
   for(auto& t : tags)
-    t.first->Draw("ple same");
+    t.first->Draw("pe same");
   leg->Draw();
   pa->drawtex(0.30, 0.85, 0.032, "", 0, -0.032*1.4*4);
   xjjroot::drawCMSleft();
@@ -170,7 +250,7 @@ void DrawThese(std::vector<std::pair<TH1D*, std::string>> tags, xjjroot::mypdf* 
     }
   tags.front().first->Draw("AXIS");
   for(auto& t : tags)
-    t.first->Draw("ple same");
+    t.first->Draw("pe same");
   leg->Draw();
   pa->drawtex(0.30, 0.85, 0.032, "", 0, -0.032*1.4*4);
   xjjroot::drawCMSleft();

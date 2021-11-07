@@ -59,7 +59,7 @@ int prep_savehist(std::string inputname, std::string inputname_data, std::string
       h["HDataReco-original"]->SetBinContent(k+1, HDataReco->GetBinContent(k+1));
       h["HDataReco-original"]->SetBinError(k+1, HDataReco->GetBinError(k+1));
     }
-  TH2D* HResponse = new TH2D("HResponse", Form(";Matched %s bin index;Gen %s bin index", var.c_str(), var.c_str()), vb.n(), 0, vb.n(), vb.n(), 0, vb.n());
+  TH2D* HResponse = new TH2D("HResponse", Form(";Matched %s bin index;Gen %s bin index", Djet::vartex[var].c_str(), Djet::vartex[var].c_str()), vb.n(), 0, vb.n(), vb.n(), 0, vb.n());
   std::vector<std::string> names_refpt = {"hrefpt_match_reco", "hrefpt_match_gen", 
                                           "hrefpt_match_reco_dRfilter0p10", "hrefpt_match_reco_dRfilter0p12", "hrefpt_match_reco_dRfilter0p14", "hrefpt_match_reco_dRfilter0p16", "hrefpt_match_reco_dRfilter0p18", "hrefpt_match_reco_dRfilter0p20"};
   for(auto& t : names_refpt)
@@ -184,33 +184,33 @@ int prep_savehist(std::string inputname, std::string inputname_data, std::string
   xjjc::progressbar_summary(nentries);
 
   // normalization
-  for(auto& t : names)
-    {
-      if(t != "HDataReco")
-        {
-          for(int k=0; k<vb.n(); k++)
-            {
-              float bin_width = vb.width(k); // dphi
-              if(var=="dr") bin_width = vb.area(k); // dr
-              float nj = njet[t]==0?1:njet[t];
-              h[t+"-original"]->SetBinContent(k+1, h[t+"-original"]->GetBinContent(k+1)/nj/bin_width);
-              h[t+"-original"]->SetBinError(k+1, h[t+"-original"]->GetBinError(k+1)/nj/bin_width);
-            }
-        }
-    }
-  for(int k=0; k<vb.n(); k++)
-    {
-      float bin_width_k = vb.width(k); // dphi
-      if(var=="dr") bin_width_k = vb.area(k); // dr
-      for(int l=0; l<vb.n(); l++)
-        {
-          float bin_width_l = vb.width(l); // dphi
-          if(var=="dr") bin_width_l = vb.area(l); // dr
+  // for(auto& t : names)
+  //   {
+  //     if(t != "HDataReco")
+  //       {
+  //         for(int k=0; k<vb.n(); k++)
+  //           {
+  //             float bin_width = vb.width(k); // dphi
+  //             if(var=="dr") bin_width = vb.area(k); // dr
+  //             float nj = njet[t]==0?1:njet[t];
+  //             h[t+"-original"]->SetBinContent(k+1, h[t+"-original"]->GetBinContent(k+1)/nj/bin_width);
+  //             h[t+"-original"]->SetBinError(k+1, h[t+"-original"]->GetBinError(k+1)/nj/bin_width);
+  //           }
+  //       }
+  //   }
+  // for(int k=0; k<vb.n(); k++)
+  //   {
+      // float bin_width_k = vb.width(k); // dphi
+      // if(var=="dr") bin_width_k = vb.area(k); // dr
+      // for(int l=0; l<vb.n(); l++)
+      //   {
+      //     float bin_width_l = vb.width(l); // dphi
+      //     if(var=="dr") bin_width_l = vb.area(l); // dr
 
-          HResponse->SetBinContent(k+1, l+1, HResponse->GetBinContent(k+1, l+1)/bin_width_k/bin_width_l);
-          HResponse->SetBinError(k+1, l+1, HResponse->GetBinError(k+1, l+1)/bin_width_k/bin_width_l);
-        }
-    }
+      //     HResponse->SetBinContent(k+1, l+1, HResponse->GetBinContent(k+1, l+1)/bin_width_k/bin_width_l);
+      //     HResponse->SetBinError(k+1, l+1, HResponse->GetBinError(k+1, l+1)/bin_width_k/bin_width_l);
+      //   }
+    // }
 
   std::string outputname = "rootfiles/" + outsubdir + "_" + var + ".root";
   xjjroot::mkdir(outputname.c_str());

@@ -22,12 +22,12 @@ int main(int argc, char *argv[])
   CommandLine CL(argc, argv);
 
   string InputFileName    = CL.Get("Input",            "Input/DataJetPNominal.root");
-  // string DataName         = CL.Get("InputName",        "HDataReco_norm");
-  string DataName         = CL.Get("InputName",        "HMCMatchedGenptRecophi_norm");
+  string DataName         = CL.Get("InputName",        "HDataReco");
+  // string DataName         = CL.Get("InputName",        "HMCMatchedGenptRecophi");
   string ResponseName     = CL.Get("ResponseName",     "HResponse");
-  string ResponseTruth    = CL.Get("ResponseTruth",    "HMCGen_norm");
+  string ResponseTruth    = CL.Get("ResponseTruth",    "HMCGen");
   // string ResponseMeasured = CL.Get("ResponseMeasured", "HMCReco");
-  string ResponseMeasured = CL.Get("ResponseMeasured", "HMCMatchedGenptRecophi_norm");
+  string ResponseMeasured = CL.Get("ResponseMeasured", "HMCMatchedGenptRecophi");
   string Output           = CL.Get("Output",           "Unfolded.root");
   bool MCPrior            = CL.GetBool("MCPrior",      false);
 
@@ -64,12 +64,13 @@ int main(int argc, char *argv[])
   HUnfolded.push_back((TH1 *)(InvertUnfold.Hreco()->Clone("HUnfoldedInvert")));
   Covariance.insert(pair<string, TMatrixD>("MUnfoldedInvert", InvertUnfold.Ereco()));
    
-  vector<double> SVDRegularization{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 80, 90, 100, 125, 150};
+  // vector<double> SVDRegularization{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 80, 90, 100, 125, 150};
+  vector<double> SVDRegularization{1, 2, 3, 4, 5, 6, 7, 8, 9};
   for(double D : SVDRegularization)
     {
       RooUnfoldSvd SVDUnfold(Response, HInput, D);
-      HUnfolded.push_back((TH1 *)(SVDUnfold.Hreco()->Clone(Form("HUnfoldedSVD%.1f", D))));
-      Covariance.insert(pair<string, TMatrixD>(Form("MUnfoldedSVD%.1f", D), SVDUnfold.Ereco()));
+      HUnfolded.push_back((TH1 *)(SVDUnfold.Hreco()->Clone(Form("HUnfoldedSVD%.0f", D))));
+      Covariance.insert(pair<string, TMatrixD>(Form("MUnfoldedSVD%.0f", D), SVDUnfold.Ereco()));
     }
 
   TFile OutputFile(Output.c_str(), "RECREATE");
@@ -84,18 +85,18 @@ int main(int argc, char *argv[])
   for(auto I : Covariance)
     I.second.Write(I.first.c_str());
 
-  InputFile.Get("HGenPrimaryBinMin")->Clone()->Write();
-  InputFile.Get("HGenPrimaryBinMax")->Clone()->Write();
-  InputFile.Get("HGenBinningBinMin")->Clone()->Write();
-  InputFile.Get("HGenBinningBinMax")->Clone()->Write();
-  InputFile.Get("HRecoPrimaryBinMin")->Clone()->Write();
-  InputFile.Get("HRecoPrimaryBinMax")->Clone()->Write();
-  InputFile.Get("HRecoBinningBinMin")->Clone()->Write();
-  InputFile.Get("HRecoBinningBinMax")->Clone()->Write();
-  InputFile.Get("HMatchedPrimaryBinMin")->Clone()->Write();
-  InputFile.Get("HMatchedPrimaryBinMax")->Clone()->Write();
-  InputFile.Get("HMatchedBinningBinMin")->Clone()->Write();
-  InputFile.Get("HMatchedBinningBinMax")->Clone()->Write();
+  // InputFile.Get("HGenPrimaryBinMin")->Clone()->Write();
+  // InputFile.Get("HGenPrimaryBinMax")->Clone()->Write();
+  // InputFile.Get("HGenBinningBinMin")->Clone()->Write();
+  // InputFile.Get("HGenBinningBinMax")->Clone()->Write();
+  // InputFile.Get("HRecoPrimaryBinMin")->Clone()->Write();
+  // InputFile.Get("HRecoPrimaryBinMax")->Clone()->Write();
+  // InputFile.Get("HRecoBinningBinMin")->Clone()->Write();
+  // InputFile.Get("HRecoBinningBinMax")->Clone()->Write();
+  // InputFile.Get("HMatchedPrimaryBinMin")->Clone()->Write();
+  // InputFile.Get("HMatchedPrimaryBinMax")->Clone()->Write();
+  // InputFile.Get("HMatchedBinningBinMin")->Clone()->Write();
+  // InputFile.Get("HMatchedBinningBinMax")->Clone()->Write();
 
   vector<string> ToCopyHist
   {
@@ -105,14 +106,14 @@ int main(int argc, char *argv[])
     {
       InputFile.Get(S.c_str())->Clone()->Write();
     }
-  vector<string> ToCopy
-  {
-    "MCEventCount", "MCAllEventCount", "MCBaselineEventCount",
-      "DataEventCount", "DataAllEventCount", "DataBaselineEventCount"
-      };
-  for(string S : ToCopy)
-    if(InputFile.Get(S.c_str()) != nullptr)
-      InputFile.Get(S.c_str())->Clone(S.c_str())->Write();
+  // vector<string> ToCopy
+  // {
+  //   "MCEventCount", "MCAllEventCount", "MCBaselineEventCount",
+  //     "DataEventCount", "DataAllEventCount", "DataBaselineEventCount"
+  //     };
+  // for(string S : ToCopy)
+  //   if(InputFile.Get(S.c_str()) != nullptr)
+  //     InputFile.Get(S.c_str())->Clone(S.c_str())->Write();
 
   OutputFile.Close();
 
