@@ -189,7 +189,15 @@ int draw(std::string inputname, std::string original, std::string outputdir)
     }, fpdf, 0.6, 1.6);
 
   fpdf->close();
-  delete pa;
+
+  std::string outputname = "Output/Result_" + outputdir + ".root";
+  xjjroot::mkdir(outputname);
+  TFile* outf = new TFile(outputname.c_str(), "recreate");
+  for(auto& hh : h) xjjroot::writehist(hh.second);
+  xjjroot::writehist(HMCResponse);
+  xjjroot::writehist(HMCResponse_norm);
+  for(auto& gr : grBayes) gr->Write();
+  for(auto& gr : grSVD) gr->Write();
 }
 
 int main(int argc, char* argv[])

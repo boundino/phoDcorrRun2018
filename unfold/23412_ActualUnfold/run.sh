@@ -1,7 +1,7 @@
 #!/bin/bash
 
 closure=0
-var="dr"
+var="dphi"
 INPUTS=(
     Input/unfold_pp_jtpt80_jteta1.6_pt6-20_y1.2_${var}.root
     Input/unfold_pp_jtpt80_jteta1.6_pt20-30_y1.2_${var}.root            
