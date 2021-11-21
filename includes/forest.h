@@ -50,10 +50,25 @@ phoD::forest::forest(TFile* inf, bool ishi, std::string tjet) : f_(inf), ishi_(i
   TTree* pt = (TTree*)inf->Get("ggHiNtuplizerGED/EventTree");
   if(pt) ptr_ = new ptree(pt, ishi_);
   else ptr_ = 0;
-  std::string jettree = tjet==""?(ishi_?"akPu4PFJetAnalyzer/t":"ak4PFJetAnalyzer/t"):tjet;
+  // std::string jettree = tjet==""?(ishi_?"akPu4PFJetAnalyzer/t":"ak4PFJetAnalyzer/t"):tjet;
+  std::string jettree = tjet;
+  if(tjet=="")
+    {
+      if(ishi_)
+        {
+          if(inf->GetListOfKeys()->Contains("akFlowPuCs4PFJetAnalyzer"))
+            jettree = "akFlowPuCs4PFJetAnalyzer/t";
+          else if(inf->GetListOfKeys()->Contains("akCs4PFJetAnalyzer"))
+            jettree = "akCs4PFJetAnalyzer/t";
+          else if(inf->GetListOfKeys()->Contains("akPu4PFJetAnalyzer"))
+            jettree = "akPu4PFJetAnalyzer/t";
+        }
+      else
+        jettree = "ak4PFJetAnalyzer/t";
+    }
   TTree* jt = (TTree*)inf->Get(jettree.c_str());
   if(jt) jtr_ = new jtree(jt, ishi_);
-  else jtr_ = 0;
+  else { jtr_ = 0; std::cout<<"error: bad jet tree name: "<<jettree<<" ."<<std::endl; }
 
   n_ = etr_->GetEntries();
 }

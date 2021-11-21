@@ -27,7 +27,7 @@ namespace phoD
     float weight() { return weight_; }
     bool evtsel();
     bool hltsel_photon();
-    bool hltsel_jet();
+    bool hltsel_jet(int ver); // 0, 60, 80, 80100
 
   private:
     TTree* nt_;
@@ -45,12 +45,15 @@ namespace phoD
     float weight_;
     int HLT_HIGEDPhoton40_v1_;
     int HLT_HIPhoton40_HoverELoose_v1_;
+    int HLT_HIAK4CaloJet60_v1_;
     int HLT_HIAK4CaloJet80_v1_;
+    int HLT_HIPuAK4CaloJet60Eta5p1_v1_;
     int HLT_HIPuAK4CaloJet80Eta5p1_v1_;
     int HLT_HIPuAK4CaloJet100Eta5p1_v1_;
     int pclusterCompatibilityFilter_;
     int pprimaryVertexFilter_;
     int phfCoincFilter2Th4_;
+    int pphfCoincFilter2Th4_;
     int pBeamScrapingFilter_;
     int pPAprimaryVertexFilter_;
     bool ishi_;
@@ -74,8 +77,12 @@ void phoD::etree::setbranchaddress()
         nt_hlt_->SetBranchAddress("HLT_HIGEDPhoton40_v1", &HLT_HIGEDPhoton40_v1_);
       if(nt_hlt_->FindBranch("HLT_HIPhoton40_HoverELoose_v1"))
         nt_hlt_->SetBranchAddress("HLT_HIPhoton40_HoverELoose_v1", &HLT_HIPhoton40_HoverELoose_v1_);
+      if(nt_hlt_->FindBranch("HLT_HIAK4CaloJet60_v1"))
+        nt_hlt_->SetBranchAddress("HLT_HIAK4CaloJet60_v1", &HLT_HIAK4CaloJet60_v1_);
       if(nt_hlt_->FindBranch("HLT_HIAK4CaloJet80_v1"))
         nt_hlt_->SetBranchAddress("HLT_HIAK4CaloJet80_v1", &HLT_HIAK4CaloJet80_v1_);
+      if(nt_hlt_->FindBranch("HLT_HIPuAK4CaloJet60Eta5p1_v1"))
+        nt_hlt_->SetBranchAddress("HLT_HIPuAK4CaloJet60Eta5p1_v1", &HLT_HIPuAK4CaloJet60Eta5p1_v1_);
       if(nt_hlt_->FindBranch("HLT_HIPuAK4CaloJet80Eta5p1_v1"))
         nt_hlt_->SetBranchAddress("HLT_HIPuAK4CaloJet80Eta5p1_v1", &HLT_HIPuAK4CaloJet80Eta5p1_v1_);
       if(nt_hlt_->FindBranch("HLT_HIPuAK4CaloJet100Eta5p1_v1"))
@@ -89,6 +96,8 @@ void phoD::etree::setbranchaddress()
         nt_skim_->SetBranchAddress("pprimaryVertexFilter", &pprimaryVertexFilter_);
       if(nt_skim_->FindBranch("phfCoincFilter2Th4"))
         nt_skim_->SetBranchAddress("phfCoincFilter2Th4", &phfCoincFilter2Th4_);
+      if(nt_skim_->FindBranch("pphfCoincFilter2Th4"))
+        nt_skim_->SetBranchAddress("pphfCoincFilter2Th4", &pphfCoincFilter2Th4_);
       if(nt_skim_->FindBranch("pBeamScrapingFilter"))
         nt_skim_->SetBranchAddress("pBeamScrapingFilter", &pBeamScrapingFilter_);
       if(nt_skim_->FindBranch("pPAprimaryVertexFilter"))
@@ -105,10 +114,13 @@ void phoD::etree::GetEntry(int i)
 
 bool phoD::etree::evtsel()
 {
+  int coin_PbPb = phfCoincFilter2Th4_;
+  if(nt_skim_->FindBranch("pphfCoincFilter2Th4"))
+    coin_PbPb = pphfCoincFilter2Th4_;
   if(ishi_ && 
      vz_ > -15 && vz_ < 15 &&
      hiBin_ >= 0 && hiBin_ < 180 &&
-     pclusterCompatibilityFilter_ && pprimaryVertexFilter_ && phfCoincFilter2Th4_
+     pclusterCompatibilityFilter_ && pprimaryVertexFilter_ && coin_PbPb
      ) return true; //
   if(!ishi_ && 
      vz_ > -15 && vz_ < 15 &&
@@ -128,14 +140,15 @@ bool phoD::etree::hltsel_photon()
   return false;
 }
 
-bool phoD::etree::hltsel_jet()
+bool phoD::etree::hltsel_jet(int ver) // 0, 60, 80, 80100
 {
-  if(ishi_ && 
-     // (HLT_HIPuAK4CaloJet80Eta5p1_v1_ || HLT_HIPuAK4CaloJet100Eta5p1_v1_)
-     HLT_HIPuAK4CaloJet80Eta5p1_v1_
+  int path_PbPb = 1, path_pp = 1;
+  if(ver == 60) { path_pp = HLT_HIAK4CaloJet60_v1_ ; path_PbPb = HLT_HIPuAK4CaloJet60Eta5p1_v1_; }
+  if(ver == 80) { path_pp = HLT_HIAK4CaloJet80_v1_ ; path_PbPb = HLT_HIPuAK4CaloJet80Eta5p1_v1_; }
+  if(ver == 80100) { path_pp = HLT_HIAK4CaloJet80_v1_ ; path_PbPb = (HLT_HIPuAK4CaloJet80Eta5p1_v1_ || HLT_HIPuAK4CaloJet100Eta5p1_v1_); }
+  if(ishi_ && path_PbPb
      ) return true; //
-  if(!ishi_ && 
-     HLT_HIAK4CaloJet80_v1_
+  if(!ishi_ && path_pp
      ) return true; //
   return false;
 }
