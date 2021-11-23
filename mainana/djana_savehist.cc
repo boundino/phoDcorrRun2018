@@ -14,14 +14,13 @@
 #include "eff.h"
 #include "pdg.h"
 
-int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa, bool isleadingjet = false)
+int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa, int hlt)
 {
   TFile* inf = TFile::Open(inputname.c_str());
   phoD::forest* f = new phoD::forest(inf, pa.ishi());
   phoD::etree* etr = f->etr();
   phoD::dtree* dtr = f->dtr();
   phoD::jtree* jtr = f->jtr();
-  bool ignorehlt = xjjc::str_contains(inputname, "Bias");
 
   eff::effbins ebin(pa.ishi()?"effrootfiles/eff_PbPb_prompt.root":"effrootfiles/eff_pp_prompt.root", pa.ishi());
   std::vector<std::string> type = {"fitweigh", "unweight"};
@@ -49,7 +48,7 @@ int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa
   TH1F* hnjet = new TH1F("hnjet", ";;", 1, 0, 1);
 
   int nentries = f->GetEntries();
-  int passevtraw = 0, passevthlt = 0, passevtjetki = 0, njet = 0;
+  int passevthlt = 0, passevtjetki = 0, njet = 0;
   int effbug = 0;
   for(int i=0; i<nentries; i++)
     {
@@ -57,7 +56,7 @@ int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa
       f->GetEntry(i);
 
       // event selection + hlt
-      if(!etr->hltsel_jet()) continue;
+      if(!etr->hltsel_jet(hlt)) continue;
       if(pa.ishi() && (etr->hiBin() < pa["centmin"]*2 || etr->hiBin() > pa["centmax"]*2)) continue;
       if(!etr->evtsel()) continue;
 
@@ -109,7 +108,6 @@ int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa
                     }
                 }
             }
-          if(isleadingjet) break;
         }
       if(passki) passevtjetki++;
       if(effbug) break;
@@ -152,10 +150,10 @@ int djana_savehist(std::string inputname, std::string outsubdir, Djet::param& pa
 
 int main(int argc, char* argv[])
 {
-  if(argc==12)
+  if(argc==13)
     {
       Djet::param pa(atoi(argv[3]), atof(argv[4]), atof(argv[5]), atof(argv[6]), atof(argv[7]), atof(argv[8]), atof(argv[9]), atof(argv[10]), atoi(argv[11]));
-      return djana_savehist(argv[1], argv[2], pa);
+      return djana_savehist(argv[1], argv[2], pa, atoi(argv[12]));
     }
   return 1;
 }

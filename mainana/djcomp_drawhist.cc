@@ -10,6 +10,7 @@
 #include "xjjrootuti.h"
 #include "xjjanauti.h"
 #include "xjjmypdf.h"
+#include "bins.h"
 
 namespace comp_
 {
@@ -69,13 +70,35 @@ int comp_drawhist(std::string outsubdir, std::string inputname_pp="", std::strin
               hd[v]["sub"]->SetBinError(i+1, hd[v]["PbPb"]->GetBinError(i+1));
             }
         }
-      for(auto& s : status)
-        {
-          if(!s.second) continue;
-          gr[v][s.first] = xjjana::shifthistcenter(hd[v][s.first], Form("gr%s", hd[v][s.first]->GetName()), 0);
-          comp_::seth(hd[v][s.first], 1.4, 1.4);
-        }
     }
+  // Self-normalized
+  for(auto& t : {"pp", "sub", "MC_pp"})
+    {
+      if(status[t])
+        {
+          hd["dphi"][Form("%s_selfnorm", t)] = (TH1F*)hd["dphi"][t]->Clone(Form("%s_selfnorm", hd["dphi"][t]->GetName()));
+          hd["dphi"][Form("%s_selfnorm", t)]->Scale(1./hd["dphi"][t]->Integral("width"));
+          hd["dphi"][Form("%s_selfnorm", t)]->GetYaxis()->SetTitle(xjjc::str_replaceall(hd["dphi"][t]->GetYaxis()->GetTitle(), "jet", "jD").c_str());
+          hd["dr"][Form("%s_selfnorm", t)] = (TH1F*)hd["dr"][t]->Clone(Form("%s_selfnorm", hd["dr"][t]->GetName()));
+          xjjana::bins<double> vbx(xjjana::gethXaxis(hd["dr"][t]));
+          // xjjana::bins<double> vbx(std::vector<double>(hd["dr"][t]->GetXaxis()->GetXbins()->GetArray(), hd["dr"][t]->GetXaxis()->GetXbins()->GetArray() + hd["dr"][t]->GetXaxis()->GetNbins()+1));
+          float drnorm = 0;
+          for(int i=0; i<hd["dr"][t]->GetXaxis()->FindBin(0.399); i++)
+            drnorm += (hd["dr"][t]->GetBinContent(i+1)*vbx.area(i)/(0.4*0.4));
+          hd["dr"][Form("%s_selfnorm", t)]->Scale(1./drnorm);
+          hd["dr"][Form("%s_selfnorm", t)]->GetYaxis()->SetTitle(xjjc::str_replaceall(hd["dr"][t]->GetYaxis()->GetTitle(), "jet", "jD").c_str());
+          status[Form("%s_selfnorm", t)] = true;
+        }
+      else
+        status[Form("%s_selfnorm", t)] = false;
+    }
+  for(auto& v : Djet::var)
+    for(auto& s : status)
+      {
+        if(!s.second) continue;
+        gr[v][s.first] = xjjana::shifthistcenter(hd[v][s.first], Form("gr%s", hd[v][s.first]->GetName()), 0);
+        comp_::seth(hd[v][s.first], 1.4, 1.4);
+      }
 
   xjjc::prt_divider();
 
@@ -94,14 +117,20 @@ int comp_drawhist(std::string outsubdir, std::string inputname_pp="", std::strin
     {
       if(status["pp"])
         xjjroot::setthgrstyle(gr[v]["pp"], kBlack, 20, 1, kBlack, 1, 2);
+      if(status["pp_selfnorm"])
+        xjjroot::setthgrstyle(gr[v]["pp_selfnorm"], kBlack, 20, 1, kBlack, 1, 2);
       if(status["PbPb"])
         xjjroot::setthgrstyle(gr[v]["PbPb"], kBlack, 20, 1, kBlack, 1, 2);
       if(status["emix"])
         xjjroot::setthgrstyle(gr[v]["emix"], kBlack, 24, 1, kBlack, 1, 2);
       if(status["sub"])
-        xjjroot::setthgrstyle(gr[v]["sub"], xjjroot::mycolor_satmiddle["red"], 20, 1, xjjroot::mycolor_satmiddle["red"], 1, 2);
+        xjjroot::setthgrstyle(gr[v]["sub"], xjjroot::mycolor_satmiddle["red"], 21, 1, xjjroot::mycolor_satmiddle["red"], 1, 2);
+      if(status["sub_selfnorm"])
+        xjjroot::setthgrstyle(gr[v]["sub_selfnorm"], xjjroot::mycolor_satmiddle["red"], 21, 1, xjjroot::mycolor_satmiddle["red"], 1, 2);
       if(status["MC_pp"])
         xjjroot::setthgrstyle(gr[v]["MC_pp"], xjjroot::mycolor_satmiddle["azure"], 20, 1, xjjroot::mycolor_satmiddle["azure"], 1, 3);
+      if(status["MC_pp_selfnorm"])
+        xjjroot::setthgrstyle(gr[v]["MC_pp_selfnorm"], xjjroot::mycolor_satmiddle["azure"], 20, 1, xjjroot::mycolor_satmiddle["azure"], 1, 3);
       if(status["MC_PbPb"])
         xjjroot::setthgrstyle(gr[v]["MC_PbPb"], xjjroot::mycolor_satmiddle["azure"], 20, 1, xjjroot::mycolor_satmiddle["azure"], 1, 3);
     }
@@ -220,6 +249,24 @@ int comp_drawhist(std::string outsubdir, std::string inputname_pp="", std::strin
           gr[v]["sub"]->Draw("pe same");
           gr[v]["pp"]->Draw("pe same");
           comp_::makecanvas(fpdf, pa, leg["ppPbPb"], "");
+
+          ymin = comp_::setyminmax_linear({hd[v]["pp_selfnorm"], hd[v]["sub_selfnorm"]});
+          fpdf->prepare();
+          fpdf->getc()->SetLogy(0);
+          hd[v]["pp_selfnorm"]->Draw("AXIS");
+          if(ymin < 0) 
+            xjjroot::drawline(hd[v]["pp_selfnorm"]->GetXaxis()->GetXmin(), 0, hd[v]["pp_selfnorm"]->GetXaxis()->GetXmax(), 0, kBlack, 2, 2);
+          gr[v]["sub_selfnorm"]->Draw("pe same");
+          gr[v]["pp_selfnorm"]->Draw("pe same");
+          comp_::makecanvas(fpdf, pa, leg["ppPbPb"], "", "Self-normalized");
+
+          comp_::setyminmax_log({hd[v]["pp_selfnorm"], hd[v]["sub_selfnorm"]});
+          fpdf->prepare();
+          fpdf->getc()->SetLogy();
+          hd[v]["pp_selfnorm"]->Draw("AXIS");
+          gr[v]["sub_selfnorm"]->Draw("pe same");
+          gr[v]["pp_selfnorm"]->Draw("pe same");
+          comp_::makecanvas(fpdf, pa, leg["ppPbPb"], "", "Self-normalized");
         }
       if(leg.find("ppMCPbPb") != leg.end())
         {
@@ -242,6 +289,26 @@ int comp_drawhist(std::string outsubdir, std::string inputname_pp="", std::strin
           gr[v]["sub"]->Draw("pe same");
           gr[v]["pp"]->Draw("pe same");
           comp_::makecanvas(fpdf, pa, leg["ppMCPbPb"], "");
+
+          ymin = comp_::setyminmax_linear({hd[v]["pp_selfnorm"], hd[v]["sub_selfnorm"], hd[v]["MC_pp_selfnorm"]});
+          fpdf->prepare();
+          fpdf->getc()->SetLogy(0);
+          hd[v]["pp_selfnorm"]->Draw("AXIS");
+          gr[v]["MC_pp_selfnorm"]->Draw("lX0 same");
+          if(ymin < 0) 
+            xjjroot::drawline(hd[v]["pp_selfnorm"]->GetXaxis()->GetXmin(), 0, hd[v]["pp_selfnorm"]->GetXaxis()->GetXmax(), 0, kBlack, 2, 2);
+          gr[v]["sub_selfnorm"]->Draw("pe same");
+          gr[v]["pp_selfnorm"]->Draw("pe same");
+          comp_::makecanvas(fpdf, pa, leg["ppMCPbPb"], "", "Self-normalized");
+
+          comp_::setyminmax_log({hd[v]["pp_selfnorm"], hd[v]["sub_selfnorm"], hd[v]["MC_pp_selfnorm"]});
+          fpdf->prepare();
+          fpdf->getc()->SetLogy();
+          hd[v]["pp_selfnorm"]->Draw("AXIS");
+          gr[v]["MC_pp_selfnorm"]->Draw("lX0 same");
+          gr[v]["sub_selfnorm"]->Draw("pe same");
+          gr[v]["pp_selfnorm"]->Draw("pe same");
+          comp_::makecanvas(fpdf, pa, leg["ppMCPbPb"], "", "Self-normalized");
         }
       fpdf->close();
     }
@@ -273,7 +340,7 @@ void comp_::makecanvas(xjjroot::mypdf* f, Djet::param& pa, TLegend* leg, std::st
   leg->Draw();
   xjjroot::drawCMSleft();
   xjjroot::drawCMSright(Form("%s #sqrt{s_{NN}} = 5.02 TeV", syst.c_str()));
-  xjjroot::drawtex(0.92, 0.80, comment.c_str(), 0.035, 33, 62);
+  xjjroot::drawtex(0.63, 0.60, comment.c_str(), 0.035, 13, 62);
   // xjjroot::drawcomment(comp_::outputdir, "lb");
   f->write();
 }
@@ -302,7 +369,7 @@ float comp_::setyminmax_log(std::vector<TH1F*> h)
   double ymin = 1.e+10, ymax = -1.e+10;
   for(auto& hh : h)
     {
-      if(xjjana::gethminimum(hh) > 8.e-5) ymin = std::min(ymin, xjjana::gethminimum(hh));
+      if(xjjana::gethminimum(hh) > 0) ymin = std::min(ymin, xjjana::gethminimum(hh));
       ymax = std::max(ymax, xjjana::gethmaximum(hh));
     }
   ymin = ymin * 0.1;
