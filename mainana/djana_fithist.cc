@@ -26,10 +26,9 @@ int djana_fithist(std::string inputname, std::string outsubdir)
 
   // get hmass, heff
   std::map<std::string, std::vector<TH1F*>> hmass;
-  std::map<std::string, TH1F*> hmass_incl, heff, hd;
+  std::map<std::string, TH1F*> hmass_incl, hd, heff_sigreg, heffnorm_sigreg, heff_sideband, heffnorm_sideband, heff, heffnorm, heff_nosub, heffnorm_nosub;
   for(auto& v : Djet::var) // dphi, dr
     {
-      heff[v] = xjjroot::gethist<TH1F>(inf, Form("heff_%s", v.c_str()));
       for(auto& t : type) // fitweight, unweight
         {
           hmass_incl[v+"_"+t] = xjjroot::gethist<TH1F>(inf, Form("hmass_incl_%s_%s", v.c_str(), t.c_str()));
@@ -43,6 +42,47 @@ int djana_fithist(std::string inputname, std::string outsubdir)
       hd[v+"_effcorr"] = new TH1F(Form("h%s_effcorr", v.c_str()), Form(";%s;%s", Djet::vartex[v].c_str(), Djet::varytex[v].c_str()), vb[v].n(), vb[v].v().data());
     }
   type.push_back("effcorr");
+
+  for(auto& v : Djet::var) // dphi, dr
+    {
+      heff_sigreg[v] = xjjroot::gethist<TH1F>(inf, Form("heff_sigreg_%s", v.c_str()));
+      heffnorm_sigreg[v] = xjjroot::gethist<TH1F>(inf, Form("heffnorm_sigreg_%s", v.c_str()));
+      heff_sideband[v] = xjjroot::gethist<TH1F>(inf, Form("heff_sideband_%s", v.c_str()));
+      heff_sideband[v]->Scale(pdg::DZERO_SCALE);
+      heffnorm_sideband[v] = xjjroot::gethist<TH1F>(inf, Form("heffnorm_sideband_%s", v.c_str()));
+      heffnorm_sideband[v]->Scale(pdg::DZERO_SCALE);
+
+      heff[v] = (TH1F*)heff_sigreg[v]->Clone(Form("heff_%s", v.c_str()));
+      heff[v]->Add(heff_sideband[v], -1);
+      heffnorm[v] = (TH1F*)heffnorm_sigreg[v]->Clone(Form("heffnorm_%s", v.c_str()));
+      heffnorm[v]->Add(heffnorm_sideband[v], -1);
+      heff_nosub[v] = (TH1F*)heff_sigreg[v]->Clone(Form("heff_nosub_%s", v.c_str()));
+      heffnorm_nosub[v] = (TH1F*)heffnorm_sigreg[v]->Clone(Form("heffnorm_nosub_%s", v.c_str()));
+      for(int i=0; i<vb[v].n(); i++)
+        {
+          if(heffnorm[v]->GetBinContent(i+1)==0)
+            {
+              heff[v]->SetBinContent(i+1, 0);
+              heff[v]->SetBinError(i+1, 0);
+            }
+          else
+            {
+              heff[v]->SetBinContent(i+1, heff[v]->GetBinContent(i+1)/heffnorm[v]->GetBinContent(i+1));
+              heff[v]->SetBinError(i+1, heff[v]->GetBinError(i+1)/heffnorm[v]->GetBinContent(i+1));
+            }
+          if(heffnorm_nosub[v]->GetBinContent(i+1)==0)
+            {
+              heff_nosub[v]->SetBinContent(i+1, 0);
+              heff_nosub[v]->SetBinError(i+1, 0);
+            }
+          else
+            {
+              heff_nosub[v]->SetBinContent(i+1, heff_nosub[v]->GetBinContent(i+1)/heffnorm_nosub[v]->GetBinContent(i+1));
+              heff_nosub[v]->SetBinError(i+1, heff_nosub[v]->GetBinError(i+1)/heffnorm_nosub[v]->GetBinContent(i+1));
+            }
+        }
+    }
+
   // get njet
   TH1F* hnjet = xjjroot::gethist<TH1F>(inf, "hnjet");
   float njet = hnjet->GetBinContent(1);
@@ -54,17 +94,12 @@ int djana_fithist(std::string inputname, std::string outsubdir)
   xjjc::prt_divider();
 
   xjjroot::setgstyle();
-  xjjroot::dfitter df("YCF"), dfw("YCFW");
+  // unweight
+  xjjroot::dfitter df("YC");
   for(auto& v : Djet::var) // dphi, dr
     {
       // std::string fitoutput = "plots/" + outsubdir + "_" + pa.tag() + "/idx_" + v + "/cmass";
       xjjroot::mypdf* fpdf = new xjjroot::mypdf("plots/" + outsubdir + "_" + pa.tag() + "/idx_" + v + "_cmass_unweight.pdf", "c", 600, 600);
-      xjjroot::mypdf* fpdfw = new xjjroot::mypdf("plots/" + outsubdir + "_" + pa.tag() + "/idx_" + v + "_cmass_fitweight.pdf", "cw", 600, 600);
-
-      fpdfw->prepare();
-      dfw.fit(fpdfw->getc(), hmass_incl[v+"_fitweigh"], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), 
-              std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
-      fpdfw->write();
       fpdf->prepare();
       df.fit(fpdf->getc(), hmass_incl[v+"_unweight"], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(),
              std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
@@ -73,13 +108,6 @@ int djana_fithist(std::string inputname, std::string outsubdir)
         {
           float bin_width = vb[v].width(k); // dphi
           if(v=="dr") bin_width = vb[v].area(k);
-
-          fpdfw->prepare();
-          dfw.fit(fpdfw->getc(), hmass[v+"_fitweigh"][k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(),
-                  std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb[v].tag(k, Djet::vartex[v]).c_str()}));
-          fpdfw->write();
-          hd[v+"_fitweigh"]->SetBinContent(k+1, dfw.GetY()/bin_width);
-          hd[v+"_fitweigh"]->SetBinError(k+1, dfw.GetYE()/bin_width);
 
           fpdf->prepare();
           df.fit(fpdf->getc(), hmass[v+"_unweight"][k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(),
@@ -91,16 +119,43 @@ int djana_fithist(std::string inputname, std::string outsubdir)
           hd[v+"_effcorr"]->SetBinError(k+1, df.GetYE()/bin_width*heff[v]->GetBinContent(k+1));
         }
       fpdf->close();
-      fpdfw->close();
-      for(auto& t : type)
-        hd[v+"_"+t]->SetTitle(Form("%f", njet));
     }
+
+  // weight
+  xjjroot::dfitter dfw("YCW");
+  for(auto& v : Djet::var) // dphi, dr
+    {
+      xjjroot::mypdf* fpdfw = new xjjroot::mypdf("plots/" + outsubdir + "_" + pa.tag() + "/idx_" + v + "_cmass_fitweight.pdf", "cw", 600, 600);
+
+      fpdfw->prepare();
+      dfw.fit(fpdfw->getc(), hmass_incl[v+"_fitweigh"], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(), 
+              std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str()}));
+      fpdfw->write();
+      for(int k=0; k<vb[v].n(); k++)
+        {
+          float bin_width = vb[v].width(k); // dphi
+          if(v=="dr") bin_width = vb[v].area(k);
+
+          fpdfw->prepare();
+          dfw.fit(fpdfw->getc(), hmass[v+"_fitweigh"][k], hmassmc_signal, hmassmc_swapped, pa.tag("ishi").c_str(),
+                  std::vector<TString>({pa.tag("pt").c_str(), pa.tag("y").c_str(), vb[v].tag(k, Djet::vartex[v]).c_str()}));
+          fpdfw->write();
+          hd[v+"_fitweigh"]->SetBinContent(k+1, dfw.GetY()/bin_width);
+          hd[v+"_fitweigh"]->SetBinError(k+1, dfw.GetYE()/bin_width);
+        }
+      fpdfw->close();
+    }
+
+  for(auto& v : Djet::var) // dphi, dr
+    for(auto& t : type)
+      hd[v+"_"+t]->SetTitle(Form("%f", njet));
 
   std::string outputname = "rootfiles/" + outsubdir + "_" + pa.tag() + "/fithist.root";
   xjjroot::mkdir(outputname);
   TFile* outf = new TFile(outputname.c_str(), "recreate");
   for(auto& h : hd) xjjroot::writehist(h.second, 10);
   for(auto& h : heff) xjjroot::writehist(h.second, 10);
+  for(auto& h : heff_nosub) xjjroot::writehist(h.second, 10);
   pa.write();
   outf->Close();
 
