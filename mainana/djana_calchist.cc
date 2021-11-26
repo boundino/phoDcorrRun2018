@@ -30,7 +30,7 @@ int djana_calchist(std::string inputname, std::string outsubdir)
   tags["fitweigh"] = "D eff weight fit";
   tags["unweight"] = "D eff uncorr";
   tags["effcorr"] = "D eff corr";
-  std::map<std::string, TH1F*> hd, heff;
+  std::map<std::string, TH1F*> hd, heff, heff_nosub, heff_weight, heff_avg, heff_weight_avg;
   for(auto& v : Djet::var) // dphi, dr
     {
       for(auto& t : type)
@@ -46,7 +46,23 @@ int djana_calchist(std::string inputname, std::string outsubdir)
       heff[v] = xjjroot::gethist<TH1F>(inf, Form("heff_%s", v.c_str()));
       heff[v]->GetYaxis()->SetTitle("< 1 / #alpha #times #varepsilon >");
       djana_::seth(heff[v], "", false);
-      xjjroot::setthgrstyle(heff[v], kBlack, 20, 1, kBlack, 1, 2);
+      xjjroot::setthgrstyle(heff[v], kGray, 20, 1, kGray, 1, 2);
+      heff_avg[v] = xjjroot::gethist<TH1F>(inf, Form("heff_avg_%s", v.c_str()));
+      heff_avg[v]->GetYaxis()->SetTitle("< 1 / #alpha #times #varepsilon >");
+      djana_::seth(heff_avg[v], "", false);
+      xjjroot::setthgrstyle(heff_avg[v], kGray, 20, 1, kGray, 1, 2);
+      heff_nosub[v] = xjjroot::gethist<TH1F>(inf, Form("heff_nosub_%s", v.c_str()));
+      heff_nosub[v]->GetYaxis()->SetTitle("< 1 / #alpha #times #varepsilon >");
+      djana_::seth(heff_nosub[v], "", false);
+      xjjroot::setthgrstyle(heff_nosub[v], kGray+2, 20, 1, kGray+2, 1, 2);
+      heff_weight[v] = xjjroot::gethist<TH1F>(inf, Form("heff_weight_%s", v.c_str()));
+      heff_weight[v]->GetYaxis()->SetTitle("< 1 / #alpha #times #varepsilon >");
+      djana_::seth(heff_weight[v], "", false);
+      xjjroot::setthgrstyle(heff_weight[v], kBlack, 24, 1, kBlack, 2, 2);
+      heff_weight_avg[v] = xjjroot::gethist<TH1F>(inf, Form("heff_weight_avg_%s", v.c_str()));
+      heff_weight_avg[v]->GetYaxis()->SetTitle("< 1 / #alpha #times #varepsilon >");
+      djana_::seth(heff_weight_avg[v], "", false);
+      xjjroot::setthgrstyle(heff_weight_avg[v], kBlack, 24, 1, kBlack, 2, 2);
     }
 
   std::string output = "rootfiles/" + outputdir + "/calchist.root";
@@ -67,8 +83,10 @@ int djana_calchist(std::string inputname, std::string outsubdir)
   leg["sbr"]->AddEntry(hd["dphi_effcorr_sbr"], "Raw / BR", "pl");
   leg["raw"] = new TLegend(0.99-0.28, 0.75-0.04, 0.99, 0.75);
   leg["raw"]->AddEntry(hd["dphi_effcorr"], "Raw", "pl");
-  leg["eff"] = new TLegend(0.99-0.28, 0.75-0.04, 0.99, 0.75);
-  leg["eff"]->AddEntry(heff["dphi"], "Raw", "pl");
+  leg["eff"] = new TLegend(0.99-0.28, 0.75-0.04*3, 0.99, 0.75);
+  leg["eff"]->AddEntry(heff["dphi"], "Sideband sub.", "pl");
+  leg["eff"]->AddEntry(heff_weight["dphi"], "Weight", "pl");
+  leg["eff"]->AddEntry(heff_nosub["dphi"], "Sig + Bkg", "pl");
   for(auto& ll : leg) xjjroot::setleg(ll.second, 0.035);
 
   TGaxis::SetExponentOffset(-0.1, 0, "y");
@@ -104,9 +122,17 @@ int djana_calchist(std::string inputname, std::string outsubdir)
         }
 
       djana_::sethminmax(heff[v], false);
+      djana_::sethminmax(heff_nosub[v], false);
+      djana_::sethminmax(heff_weight[v], false);
       fpdf->getc()->SetLogy(0);
       fpdf->prepare();
-      heff[v]->Draw("pe");
+      heff_nosub[v]->Draw("pe");
+      heff[v]->Draw("pe same");
+      // if(xjjc::str_contains(inputname, "emix") && pa["Dptmin"] < 15 && v=="dr")
+      if(xjjc::str_contains(inputname, "emix") && v=="dr")
+        heff_weight_avg[v]->Draw("pe same");
+      else
+        heff_weight[v]->Draw("pe same");
       djana_::makecanvas(fpdf, pa, leg["eff"], "");
 
       fpdf->close();

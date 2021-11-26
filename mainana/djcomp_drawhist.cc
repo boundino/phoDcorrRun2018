@@ -41,7 +41,6 @@ int comp_drawhist(std::string outsubdir, std::string inputname_pp="", std::strin
     }
 
   if(!status["PbPb"] && !status["pp"]) return 3;
-  status["sub"] = status["PbPb"] && status["emix"];
   Djet::param pa;
   if(status["PbPb"]) pa = Djet::param(inf["PbPb"]);
   else pa = Djet::param(inf["pp"]);
@@ -54,25 +53,53 @@ int comp_drawhist(std::string outsubdir, std::string inputname_pp="", std::strin
     {
       for(auto& s : status)
         {
-          if(!s.second || s.first == "sub") continue;
+          if(!s.second) continue;
           if(xjjc::str_contains(s.first, "MC"))
             hd[v][s.first] = xjjroot::gethist<TH1F>(inf[s.first], "h"+v+"_gen");
           else
             hd[v][s.first] = xjjroot::gethist<TH1F>(inf[s.first], "h"+v+"_sbr_effcorr");
           hd[v][s.first]->SetName(Form("h%s_%s", v.c_str(), s.first.c_str()));
-        } 
-      if(status["sub"])
+        }
+      if(status["emix"])
+        {
+          hd[v]["emix_avg"] = (TH1F*)hd[v]["emix"]->Clone(Form("h%s_emix_avg", v.c_str()));
+          // xjjana::bins<double> vbx(xjjana::gethXaxis(hd[v]["emix"]));
+          // float bincontent = 0, normbin = 0;
+          // for(int i=0; i<xjjana::gethXn(hd[v]["emix"]); i++)
+          //   {
+          //     bincontent += (hd[v]["emix"]->GetBinContent(i+1)*(v=="dr"?vbx.area(i):vbx.width(i)));
+          //     normbin += (v=="dr"?vbx.area(i):vbx.width(i));
+          //   }
+          double bincontent = 1.e+10;
+          for(int i=0; i<xjjana::gethXn(hd[v]["emix"]); i++)
+            bincontent = std::min(bincontent, hd[v]["emix"]->GetBinContent(i+1));
+          for(int i=0; i<xjjana::gethXn(hd[v]["emix"]); i++)
+            {
+              hd[v]["emix_avg"]->SetBinContent(i+1, bincontent);
+              if(hd[v]["emix"]->GetBinContent(i+1) > 0)
+                hd[v]["emix_avg"]->SetBinError(i+1, hd[v]["emix"]->GetBinError(i+1) / hd[v]["emix"]->GetBinContent(i+1) * bincontent);
+              else
+                hd[v]["emix_avg"]->SetBinError(i+1, 0);
+            }
+        }
+      if(status["PbPb"] && status["emix"])
         {
           hd[v]["sub"] = (TH1F*)hd[v]["PbPb"]->Clone(Form("h%s_sub", v.c_str()));
+          hd[v]["sub_avg"] = (TH1F*)hd[v]["PbPb"]->Clone(Form("h%s_sub_avg", v.c_str()));
           for(int i=0; i<xjjana::gethXn(hd[v]["sub"]); i++)
             {
               hd[v]["sub"]->SetBinContent(i+1, hd[v]["PbPb"]->GetBinContent(i+1) - hd[v]["emix"]->GetBinContent(i+1));
               hd[v]["sub"]->SetBinError(i+1, hd[v]["PbPb"]->GetBinError(i+1));
+              hd[v]["sub_avg"]->SetBinContent(i+1, hd[v]["PbPb"]->GetBinContent(i+1) - hd[v]["emix_avg"]->GetBinContent(i+1));
+              hd[v]["sub_avg"]->SetBinError(i+1, hd[v]["PbPb"]->GetBinError(i+1));
             }
         }
     }
+  status["emix_avg"] = status["emix"];
+  status["sub"] = status["PbPb"] && status["emix"];
+  status["sub_avg"] = status["PbPb"] && status["emix_avg"];
   // Self-normalized
-  for(auto& t : {"pp", "sub", "MC_pp"})
+  for(auto& t : {"pp", "sub", "MC_pp", "sub_avg"})
     {
       if(status[t])
         {
@@ -120,13 +147,19 @@ int comp_drawhist(std::string outsubdir, std::string inputname_pp="", std::strin
       if(status["pp_selfnorm"])
         xjjroot::setthgrstyle(gr[v]["pp_selfnorm"], kBlack, 20, 1, kBlack, 1, 2);
       if(status["PbPb"])
-        xjjroot::setthgrstyle(gr[v]["PbPb"], kBlack, 20, 1, kBlack, 1, 2);
+        xjjroot::setthgrstyle(gr[v]["PbPb"], kBlack, 21, 1, kBlack, 1, 2);
       if(status["emix"])
-        xjjroot::setthgrstyle(gr[v]["emix"], kBlack, 24, 1, kBlack, 1, 2);
+        xjjroot::setthgrstyle(gr[v]["emix"], kBlack, 25, 1, kBlack, 1, 2);
+      if(status["emix_avg"])
+        xjjroot::setthgrstyle(gr[v]["emix_avg"], kBlack, 25, 1, kBlack, 1, 2);
       if(status["sub"])
         xjjroot::setthgrstyle(gr[v]["sub"], xjjroot::mycolor_satmiddle["red"], 21, 1, xjjroot::mycolor_satmiddle["red"], 1, 2);
       if(status["sub_selfnorm"])
         xjjroot::setthgrstyle(gr[v]["sub_selfnorm"], xjjroot::mycolor_satmiddle["red"], 21, 1, xjjroot::mycolor_satmiddle["red"], 1, 2);
+      if(status["sub_avg"])
+        xjjroot::setthgrstyle(gr[v]["sub_avg"], xjjroot::mycolor_satmiddle["red"], 21, 1, xjjroot::mycolor_satmiddle["red"], 1, 2);
+      if(status["sub_avg_selfnorm"])
+        xjjroot::setthgrstyle(gr[v]["sub_avg_selfnorm"], xjjroot::mycolor_satmiddle["red"], 21, 1, xjjroot::mycolor_satmiddle["red"], 1, 2);
       if(status["MC_pp"])
         xjjroot::setthgrstyle(gr[v]["MC_pp"], xjjroot::mycolor_satmiddle["azure"], 20, 1, xjjroot::mycolor_satmiddle["azure"], 1, 3);
       if(status["MC_pp_selfnorm"])
@@ -159,13 +192,26 @@ int comp_drawhist(std::string outsubdir, std::string inputname_pp="", std::strin
       leg["ppMCPbPb"] = new TLegend(0.25, 0.85-0.04*3, 0.54, 0.85);
       leg["ppMCPbPb"]->AddEntry(gr["dphi"]["pp"], "pp", "pl");
       leg["ppMCPbPb"]->AddEntry(gr["dphi"]["MC_pp"], "PYTHIA8", "l");
-      leg["ppMCPbPb"]->AddEntry(gr["dphi"]["sub"], "PbPb", "pl");
+      leg["ppMCPbPb"]->AddEntry(gr["dphi"]["sub"], "PbPb (bkg sub)", "pl");
+    }
+  if(status["pp"] && status["MC_pp"] && status["sub_avg"])
+    {
+      leg["ppMCPbPb_avg"] = new TLegend(0.25, 0.85-0.04*3, 0.54, 0.85);
+      leg["ppMCPbPb_avg"]->AddEntry(gr["dphi"]["pp"], "pp", "pl");
+      leg["ppMCPbPb_avg"]->AddEntry(gr["dphi"]["MC_pp"], "PYTHIA8", "l");
+      leg["ppMCPbPb_avg"]->AddEntry(gr["dphi"]["sub_avg"], "PbPb (bkg sub)", "pl");
     }
   if(status["PbPb"] && status["emix"])
     {
       leg["emix"] = new TLegend(0.25, 0.85-0.04*2, 0.54, 0.85);
       leg["emix"]->AddEntry(gr["dphi"]["PbPb"], "Trigger sample", "pl");
       leg["emix"]->AddEntry(gr["dphi"]["emix"], "Mixed events", "pl");
+    }
+  if(status["PbPb"] && status["emix_avg"])
+    {
+      leg["emix_avg"] = new TLegend(0.25, 0.85-0.04*2, 0.54, 0.85);
+      leg["emix_avg"]->AddEntry(gr["dphi"]["PbPb"], "Trigger sample", "pl");
+      leg["emix_avg"]->AddEntry(gr["dphi"]["emix_avg"], "Mixed events", "pl");
     }
   for(auto& ll : leg) xjjroot::setleg(ll.second, 0.035);
 
@@ -229,6 +275,24 @@ int comp_drawhist(std::string outsubdir, std::string inputname_pp="", std::strin
           gr[v]["PbPb"]->Draw("pe same");
           gr[v]["emix"]->Draw("pe same");
           comp_::makecanvas(fpdf, pa, leg["emix"], "PbPb");
+        }
+      if(leg.find("emix_avg") != leg.end())
+        {
+          comp_::setyminmax_linear({hd[v]["PbPb"], hd[v]["emix_avg"]});
+          fpdf->prepare();
+          fpdf->getc()->SetLogy(0);
+          hd[v]["PbPb"]->Draw("AXIS");
+          gr[v]["PbPb"]->Draw("pe same");
+          gr[v]["emix_avg"]->Draw("pe same");
+          comp_::makecanvas(fpdf, pa, leg["emix_avg"], "PbPb");
+
+          comp_::setyminmax_log({hd[v]["PbPb"], hd[v]["emix_avg"]});
+          fpdf->prepare();
+          fpdf->getc()->SetLogy();
+          hd[v]["PbPb"]->Draw("AXIS");
+          gr[v]["PbPb"]->Draw("pe same");
+          gr[v]["emix_avg"]->Draw("pe same");
+          comp_::makecanvas(fpdf, pa, leg["emix_avg"], "PbPb");
         }
       if(leg.find("ppPbPb") != leg.end())
         {
@@ -309,6 +373,49 @@ int comp_drawhist(std::string outsubdir, std::string inputname_pp="", std::strin
           gr[v]["sub_selfnorm"]->Draw("pe same");
           gr[v]["pp_selfnorm"]->Draw("pe same");
           comp_::makecanvas(fpdf, pa, leg["ppMCPbPb"], "", "Self-normalized");
+        }
+
+      if(leg.find("ppMCPbPb_avg") != leg.end())
+        {
+          float ymin = comp_::setyminmax_linear({hd[v]["pp"], hd[v]["sub_avg"], hd[v]["MC_pp"]});
+          fpdf->prepare();
+          fpdf->getc()->SetLogy(0);
+          hd[v]["pp"]->Draw("AXIS");
+          gr[v]["MC_pp"]->Draw("lX0 same");
+          if(ymin < 0) 
+            xjjroot::drawline(hd[v]["pp"]->GetXaxis()->GetXmin(), 0, hd[v]["pp"]->GetXaxis()->GetXmax(), 0, kBlack, 2, 2);
+          gr[v]["sub_avg"]->Draw("pe same");
+          gr[v]["pp"]->Draw("pe same");
+          comp_::makecanvas(fpdf, pa, leg["ppMCPbPb_avg"], "");
+
+          comp_::setyminmax_log({hd[v]["pp"], hd[v]["sub_avg"], hd[v]["MC_pp"]});
+          fpdf->prepare();
+          fpdf->getc()->SetLogy();
+          hd[v]["pp"]->Draw("AXIS");
+          gr[v]["MC_pp"]->Draw("lX0 same");
+          gr[v]["sub_avg"]->Draw("pe same");
+          gr[v]["pp"]->Draw("pe same");
+          comp_::makecanvas(fpdf, pa, leg["ppMCPbPb_avg"], "");
+
+          ymin = comp_::setyminmax_linear({hd[v]["pp_selfnorm"], hd[v]["sub_avg_selfnorm"], hd[v]["MC_pp_selfnorm"]});
+          fpdf->prepare();
+          fpdf->getc()->SetLogy(0);
+          hd[v]["pp_selfnorm"]->Draw("AXIS");
+          gr[v]["MC_pp_selfnorm"]->Draw("lX0 same");
+          if(ymin < 0) 
+            xjjroot::drawline(hd[v]["pp_selfnorm"]->GetXaxis()->GetXmin(), 0, hd[v]["pp_selfnorm"]->GetXaxis()->GetXmax(), 0, kBlack, 2, 2);
+          gr[v]["sub_avg_selfnorm"]->Draw("pe same");
+          gr[v]["pp_selfnorm"]->Draw("pe same");
+          comp_::makecanvas(fpdf, pa, leg["ppMCPbPb_avg"], "", "Self-normalized");
+
+          comp_::setyminmax_log({hd[v]["pp_selfnorm"], hd[v]["sub_avg_selfnorm"], hd[v]["MC_pp_selfnorm"]});
+          fpdf->prepare();
+          fpdf->getc()->SetLogy();
+          hd[v]["pp_selfnorm"]->Draw("AXIS");
+          gr[v]["MC_pp_selfnorm"]->Draw("lX0 same");
+          gr[v]["sub_avg_selfnorm"]->Draw("pe same");
+          gr[v]["pp_selfnorm"]->Draw("pe same");
+          comp_::makecanvas(fpdf, pa, leg["ppMCPbPb_avg"], "", "Self-normalized");
         }
       fpdf->close();
     }
