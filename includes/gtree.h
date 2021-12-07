@@ -33,10 +33,18 @@ namespace phoD
     int Gsize() { return Gsize_; }
     bool presel(int j);
 
+    void ClearGsize() { if(newtree_) { Gsize_ = 0; } }
+    void Fillall(dtree* nt, int j);
+    void Gsizepp() { if(newtree_) Gsize_++; }
+    void Fill() { if(newtree_ ){ dr_->cd(); nt_->Fill(); } }
+
   private:
     TTree* nt_;
+    TDirectory* dr_;
+    bool newtree_;
     bool ishi_;
     void setbranchaddress();
+    void branch();
     int Gsize_;
     std::vector<std::string> tbvf_ = {
       "Gpt",
@@ -68,6 +76,7 @@ phoD::gtree::gtree(TTree* nt, bool ishi) : nt_(nt), ishi_(ishi)
   for(auto& i : tbvi_) { bvi_[i] = new int[MAX_GEN]; }
   for(auto& i : tbvo_) { bvo_[i] = new bool[MAX_GEN]; }
 
+  newtree_ = false;
   nt_->SetBranchStatus("*", 0);
   nt_->SetBranchStatus("Gsize", 1);
 
@@ -79,6 +88,37 @@ phoD::gtree::gtree(TTree* nt, bool ishi) : nt_(nt), ishi_(ishi)
     if(nt_->FindBranch(b.c_str())) { nt_->SetBranchStatus(b.c_str(), 1); bvs_[b] = true; } }
 
   setbranchaddress();
+}
+
+phoD::gtree::gtree(TFile* outf, std::string name, bool ishi) : ishi_(ishi)
+{
+  std::cout<<"\e[32;1m -- "<<__PRETTY_FUNCTION__<<"\e[0m"<<std::endl;
+
+  for(auto& i : tbvf_) { bvf_[i] = new float[MAX_GEN]; bvs_[i] = false; }
+  for(auto& i : tbvi_) { bvi_[i] = new int[MAX_GEN]; bvs_[i] = false; }
+  for(auto& i : tbvo_) { bvo_[i] = new bool[MAX_GEN]; bvs_[i] = false; }
+
+  newtree_ = true;
+
+  std::vector<std::string> p = xjjc::str_divide(name, "/");
+  if(p.size() > 1)
+    {
+      if(!outf->cd(p[0].c_str())) dr_ = outf->mkdir(p[0].c_str());
+      else { dr_ = outf->GetDirectory(p[0].c_str()); }
+    }
+  else { dr_ = outf; }
+  dr_->cd();
+  nt_ = new TTree(p.back().c_str(), "");
+  branch();
+  outf->cd();
+}
+
+void phoD::gtree::branch()
+{
+  nt_->Branch("Gsize", &Gsize_, "Gsize/I");
+  for(auto& b : tbvf_) nt_->Branch(b.c_str(), bvf_[b], Form("%s[Gsize]/F", b.c_str()));
+  for(auto& b : tbvi_) nt_->Branch(b.c_str(), bvi_[b], Form("%s[Gsize]/I", b.c_str()));
+  for(auto& b : tbvo_) nt_->Branch(b.c_str(), bvo_[b], Form("%s[Gsize]/O", b.c_str()));
 }
 
 void phoD::gtree::setbranchaddress()
@@ -95,6 +135,14 @@ template<typename T> T phoD::gtree::val(std::string br, int j)
   if(std::is_same<T, int>::value) { return bvi_[br][j]; }
   if(std::is_same<T, bool>::value) { return bvo_[br][j]; }
   return (T)0;
+}
+
+void phoD::gtree::Fillall(gtree* nt, int j)
+{
+  if(!newtree_) return;
+  for(auto& b : tbvf_) { if(nt->status(b)) { bvf_[b][Dsize_] = nt->val<float>(b, j); } }
+  for(auto& b : tbvi_) { if(nt->status(b)) { bvi_[b][Dsize_] = nt->val<int>(b, j); } }
+  for(auto& b : tbvo_) { if(nt->status(b)) { bvo_[b][Dsize_] = nt->val<bool>(b, j); } }
 }
 
 bool phoD::gtree::presel(int j)
