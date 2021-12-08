@@ -34,7 +34,7 @@ namespace phoD
     bool presel(int j);
 
     void ClearGsize() { if(newtree_) { Gsize_ = 0; } }
-    void Fillall(dtree* nt, int j);
+    void Fillall(gtree* nt, int j);
     void Gsizepp() { if(newtree_) Gsize_++; }
     void Fill() { if(newtree_ ){ dr_->cd(); nt_->Fill(); } }
 
@@ -140,14 +140,15 @@ template<typename T> T phoD::gtree::val(std::string br, int j)
 void phoD::gtree::Fillall(gtree* nt, int j)
 {
   if(!newtree_) return;
-  for(auto& b : tbvf_) { if(nt->status(b)) { bvf_[b][Dsize_] = nt->val<float>(b, j); } }
-  for(auto& b : tbvi_) { if(nt->status(b)) { bvi_[b][Dsize_] = nt->val<int>(b, j); } }
-  for(auto& b : tbvo_) { if(nt->status(b)) { bvo_[b][Dsize_] = nt->val<bool>(b, j); } }
+  for(auto& b : tbvf_) { if(nt->status(b)) { bvf_[b][Gsize_] = nt->val<float>(b, j); } }
+  for(auto& b : tbvi_) { if(nt->status(b)) { bvi_[b][Gsize_] = nt->val<int>(b, j); } }
+  for(auto& b : tbvo_) { if(nt->status(b)) { bvo_[b][Gsize_] = nt->val<bool>(b, j); } }
 }
 
 bool phoD::gtree::presel(int j)
 {
-  bool p = (bvi_["GisSignal"][j]==1 || bvi_["GisSignal"][j]==2) && bvi_["GcollisionId"][j]==0;
+  // bool p = (bvi_["GisSignal"][j]==1 || bvi_["GisSignal"][j]==2) && bvi_["GcollisionId"][j]==0;
+  bool p = (abs(bvi_["GpdgId"][j]) == 421);
   return p;
 }
 
