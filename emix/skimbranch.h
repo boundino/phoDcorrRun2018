@@ -74,8 +74,10 @@ phoD::skimbranch::skimbranch(bool ishi) : fishi(ishi)
   fbr["Dfinder/ntDkpi"] = {"*"};
   fbr["Dfinder/ntGen"] = {"*"};
   fbr["HiForest/HiForestInfo"] = {"*"};
+  fbr["HiForestInfo/HiForest"] = {"*"};
   fbr["ggHiNtuplizerGED/EventTree"] = {"*"};
   fbr["akPu4PFJetAnalyzer/t"] = {"*"};
+  fbr["akCs4PFJetAnalyzer/t"] = {"*"};
   fbr["hiEvtAnalyzer/HiTree"] = {"*"};
   fbr["hltanalysis/HltTree"] = {"*"};
   fbr["skimanalysis/HltTree"] = {"*"};

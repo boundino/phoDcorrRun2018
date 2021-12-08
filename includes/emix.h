@@ -1,10 +1,12 @@
 
 namespace emix
 {
-  const int N_HIBIN = 100;
+  const int N_HIBIN = 90;
+  const float min_HIBIN = 0, max_HIBIN = 180;
   const int N_VZ = 30;
-  // const int N_EVENTPLANE = 16;
-  const int N_EVENTPLANE = 1;
+  const float min_VZ = -15, max_VZ = 15;
+  const int N_EVENTPLANE = 16;
+  const float min_EVENTPLANE = -M_PI/2., max_EVENTPLANE = M_PI/2.;
 
   class mixhve
   {
@@ -13,7 +15,7 @@ namespace emix
     int getBin(int hiBin, float vz, double eventPlaneAngle);
     int ihibin(int hiBin);
     int ivz(float vz);
-    int ieventplane(double eventPlaneAngle);
+    int ieventplane(float eventPlaneAngle);
 
   private:
     int nHIBIN;
@@ -35,25 +37,27 @@ int emix::mixhve::getBin(int hiBin, float vz, double eventPlaneAngle)
 int emix::mixhve::ivz(float vz)
 {
   for (int i = 0; i < nVZ; ++i){
-    if ((i-15) <= vz && vz < (i-14)) return i;
+    if ((i+min_VZ) <= vz && vz < (i+min_VZ+1)) return i;
   }
-  if (vz == 15) return 29;
+  if (vz == 15) return nVZ-1;
   return -1;
 }
 
 int emix::mixhve::ihibin(int hiBin)
 {
-  int div = 200 / nHIBIN;
-  if(hiBin < 0 || hiBin > 200) return -1;
+  int div = (max_HIBIN-min_HIBIN) / nHIBIN;
+  if(hiBin < min_HIBIN || hiBin > max_HIBIN) return -1;
   return hiBin/div;
 }
 
-int emix::mixhve::ieventplane(double eventPlaneAngle)
+int emix::mixhve::ieventplane(float eventPlaneAngle)
 {
   if(nEVENTPLANE==1) return 0;
   for (int i = 0; i < nEVENTPLANE; ++i){
-    if ((double)i*M_PI/nEVENTPLANE <= eventPlaneAngle + 0.5*M_PI && eventPlaneAngle + 0.5*M_PI < (double)(i+1)*M_PI/nEVENTPLANE) return i;
+    if (eventPlaneAngle - min_EVENTPLANE >= i*(max_EVENTPLANE - min_EVENTPLANE)/nEVENTPLANE && 
+        eventPlaneAngle - min_EVENTPLANE < (i+1)*(max_EVENTPLANE - min_EVENTPLANE)/nEVENTPLANE) return i;
   }
-  if (eventPlaneAngle + 0.5*M_PI == (double)M_PI) return 15;
+  if (eventPlaneAngle - min_EVENTPLANE == max_EVENTPLANE - min_EVENTPLANE) return nEVENTPLANE-1;
   return -1;
 }
+

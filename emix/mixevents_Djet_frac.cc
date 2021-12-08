@@ -27,6 +27,9 @@ int mixevents(std::string inputname_trig, std::string inputname_mb,
   phoD::forest* f_trig = new phoD::forest(inf_trig, ishi, "akCs4PFJetAnalyzer/t");
   phoD::etree* etr_trig = f_trig->etr();
   phoD::jtree* jtr_trig = f_trig->jtr();
+  TH1F* hnevt = (TH1F*)inf_trig->Get("hnentries");
+  int nentries_raw = hnevt->GetEntries(); delete hnevt;
+
   TFile* outf = new TFile(outputname.c_str(), "recreate");
 
   phoD::skimbranch* sb = new phoD::skimbranch(ishi);
@@ -38,7 +41,6 @@ int mixevents(std::string inputname_trig, std::string inputname_mb,
   // s["forest"] = new phoD::skimtree("HiForestInfo/HiForest", inf_trig, outf, sb->branches("HiForestInfo/HiForest"));
   // s["jet"] = new phoD::skimtree("akPu4PFJetAnalyzer/t", inf_trig, outf, sb->branches("akPu4PFJetAnalyzer/t"));
   s["jet"] = new phoD::skimtree("akCs4PFJetAnalyzer/t", inf_trig, outf, sb->branches("akCs4PFJetAnalyzer/t"));
-  // s["ntDkpi_trig"] = new phoD::skimtree("Dfinder/ntDkpi", inf_trig, outf, sb->branches("Dfinder/ntDkpi"));
   s["ntDkpi"] = new phoD::skimtree("Dfinder/ntDkpi", inf_mb, outf, sb->branches("Dfinder/ntDkpi"));
   // outf->cd();
 
@@ -58,7 +60,7 @@ int mixevents(std::string inputname_trig, std::string inputname_mb,
       // std::cout<<i<<std::endl;
       xjjc::progressslide(i-ifrac*nentries_mb_frac, nentries_mb_frac, 100000);
       etr_mb->GetEntry(i);
-      jtr_mb->GetEntry(i);
+      // jtr_mb->GetEntry(i);
 
       if(!etr_mb->evtsel()) continue;
       // if(jtr_mb->nref()>0) continue; // only use MB events without 60 GeV jets
@@ -67,7 +69,9 @@ int mixevents(std::string inputname_trig, std::string inputname_mb,
       if(ihibin < 0) { std::cout<<"error: bad hiBin."<<std::endl; return 2; }
       int ivz = mix.ivz(etr_mb->vz());
       if(ivz < 0) continue;
-      int ieventplane = 0;
+      int ieventplane = mix.ieventplane(etr_mb->hiEvtPlane());
+      // std::cout<<etr_mb->hiEvtPlane()<<" -> "<<ieventplane<<std::endl;
+      if(ieventplane < 0) { std::cout<<"error: bad eventplane."<<std::endl; return 2; }
       outv[ihibin][ivz][ieventplane].push_back(i);
       h_mb->Fill(ihibin, ivz);
       npass_mb++;
@@ -84,6 +88,9 @@ int mixevents(std::string inputname_trig, std::string inputname_mb,
   // mix events
   int npass = 0;
   int nentries_trig_frac = std::floor(etr_trig->GetEntries()/fraction);
+  int nentries_equiv = (int)(nentries_raw * 1. nentries_trig_frac/etr_trig->GetEntries());
+  for(int i=0; i<nentries_equiv; i++) hnentries->Fill(0.5);
+
   for(int i=ifrac*nentries_trig_frac; i<(ifrac+1)*nentries_trig_frac; i++)
     {
       xjjc::progressslide(i-ifrac*nentries_trig_frac, nentries_trig_frac, 10000);
@@ -106,7 +113,8 @@ int mixevents(std::string inputname_trig, std::string inputname_mb,
       if(ihibin < 0) { std::cout<<"error: bad hiBin."<<std::endl; return 2; }
       int ivz = mix.ivz(etr_trig->vz());
       if(ivz < 0) { std::cout<<"error: bad vz."<<std::endl; continue; }
-      int ieventplane = 0;
+      int ieventplane = mix.ieventplane(etr_trig->hiEvtPlane());
+      if(ieventplane < 0) { std::cout<<"error: bad eventplane."<<std::endl; continue; }
       h_trig->Fill(ihibin, ivz);
 
       int nevt = outv[ihibin][ivz][ieventplane].size();
