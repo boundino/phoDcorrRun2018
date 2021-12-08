@@ -399,7 +399,10 @@ void xjjroot::dfitter::calvar()
   B = fun_background->Integral(mass_dzero_signal_l,mass_dzero_signal_h)/binwid_hist_dzero + fun_swap->Integral(mass_dzero_signal_h,mass_dzero_signal_h)/binwid_hist_dzero;
   Sig = S/TMath::Sqrt(S+B);
   yield = fun_mass->Integral(min_hist_dzero,max_hist_dzero)/binwid_hist_dzero;
-  yieldErr = fun_mass->Integral(min_hist_dzero,max_hist_dzero)/binwid_hist_dzero*fun_mass->GetParError(0)/fun_mass->GetParameter(0);
+  if(fun_mass->GetParameter(0) != 0)
+    yieldErr = fun_mass->Integral(min_hist_dzero,max_hist_dzero)/binwid_hist_dzero*fun_mass->GetParError(0)/fun_mass->GetParameter(0);
+  else
+    yieldErr = fun_mass->GetParError(0);
   Chi2 = 2.*r->MinFcnValue();
   NDF = fun_f->GetNDF();
   Chi2Prob = TMath::Prob(Chi2,NDF);
