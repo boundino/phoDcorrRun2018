@@ -17,21 +17,25 @@ namespace Djet
 {
   std::vector<std::string> var = {"dphi", "dr"};
   std::map<std::string, std::string> vartex = {
-    {"dphi", "#Delta#phi^{jD} / #pi"},
+    {"dphi", "#Delta#phi^{jD}"},
     {"dr", "#Deltar^{jD}"}
   };
   std::map<std::string, std::string> varytex = {
     {"dphi", "#frac{dN^{jD}}{d#Delta#phi}"},
     {"dr", "#frac{dN^{jD}}{d#Deltar}"}
   };
+  std::map<std::string, std::vector<float>> bins = {
+    {"dphi", {0*M_PI, 0.1*M_PI, 0.2*M_PI, 0.3*M_PI, 0.4*M_PI, 0.5*M_PI, 0.6*M_PI, 0.7*M_PI, 0.8*M_PI, 0.9*M_PI, 1.0*M_PI}},
+    {"dr", {0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0}},
+  };
   std::map<std::string, std::vector<float>> bins_pp = {
-    {"dphi", {0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}},
+    {"dphi", {0*M_PI, 0.1*M_PI, 0.2*M_PI, 0.3*M_PI, 0.4*M_PI, 0.5*M_PI, 0.6*M_PI, 0.7*M_PI, 0.8*M_PI, 0.9*M_PI, 1.0*M_PI}},
     {"dr", {0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0}},
   };
   std::map<std::string, std::vector<float>> bins_aa = {
-    // {"dphi", {0, 0.2, 0.4, 0.6, 0.8, 1.0}},
+    // {"dphi", {0*M_PI, 0.2*M_PI, 0.4*M_PI, 0.6*M_PI, 0.8*M_PI, 1.0*M_PI}},
     // {"dr", {0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0}},
-    {"dphi", {0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}},
+    {"dphi", {0*M_PI, 0.1*M_PI, 0.2*M_PI, 0.3*M_PI, 0.4*M_PI, 0.5*M_PI, 0.6*M_PI, 0.7*M_PI, 0.8*M_PI, 0.9*M_PI, 1.0*M_PI}},
     {"dr", {0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0}},
   };
 }
@@ -178,7 +182,7 @@ namespace phoD
 {
   std::vector<std::string> var = {"dphi"};
   std::map<std::string, std::string> vartex = {
-    {"dphi", "#Delta#phi^{jD} / #pi"},
+    {"dphi", "#Delta#phi^{jD}"},
   };
   std::map<std::string, std::string> varytex = {
     {"dphi", "#frac{dN^{jD}}{d#Delta#phi}"},
