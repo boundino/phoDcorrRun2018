@@ -25,6 +25,7 @@ namespace phoD
     float pthat() { return pthat_; }
     float pthatweight() { return pthatweight_; }
     float weight() { return weight_; }
+    float hiEvtPlane() { return hiEvtPlanes_[2]; }
     bool evtsel();
     bool hltsel_photon();
     bool hltsel_jet(int ver); // 0, 60, 80, 80100
@@ -43,6 +44,7 @@ namespace phoD
     float pthat_;
     float pthatweight_;
     float weight_;
+    float hiEvtPlanes_[24];
     int HLT_HIGEDPhoton40_v1_;
     int HLT_HIPhoton40_HoverELoose_v1_;
     int HLT_HIAK4CaloJet60_v1_;
@@ -71,6 +73,7 @@ void phoD::etree::setbranchaddress()
   if(nt_->FindBranch("pthat")) nt_->SetBranchAddress("pthat", &pthat_);
   if(nt_->FindBranch("pthatweight")) nt_->SetBranchAddress("pthatweight", &pthatweight_);
   if(nt_->FindBranch("weight")) nt_->SetBranchAddress("weight", &weight_);
+  if(nt_->FindBranch("hiEvtPlanes")) nt_->SetBranchAddress("hiEvtPlanes", hiEvtPlanes_);
   if(nt_hlt_)
     {
       if(nt_hlt_->FindBranch("HLT_HIGEDPhoton40_v1"))
