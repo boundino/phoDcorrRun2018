@@ -10,6 +10,7 @@ namespace eff
     effbins(bool ishi) : fishi(ishi) { fcentbins = fishi?fcentbins_PbPb:fcentbins_pp; }
     effbins(std::string inputfile, bool ishi);
     float geteff(float pt, float absy, int hiBin);
+    void print(float pt, float absy, int hiBin);
     int npt() { return fptbins.size()-1; }
     int ny() { return fybins.size()-1; }
     int ncent() { return fcentbins.size()-1; }
@@ -27,8 +28,9 @@ namespace eff
     std::vector<float> fcentbins;
     std::vector<float> fcentbins_PbPb = {0, 30, 50, 90};
     std::vector<float> fcentbins_pp = {-1, 0};
+    // std::vector<float> fptbins = {2, 2.5, 3., 3.5, 4., 4.5, 5., 5.5, 6., 6.5, 7., 8., 9., 10., 12., 14., 16., 20., 25., 30., 35., 40., 45., 50., 60., 70., 80.};
     std::vector<float> fptbins = {2, 2.5, 3., 3.5, 4., 4.5, 5., 5.5, 6., 6.5, 7., 8., 9., 10., 12., 14., 16., 20., 30.};
-    std::vector<float> fybins = {0., 1.2, 2.4};
+    std::vector<float> fybins = {0., 1.2, 2};
     std::string ftpt(int ipt);
     std::string fty(int iy);
     std::string ftcent(int icent);
@@ -48,13 +50,30 @@ eff::effbins::effbins(std::string inputfile, bool ishi) : fishi(ishi)
 
 float eff::effbins::geteff(float pt, float absy, int hiBin)
 {
-  // std::cout<<pt<<" "<<absy<<" "<<hiBin<<" "<<ipt(pt)<<" "<<iycent(absy, hiBin)<<std::endl;
+  float result = fheff[iycent(absy, hiBin)]->GetBinContent(ipt(pt)+1);
+  if(result < 1.e-6) print(pt, absy, hiBin);
   return fheff[iycent(absy, hiBin)]->GetBinContent(ipt(pt)+1);
+}
+
+void eff::effbins::print(float pt, float absy, int hiBin)
+{
+  std::cout << std::left << "\e[31m"
+            << std::setw(10) << pt
+            << std::setw(10) << ipt(pt)
+            << " | "
+            << std::setw(10) << absy
+            << std::setw(10) << hiBin
+            << std::setw(10) << iycent(absy, hiBin)
+            << " | "
+            << fheff[iycent(absy, hiBin)]->GetXaxis()->GetNbins()
+            << " | "
+            << fheff[iycent(absy, hiBin)]->GetBinContent(ipt(pt)+1)
+            << "\e[0m" << std::endl;
 }
 
 int eff::effbins::ipt(float pt)
 {
-  if(pt >= fptbins.back()) { return fptbins.size()-1; }
+  if(pt >= fptbins.back()) { return fptbins.size()-2; }
   if(pt < fptbins.front()) { return 0; }
   return xjjc::findibin(fptbins, pt);
 }
